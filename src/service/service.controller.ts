@@ -79,7 +79,8 @@ export class ServiceController {
     }
 
     @Get('get-all-service-categories')
-    getAllCategories() {
+    getAllCategories(@Req() req: any) {
+        console.log('Authorization Header:', req.headers?.authorization);
         return this.serviceService.getAllServiceCategories();
     }
 
