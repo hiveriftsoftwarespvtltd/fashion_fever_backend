@@ -402,22 +402,20 @@ export class OrderService {
         let estimatedDate: any = null;
 
         try {
+          if (!vendor.vendorPincode) {
+            throw new Error(`Vendor ${vendor.businessName} has no pincode configured`);
+          }
+
           const shipping = await this.shiprocketService.getShippingOptions({
             pickupPincode: vendor.vendorPincode,
             deliveryPincode: address.pincode,
-
-            weightKg: bucket.totalWeight,
-
+            weightKg: bucket.totalWeight || 0.5,
             declaredValue: bucket.declaredValue,
-
             isCOD: dto.paymentMethod === PaymentMethod.CASH_ON_DELIVERY ? 1 : 0,
-
-            length: bucket.length,
-            breadth: bucket.width,
-            height: bucket.height,
+            length: bucket.length || 10,
+            breadth: bucket.width || 10,
+            height: bucket.height || 10,
           });
-
-
 
           shippingCharge = Number(shipping.shippingCharge) || 0;
 
@@ -426,13 +424,15 @@ export class OrderService {
               ? Number(shipping.codCharge) || 0
               : 0;
 
-          estimatedDays = Number(shipping.estimatedDays) || 0;
+          estimatedDays = Number(shipping.estimatedDays) || 5;
 
           estimatedDate = shipping.estimatedDate || null;
         } catch (error) {
-          throw new BadRequestException(
-            `Shipping unavailable for vendor ${vendor.businessName}`,
-          );
+          console.warn(`Shiprocket shipping fallback used for vendor ${vendor.businessName}:`, error?.message || error);
+          shippingCharge = 50; // Standard fallback shipping fee
+          codCharge = dto.paymentMethod === PaymentMethod.CASH_ON_DELIVERY ? 30 : 0;
+          estimatedDays = 5;
+          estimatedDate = new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString();
         }
 
         // ─────────────────────────────────────────

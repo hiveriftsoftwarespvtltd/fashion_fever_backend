@@ -1,4 +1,4 @@
-import { Controller, Put, Body, Param, Req, UseGuards } from '@nestjs/common';
+import { Controller, Put, Body, Param, Req, UseGuards, Get, Query, UseInterceptors, UploadedFile, BadRequestException } from '@nestjs/common';
 import { QuickOrderService } from './quick-delivery-order.service';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guad';
 import { RolesGuard } from 'src/auth/roles.guard';
@@ -6,10 +6,9 @@ import { Roles } from 'src/auth/roles.decorator';
 import { UserRole } from 'src/user/schema/user.schema';
 import { MarkOrderDeliveredDto } from './dto/vendor-order-update.dto';
 import { GetVendorOrdersDto } from './dto/vendor-order-update.dto';
-import { UpdateDeliveryPersonStatusDto } from './dto/delivery-person.dto';
+import { UpdateDeliveryPersonStatusDto, UpdateDeliveryPersonDto } from './dto/delivery-person.dto';
 import { DeliveryPersonService } from './delivery-person.service';
-import { Get, Query, UseInterceptors, UploadedFiles, BadRequestException } from '@nestjs/common';
-import { FilesInterceptor } from '@nestjs/platform-express';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @Controller('delivery-person/quick-order')
 @UseGuards(JwtAuthGuard)
@@ -18,6 +17,17 @@ export class DeliveryPersonQuickOrderController {
         private readonly quickOrderService: QuickOrderService,
         private readonly deliveryPersonService: DeliveryPersonService
     ) { }
+
+    @Get('profile')
+    async getProfile(@Req() req: any) {
+        return this.deliveryPersonService.getOwnProfile(req.user._id);
+    }
+
+    @Put('profile/update')
+    @UseInterceptors(FileInterceptor('file'))
+    async updateProfile(@Req() req: any, @Body() dto: UpdateDeliveryPersonDto, @UploadedFile() file?: any) {
+        return this.deliveryPersonService.updateOwnProfile(req.user._id, dto, file);
+    }
 
     @Get('list')
     async getAssignedOrders(@Req() req: any, @Query() query: GetVendorOrdersDto) {

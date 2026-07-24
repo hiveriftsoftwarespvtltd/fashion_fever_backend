@@ -67,6 +67,7 @@ import { NotificationModuleType, NotificationType, NotificationPriority } from '
 import { MarketplaceEarning, MarketplaceEarningDocument, EarningRole, EarningReferenceType, EarningStatus } from 'src/payout/schema/market-place-earning.schema';
 import { PaymentTransaction, PaymentTransactionDocument, TransactionStatus as PayoutTransactionStatus, ReferenceType as PayoutReferenceType, PaymentMode as PayoutPaymentMode, PaymentMethod as PayoutPaymentMethod } from 'src/payout/schema/payment-transaction.schema';
 import { CancelledByEntity } from 'src/order/schema/vendor-order.schema';
+import { DeliveryPerson, DeliveryPersonDocument, DeliveryPersonStatus } from 'src/quick-e-commerce/schema/delivery-person.schema';
 
 @Injectable()
 export class VendorService {
@@ -97,6 +98,7 @@ export class VendorService {
     private notificationService: NotificationService,
     @InjectModel(MarketplaceEarning.name) private marketplaceEarningModel: Model<MarketplaceEarningDocument>,
     @InjectModel(PaymentTransaction.name) private paymentTransactionModel: Model<PaymentTransactionDocument>,
+    @InjectModel(DeliveryPerson.name) private deliveryPersonModel: Model<DeliveryPersonDocument>,
   ) { }
 
   async registerVendor(
@@ -901,6 +903,54 @@ export class VendorService {
     }
   }
 
+
+  // ─── Assign Rider to Standard Order ─────────────────────────────────
+  async assignRiderToStandardOrder(orderId: string, vendorId: string, deliveryPersonId: string) {
+    // Find the vendor order
+    const vendorOrder = await this.vendorOrderModel.findOne({
+      _id: new Types.ObjectId(orderId),
+      vendorId: new Types.ObjectId(vendorId),
+    });
+    if (!vendorOrder) throw new NotFoundException('Vendor order not found');
+
+    // Find the delivery person
+    const deliveryPerson = await this.deliveryPersonModel.findOne({
+      _id: new Types.ObjectId(deliveryPersonId),
+      isDeleted: false,
+      isActive: true,
+    });
+    if (!deliveryPerson) throw new BadRequestException('Delivery rider not found or inactive');
+
+    // Assign rider
+    (vendorOrder as any).deliveryPersonId = new Types.ObjectId(deliveryPersonId);
+    (vendorOrder as any).deliveryStatus = 'ASSIGNED';
+    vendorOrder.orderStatus = OrderStatus.SHIPPED;
+    vendorOrder.shippedAt = new Date();
+    await vendorOrder.save();
+
+    // Update delivery person status
+    deliveryPerson.status = DeliveryPersonStatus.ON_DELIVERY;
+    await deliveryPerson.save();
+
+    // Notify rider
+    if (deliveryPerson.userId) {
+      await this.notificationService.sendNotification({
+        receiverId: deliveryPerson.userId.toString(),
+        type: NotificationType.TRANSACTIONAL,
+        priority: NotificationPriority.HIGH,
+        title: 'New Standard Order Assigned',
+        body: `You have been assigned a standard delivery for order #${vendorOrder.orderNumber}.`,
+        moduleType: NotificationModuleType.ORDER,
+      });
+    }
+
+    const populatedOrder = await this.vendorOrderModel
+      .findById(vendorOrder._id)
+      .populate('deliveryPersonId', 'name phone vehicleType vehicleNumber status')
+      .lean();
+
+    return ApiResponse.success('Rider assigned successfully', populatedOrder);
+  }
 
   async deleteAllVendorProducts(vendorId: string) {
     const session = await this.productModel.db.startSession();

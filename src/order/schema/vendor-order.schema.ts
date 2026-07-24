@@ -170,6 +170,17 @@ export class VendorOrder {
   @Prop({ default: false })
   isSettled!: boolean;
 
+  // ─── Rider Assignment (Standard Delivery) ───
+  @Prop({
+    type: Types.ObjectId,
+    ref: 'DeliveryPerson',
+    default: null,
+  })
+  deliveryPersonId?: Types.ObjectId | null;
+
+  @Prop({ type: String, default: null })
+  deliveryStatus?: string;
+
   createdAt?: Date;
   updatedAt?: Date;
 }

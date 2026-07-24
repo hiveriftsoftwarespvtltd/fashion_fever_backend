@@ -33,6 +33,11 @@ export class VendorDeliveryPersonController {
     return this.deliveryPersonService.getDeliveryPersons(req.user._id, DeliveryPersonRole.VENDOR, req.user.vendorId, page, limit, status);
   }
 
+  @Get('available')
+  async getAvailableRiders() {
+    return this.deliveryPersonService.getAllActiveRiders();
+  }
+
   @Get('details/:id')
   async getDeliveryPersonById(@Param('id') id: string, @Req() req: any) {
     return this.deliveryPersonService.getDeliveryPersonById(req.user._id, DeliveryPersonRole.VENDOR, id, req.user.vendorId);

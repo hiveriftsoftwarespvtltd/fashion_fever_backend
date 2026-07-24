@@ -24,6 +24,7 @@ import { PaymentMode, PaymentTransaction, PaymentTransactionDocument, ReferenceT
 import { PaymentMethod as TransactionPaymentMethod } from 'src/payout/schema/payment-transaction.schema';
 import { MarketplaceEarning, MarketplaceEarningDocument, EarningRole, EarningReferenceType, EarningStatus } from 'src/payout/schema/market-place-earning.schema';
 import { Influencer, InfluencerDocument } from 'src/influencer/schema/influencer.schema';
+import { VendorOrder as StandardVendorOrder, VendorOrderDocument as StandardVendorOrderDocument } from 'src/order/schema/vendor-order.schema';
 
 @Injectable()
 export class QuickOrderService {
@@ -45,6 +46,7 @@ export class QuickOrderService {
         @InjectModel(PaymentTransaction.name) private paymentTransactionModel: Model<PaymentTransactionDocument>,
         @InjectModel(MarketplaceEarning.name) private marketplaceEarningModel: Model<MarketplaceEarningDocument>,
         @InjectModel(Influencer.name) private influencerModel: Model<InfluencerDocument>,
+        @InjectModel(StandardVendorOrder.name) private standardVendorOrderModel: Model<StandardVendorOrderDocument>,
         @InjectConnection() private connection: Connection,
         private checkoutService: QuickDeliveryCheckoutService,
         private notificationService: NotificationService,
@@ -596,7 +598,7 @@ export class QuickOrderService {
         const deliveryPerson = await this.deliveryPersonModel.findOne({ _id: new Types.ObjectId(deliveryPersonId), isDeleted: false, isActive: true });
         if (!deliveryPerson)
             throw new BadRequestException('Delivery person not found or inactive');
-        
+
         if (!deliveryPerson.assignedVendorIds.some(id => id.toString() === String(vendorId))) {
             deliveryPerson.assignedVendorIds.push(new Types.ObjectId(vendorId));
         }
@@ -965,7 +967,7 @@ export class QuickOrderService {
         } catch (error: any) {
             console.error('Error in markVendorOrderAsDelivered:', error);
             if (session) {
-                try { await session.abortTransaction(); } catch (e) {}
+                try { await session.abortTransaction(); } catch (e) { }
             }
             // Guaranteed fallback response so Rider never gets 500 Internal Server Error
             return { success: true, statusCode: 200, message: 'Order marked as delivered successfully' };
@@ -1264,7 +1266,7 @@ export class QuickOrderService {
         }
     }
 
-    // Delivery Person Methods
+    // Delivery Person Methods - queries BOTH quick-commerce and standard vendor orders
     async getDeliveryPersonOrders(deliveryUserId: string, page: number, limit: number, status?: VendorOrderStatus) {
         const deliveryPerson = await this.deliveryPersonModel.findOne({ userId: new Types.ObjectId(deliveryUserId) }).lean();
 
@@ -1280,43 +1282,40 @@ export class QuickOrderService {
         }
         if (status) query.status = status;
 
-        const [orders, total] = await Promise.all([
-            this.vendorOrderModel.find(query)
-                .populate({
-                    path: 'items.variantId',
-                    select: 'thumbnail images sku',
-                    populate: [
-                        { path: 'thumbnail', select: 'url publicId' },
-                        { path: 'images', select: 'url publicId' }
-                    ]
-                })
-                .populate({
-                    path: 'items.productId',
-                    select: 'name variants',
-                    populate: {
-                        path: 'variants',
-                        select: 'thumbnail images',
-                        populate: [
-                            { path: 'thumbnail', select: 'url publicId' },
-                            { path: 'images', select: 'url publicId' }
-                        ]
-                    }
-                })
-                .populate('vendorId', 'businessName email phone location')
-                .populate({
-                    path: 'quickOrderId',
-                    select: 'customerId addressId paymentMethod paymentStatus',
-                    populate: [
-                        { path: 'customerId', select: 'name email phone' },
-                        { path: 'addressId' }
-                    ]
-                })
-                .sort({ createdAt: -1 })
-                .skip(skip)
-                .limit(limit)
-                .lean(),
-            this.vendorOrderModel.countDocuments(query)
-        ]);
+        // Query quick-commerce VendorQuickOrders
+        const quickOrdersPromise = this.vendorOrderModel.find(query)
+            .populate({ path: 'items.variantId', select: 'thumbnail images sku', populate: [{ path: 'thumbnail', select: 'url publicId' }, { path: 'images', select: 'url publicId' }] })
+            .populate({ path: 'items.productId', select: 'name variants', populate: { path: 'variants', select: 'thumbnail images', populate: [{ path: 'thumbnail', select: 'url publicId' }, { path: 'images', select: 'url publicId' }] } })
+            .populate('vendorId', 'businessName email phone location')
+            .populate({ path: 'quickOrderId', select: 'customerId addressId shippingAddress paymentMethod paymentStatus grandTotal createdAt', populate: [{ path: 'customerId', select: 'name email phone' }, { path: 'addressId' }] })
+            .sort({ createdAt: -1 })
+            .lean();
+
+        // Query standard VendorOrders (if deliveryPersonId field is set)
+        const standardQuery: any = { ...query };
+        if (standardQuery.status) delete standardQuery.status; // standard orders use orderStatus field
+        const standardOrdersPromise = this.standardVendorOrderModel.find(standardQuery)
+            .populate({ path: 'items.variantId', select: 'thumbnail images sku', populate: [{ path: 'thumbnail', select: 'url publicId' }, { path: 'images', select: 'url publicId' }] })
+            .populate({ path: 'items.productId', select: 'name thumbnail images variants', populate: { path: 'variants', select: 'thumbnail images', populate: [{ path: 'thumbnail', select: 'url publicId' }, { path: 'images', select: 'url publicId' }] } })
+            .populate('vendorId', 'businessName email phone location')
+            .populate('userId', 'name email phone')
+            .populate('deliveryPersonId', 'name phone vehicleType status')
+            .sort({ createdAt: -1 })
+            .lean();
+
+        const [quickOrders, standardOrders] = await Promise.all([quickOrdersPromise, standardOrdersPromise]);
+
+        // Tag order source for frontend rendering
+        const taggedQuick = (quickOrders as any[]).map(o => ({ ...o, _orderSource: 'QUICK' }));
+        const taggedStandard = (standardOrders as any[]).map(o => ({ ...o, _orderSource: 'STANDARD', orderType: 'STANDARD' }));
+
+        // Merge and sort by newest
+        const allOrders = [...taggedQuick, ...taggedStandard].sort(
+            (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+
+        const total = allOrders.length;
+        const orders = allOrders.slice(skip, skip + limit);
 
         return {
             orders,

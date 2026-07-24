@@ -43,6 +43,7 @@ import { DeliveryPersonAssignment, DeliveryPersonAssignmentSchema } from './sche
 import { PaymentTransaction, PaymenttransactionSchema } from 'src/payout/schema/payment-transaction.schema';
 import { MarketplaceEarning, MarketplaceEarningSchema } from 'src/payout/schema/market-place-earning.schema';
 import { Influencer, InfluencerSchema } from 'src/influencer/schema/influencer.schema';
+import { VendorOrder as StandardVendorOrder, VendorOrderSchema as StandardVendorOrderSchema } from 'src/order/schema/vendor-order.schema';
 
 @Module({
   imports: [
@@ -67,7 +68,8 @@ import { Influencer, InfluencerSchema } from 'src/influencer/schema/influencer.s
       { name: DeliveryPersonAssignment.name, schema: DeliveryPersonAssignmentSchema },
       { name: PaymentTransaction.name, schema: PaymenttransactionSchema },
       { name: MarketplaceEarning.name, schema: MarketplaceEarningSchema },
-      { name: Influencer.name, schema: InfluencerSchema }
+      { name: Influencer.name, schema: InfluencerSchema },
+      { name: StandardVendorOrder.name, schema: StandardVendorOrderSchema }
     ]),
     DocumentModule,
     NotificationModule

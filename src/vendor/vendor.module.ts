@@ -20,10 +20,11 @@ import { InfluencerModule } from 'src/influencer/influencer.module';
 import { NotificationModule } from 'src/notification/notification.module';
 import { MarketplaceEarning, MarketplaceEarningSchema } from 'src/payout/schema/market-place-earning.schema';
 import { PaymentTransaction, PaymenttransactionSchema } from 'src/payout/schema/payment-transaction.schema';
+import { DeliveryPerson, DeliveryPersonSchema } from 'src/quick-e-commerce/schema/delivery-person.schema';
 
 @Module({
   imports:[MongooseModule.forFeature([{name:Vendor.name,schema:VendorSchema}]),MongooseModule.forFeature([{name:User.name,schema:UserSchema}]),MongooseModule.forFeature([{name:Product.name,schema:ProductSchema}]),MongooseModule.forFeature([{name:Category.name,schema:CategorySchema}]),MongooseModule.forFeature([{name:ProductVariant.name,schema:ProductVariantSchema}]),MongooseModule.forFeature([{name:Order.name,schema:OrderSchema}]),MongooseModule.forFeature([{name:VendorOrder.name,schema:VendorOrderSchema}]),
-  MongooseModule.forFeature([{name:VendorShipment.name,schema:VendorShipmentSchema}]),MongooseModule.forFeature([{name:Influencer.name,schema:InfluencerSchema}]),MongooseModule.forFeature([{name:InfluencerCommission.name,schema:InfluencerCommissionSchema}]),MongooseModule.forFeature([{name:CashbackSlab.name,schema:CashbackSlabSchema}]),MongooseModule.forFeature([{name:CommissionRate.name,schema:CommissionRateSchema}]),MongooseModule.forFeature([{name:MarketplaceEarning.name,schema:MarketplaceEarningSchema}]),MongooseModule.forFeature([{name:PaymentTransaction.name,schema:PaymenttransactionSchema}]),DocumentModule,WalletModule,InfluencerModule,NotificationModule],
+  MongooseModule.forFeature([{name:VendorShipment.name,schema:VendorShipmentSchema}]),MongooseModule.forFeature([{name:Influencer.name,schema:InfluencerSchema}]),MongooseModule.forFeature([{name:InfluencerCommission.name,schema:InfluencerCommissionSchema}]),MongooseModule.forFeature([{name:CashbackSlab.name,schema:CashbackSlabSchema}]),MongooseModule.forFeature([{name:CommissionRate.name,schema:CommissionRateSchema}]),MongooseModule.forFeature([{name:MarketplaceEarning.name,schema:MarketplaceEarningSchema}]),MongooseModule.forFeature([{name:PaymentTransaction.name,schema:PaymenttransactionSchema}]),MongooseModule.forFeature([{name:DeliveryPerson.name,schema:DeliveryPersonSchema}]),DocumentModule,WalletModule,InfluencerModule,NotificationModule],
   providers: [VendorService],
   controllers: [VendorController],
   exports:[MongooseModule]

@@ -172,6 +172,13 @@ export class VendorController {
     return this.vendorService.updateOrder(dto, id, req.user.vendorId, req.user._id);
   }
 
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.VENDOR)
+  @Put('order/:id/assign-rider')
+  assignRider(@Param('id') id: string, @Body('deliveryPersonId') deliveryPersonId: string, @Req() req: any) {
+    return this.vendorService.assignRiderToStandardOrder(id, req.user.vendorId, deliveryPersonId);
+  }
+
   // Analytics Endpoints
 
 

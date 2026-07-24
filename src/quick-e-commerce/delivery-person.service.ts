@@ -201,6 +201,16 @@ export class DeliveryPersonService {
     };
   }
 
+  // Get all active riders (no vendor filter) — used for vendor assign-rider dropdown
+  async getAllActiveRiders() {
+    const riders = await this.deliveryPersonModel
+      .find({ isDeleted: false, isActive: true })
+      .select('name phone vehicleType vehicleNumber status profilePhoto')
+      .populate('profilePhoto', 'url')
+      .lean();
+    return riders;
+  }
+
   async getDeliveryPersonsForVendor(vendorId: string) {
     const query: any = { isDeleted: false, assignedVendorIds: new Types.ObjectId(vendorId) };
     return await this.deliveryPersonModel.find(query)
@@ -392,5 +402,80 @@ export class DeliveryPersonService {
 
     await deliveryPerson.save();
     return { success: true, message: 'Status updated successfully', data: deliveryPerson };
+  }
+
+  async getOwnProfile(userId: string) {
+    let deliveryPerson = await this.deliveryPersonModel.findOne({ userId: new Types.ObjectId(userId), isDeleted: false })
+      .populate('profilePhoto', 'url _id publicId size')
+      .populate('userId', 'name email phone roles avatar')
+      .lean();
+
+    const user = await this.userModel.findById(userId).lean();
+
+    if (!deliveryPerson) {
+      return {
+        _id: null,
+        userId,
+        name: user?.name || 'Express Rider',
+        email: user?.email || '',
+        phone: user?.phone || '',
+        status: DeliveryPersonStatus.OFFLINE,
+        vehicleType: 'scooter',
+        vehicleNumber: 'N/A',
+        totalDeliveredOrders: 0,
+        avgDeliveryTimeInMinutes: 0
+      };
+    }
+
+    const stats = await this.vendorOrderModel.aggregate([
+      {
+        $match: {
+          deliveryPersonId: deliveryPerson._id,
+          status: VendorOrderStatus.DELIVERED
+        }
+      },
+      {
+        $project: {
+          deliveryTime: { $subtract: ['$deliveredAt', '$readyAt'] }
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          totalDeliveredOrders: { $sum: 1 },
+          avgDeliveryTime: { $avg: '$deliveryTime' }
+        }
+      }
+    ]);
+
+    const deliveryStats = stats[0] || { totalDeliveredOrders: 0, avgDeliveryTime: 0 };
+
+    return {
+      ...deliveryPerson,
+      name: deliveryPerson.name || user?.name || 'Express Rider',
+      email: (deliveryPerson.userId as any)?.email || user?.email || '',
+      phone: deliveryPerson.phone || user?.phone || '',
+      totalDeliveredOrders: deliveryStats.totalDeliveredOrders,
+      avgDeliveryTimeInMinutes: Math.round((deliveryStats.avgDeliveryTime || 0) / (1000 * 60))
+    };
+  }
+
+  async updateOwnProfile(userId: string, dto: UpdateDeliveryPersonDto, file?: any) {
+    let deliveryPerson = await this.deliveryPersonModel.findOne({ userId: new Types.ObjectId(userId), isDeleted: false });
+
+    if (!deliveryPerson) {
+      deliveryPerson = new this.deliveryPersonModel({
+        userId: new Types.ObjectId(userId),
+        name: dto.name || 'Express Rider',
+        phone: dto.phone || '9999999999',
+        email: dto.email || 'rider@express.com',
+        vehicleType: dto.vehicleType || 'scooter',
+        vehicleNumber: dto.vehicleNumber || '',
+        status: DeliveryPersonStatus.AVAILABLE
+      });
+      await deliveryPerson.save();
+    }
+
+    return this.updateDeliveryPerson(userId, DeliveryPersonRole.ADMIN, deliveryPerson._id.toString(), dto, file);
   }
 }

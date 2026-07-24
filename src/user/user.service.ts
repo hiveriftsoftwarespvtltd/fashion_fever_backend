@@ -192,6 +192,16 @@ export class UserService {
 
     const skip = (page - 1) * limit;
 
+    // Soft delete old test seed products
+    try {
+      await this.productModel.updateMany(
+        { name: { $in: ['Eye Liner', 'Eye_Liner', 'Hair Oil', 'Suns Cream', 'Serum'] } },
+        { $set: { isDeleted: true, isActive: false, status: ProductStatus.INACTIVE } }
+      ).exec();
+    } catch (e) {
+      // Ignore cleanup error if any
+    }
+
     const matchStage: any = {
       isDeleted: false,
       isActive: true,

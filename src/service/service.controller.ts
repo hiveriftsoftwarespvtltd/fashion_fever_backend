@@ -78,7 +78,6 @@ export class ServiceController {
         return this.serviceService.updateCategory(dto, file, req.user._id, id);
     }
 
-    @AdminAccess(AdminModule.SERVICE_PROVIDERS, AccessType.READ)
     @Get('get-all-service-categories')
     getAllCategories() {
         return this.serviceService.getAllServiceCategories();
@@ -120,7 +119,6 @@ export class ServiceController {
         return this.serviceService.updateServiceSubscriptionPlan(dto, id);
     }
 
-    @AdminAccess(AdminModule.SERVICE_PROVIDERS, AccessType.READ)
     @Get('get-all-service-subscription-plans')
     allSubscriptionPlans() {
         return this.serviceService.allSubscriptionPlans();
