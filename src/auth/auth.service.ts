@@ -160,11 +160,11 @@ export class AuthService {
 
     const requestedRoles = dto.roles ?? [];
 
-    // new user creation
+    // combine USER role with all requested roles (e.g. vendor, service_provider, educator)
     const initialRoles = Array.from(
       new Set([
-        UserRole.USER
-
+        UserRole.USER,
+        ...requestedRoles,
       ]),
     );
 
@@ -178,21 +178,11 @@ export class AuthService {
     requestedRoles.forEach((role) => {
       if (role !== UserRole.USER) {
         initialRoleStatuses.set(
-          role,
+          role as UserRole,
           RoleStatus.NOT_ONBOARDED,
         );
       }
     });
-    // const initialRoles = dto.roles || [UserRole.USER];
-    // const initialRoleStatuses = new Map<UserRole, RoleStatus>();
-    // initialRoles.forEach((role) => {
-    //   initialRoleStatuses.set(
-    //     role,
-    //     role === UserRole.USER
-    //       ? RoleStatus.APPROVED
-    //       : RoleStatus.NOT_ONBOARDED,
-    //   );
-    // });
 
     const user = await this.userModel.create({
       ...dto,
