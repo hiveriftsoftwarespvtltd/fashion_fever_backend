@@ -32,6 +32,8 @@ import { Admin } from 'openai/resources';
 import { AdminSchema } from 'src/admin/schema/admin.schema';
 import { NotificationModule } from 'src/notification/notification.module';
 
+import { VendorWalletController } from './controller/vendor/vendor.wallet.controller';
+
 @Module({
   imports: [
     MongooseModule.forFeature([
@@ -58,6 +60,7 @@ import { NotificationModule } from 'src/notification/notification.module';
   ],
   controllers: [
     UserWalletController,
+    VendorWalletController,
     PlatformWalletController,
     AdminWalletController,
     AdminCashbackSlabController,
