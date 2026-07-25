@@ -1,5 +1,5 @@
 import { IsEnum, IsMongoId, IsNumber, IsOptional, IsString, Min, IsArray, IsNotEmpty, ArrayMinSize } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Type, Transform } from 'class-transformer';
 import { VendorOrderStatus } from '../schema/quick-vendor-order.schema';
 
 export class GetVendorOrdersDto {
@@ -43,6 +43,7 @@ export class UpdateVendorOrderStatusDto {
 }
 
 export class AssignDeliveryPersonDto {
+  @Transform(({ value }) => typeof value === 'object' && value !== null ? (value.deliveryPersonId || value._id || value.id) : value)
   @IsMongoId()
   deliveryPersonId!: string;
 }
