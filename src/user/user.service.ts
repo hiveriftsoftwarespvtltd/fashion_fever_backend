@@ -170,7 +170,7 @@ export class UserService {
     }
 
     if (!user.avatar) {
-      throw new NotFoundException('User Avatar not found');
+      return ApiResponse.success('User avatar not set', { avatar: null }, 200);
     }
     return ApiResponse.success('User avatar fetched successfully', user, 200);
   }
