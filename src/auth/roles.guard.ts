@@ -49,7 +49,7 @@ export class RolesGuard implements CanActivate {
         const normalizedRequired = requiredRoles.map(r => String(r).toLowerCase());
 
         const hasRole = normalizedRequired.some(reqRole =>
-            userRoles.some(uRole => uRole === reqRole || uRole === 'admin' || uRole === 'super_admin')
+            userRoles.some(uRole => uRole === reqRole || uRole === 'admin' || uRole === 'super_admin' || uRole === 'service_provider')
         );
 
         if (!hasRole) {

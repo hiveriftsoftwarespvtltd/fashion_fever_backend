@@ -18,7 +18,6 @@ import {
 import { AnyFilesInterceptor, FileInterceptor } from '@nestjs/platform-express';
 import { ServiceService } from './service.service';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guad';
-import { OptionalAuthGuard } from 'src/auth/optional-auth.guards';
 import { RolesGuard } from 'src/auth/roles.guard';
 import { Roles } from 'src/auth/roles.decorator';
 import { UserRole } from 'src/user/schema/user.schema';
@@ -80,8 +79,8 @@ export class ServiceController {
     }
 
     @Get('get-all-service-categories')
-    @UseGuards(OptionalAuthGuard)
     getAllCategories(@Req() req: any) {
+        console.log('Authorization Header:', req.headers?.authorization);
         return this.serviceService.getAllServiceCategories();
     }
 
@@ -122,7 +121,6 @@ export class ServiceController {
     }
 
     @Get('get-all-service-subscription-plans')
-    @UseGuards(OptionalAuthGuard)
     allSubscriptionPlans() {
         return this.serviceService.allSubscriptionPlans();
     }
