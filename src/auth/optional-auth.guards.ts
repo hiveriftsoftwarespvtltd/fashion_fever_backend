@@ -6,16 +6,18 @@ import { AuthGuard } from '@nestjs/passport';
 
 @Injectable()
 export class OptionalAuthGuard extends AuthGuard('jwt') {
+  async canActivate(context: ExecutionContext) {
+    try {
+      return (await super.canActivate(context)) as boolean;
+    } catch {
+      return true;
+    }
+  }
+
   handleRequest(err: any, user: any) {
-    // if token invalid → ignore
     if (err || !user) {
       return null;
     }
-
     return user;
-  }
-
-  canActivate(context: ExecutionContext) {
-    return super.canActivate(context) as any;
   }
 }

@@ -30,28 +30,16 @@ async function bootstrap() {
       forbidNonWhitelisted: true,
     }),
   );
-  app.use((req: any, res: any, next: any) => {
-    res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
-    res.header('Access-Control-Allow-Credentials', 'true');
-    res.header('Access-Control-Allow-Methods', 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS');
-    res.header('Access-Control-Allow-Headers', '*');
-    res.header('Access-Control-Allow-Private-Network', 'true');
-    if (req.method === 'OPTIONS') {
-      return res.sendStatus(200);
-    }
-    next();
-  });
-
   app.enableCors({
-    origin: true,
+    origin: (origin, callback) => {
+      // Allow any origin dynamically to support credentials: true
+      callback(null, true);
+    },
     credentials: true,
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
-    allowedHeaders: '*',
   });
-  const port = process.env.PORT ?? 9000;
-  await app.listen(port, '0.0.0.0');
+  await app.listen(process.env.PORT ?? 3000);
 
-  console.log(`backend running on http://0.0.0.0:${port}`);
+  console.log(`backend running on http://localhost:${process.env.PORT ?? 3000}`);
 }
 
 process.on('unhandledRejection', (reason: any) => {
