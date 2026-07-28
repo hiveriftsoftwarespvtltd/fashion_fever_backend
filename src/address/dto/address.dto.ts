@@ -33,6 +33,10 @@ export class AddAddressDTO {
   state!: string;
 
   @IsOptional()
+  @IsString()
+  addressType?: string;
+
+  @IsOptional()
   location?: {
     type: 'Point';
     coordinates: number[];
@@ -74,6 +78,10 @@ export class UpdateAddressDTO {
   @IsOptional()
   @IsString()
   city?: string;
+
+  @IsOptional()
+  @IsString()
+  addressType?: string;
 
   @IsOptional()
   @IsString()

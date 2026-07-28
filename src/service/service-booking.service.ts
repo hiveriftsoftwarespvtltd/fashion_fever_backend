@@ -581,7 +581,7 @@ export class ServiceBookingService {
 
       safeSendMail(
         user.email,
-        'Booking Confirmed - WakeUp MakeUp',
+        'Booking Confirmed - FashionFever',
         bookingCompletedTemplate(user.name || '', {
           serviceTitle: primaryService?.title || 'Service',
           providerName: 'Provider Name',
@@ -690,7 +690,7 @@ export class ServiceBookingService {
       // ✅ Safe email (non-blocking)
       safeSendMail(
         user.email,
-        'Booking Cancelled - WakeUp MakeUp',
+        'Booking Cancelled - FashionFever',
         bookingCancelledTemplate(user.name || '', {
           serviceTitle: booking.items?.[0]?.serviceName || 'Service',
           providerName: (booking.providerId as any)?.businessName || 'Provider',
@@ -841,7 +841,7 @@ export class ServiceBookingService {
       // 🔥 NON-BLOCKING EMAIL (AFTER COMMIT)
       safeSendMail(
         '', // user email (fetch user if needed)
-        'Booking Rescheduled - WakeUp MakeUp',
+        'Booking Rescheduled - FashionFever',
         bookingRescheduledTemplate('', {
           serviceTitle: booking.items?.[0]?.serviceName || 'Service',
           providerName: 'Provider Name',

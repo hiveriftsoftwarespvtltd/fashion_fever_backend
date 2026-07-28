@@ -487,10 +487,10 @@ export class CreateBookingDTO {
   @IsString()
   serviceProviderId!: string;
 
-  @IsDateString()
+  @IsString()
   bookingDate!: string;
 
-  @IsDateString()
+  @IsString()
   slotStartTime!: string;
 
   @IsOptional()

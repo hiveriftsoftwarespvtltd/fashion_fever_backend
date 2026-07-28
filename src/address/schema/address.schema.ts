@@ -49,6 +49,9 @@ export class Address {
   @Prop({ required: true })
   state!: string;
 
+  @Prop({ default: 'Home' })
+  addressType?: string;
+
   @Prop({ default: true })
   isActive!: boolean;
 

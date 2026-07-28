@@ -41,7 +41,7 @@ export const emailWrapper = (
                   color:white;
                   font-size:30px;
                 ">
-                  WakeUp MakeUp
+                  FashionFever
                 </h1>
 
                 <p style="
@@ -86,7 +86,7 @@ export const emailWrapper = (
                   color:#9ca3af;
                   font-size:13px;
                 ">
-                  © ${new Date().getFullYear()} WakeUp MakeUp. All Rights Reserved.
+                  © ${new Date().getFullYear()} FashionFever. All Rights Reserved.
                 </p>
 
                 <p style="
@@ -308,7 +308,7 @@ export const forgotPasswordTemplate = (
 
 const commissionSlabsUrl =
   process.env.NODE_ENV === 'production'
-    ? 'https://wakeup-makeup.com/influencer/commission-slabs'
+    ? 'https://fashionfever.in/influencer/commission-slabs'
     : 'http://localhost:5173/influencer/commission-slabs';
 
 
@@ -318,7 +318,7 @@ export const influencerInvitationTemplate = (
 ) => {
   const commissionSlabsUrl =
     process.env.NODE_ENV === 'production'
-      ? 'https://wakeup-makeup.com/influencer/commission-slabs'
+      ? 'https://fashionfever.in/influencer/commission-slabs'
       : 'http://localhost:5173/influencer/commission-slabs';
 
   return `
@@ -327,7 +327,7 @@ export const influencerInvitationTemplate = (
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>WakeUp MakeUp Influencer Invitation</title>
+<title>FashionFever Influencer Invitation</title>
 </head>
 
 <body style="
@@ -361,7 +361,7 @@ export const influencerInvitationTemplate = (
                 font-size:34px;
                 font-weight:700;
               ">
-                WakeUp MakeUp
+                FashionFever
               </h1>
 
               <p style="
@@ -394,7 +394,7 @@ export const influencerInvitationTemplate = (
                 margin-bottom:20px;
               ">
                 We're excited to invite you to become an official
-                <strong>WakeUp MakeUp Influencer Partner</strong>.
+                <strong>FashionFever Influencer Partner</strong>.
                 Join our growing beauty marketplace and earn rewards by promoting
                 products you genuinely love.
               </p>
@@ -417,7 +417,7 @@ export const influencerInvitationTemplate = (
                   This registration link will remain active for
                   <strong>7 days</strong> from the date it was sent.
                   If it expires, you'll need a new invitation from the
-                  WakeUp MakeUp team.
+                  FashionFever team.
                 </p>
               </div>
 
@@ -426,7 +426,7 @@ export const influencerInvitationTemplate = (
                 font-size:16px;
                 line-height:1.8;
               ">
-                As a WakeUp MakeUp influencer, you'll be able to:
+                As a FashionFever influencer, you'll be able to:
               </p>
 
               <ul style="
@@ -531,7 +531,7 @@ export const influencerInvitationTemplate = (
               ">
                 We're excited to partner with you and help you grow your
                 influence while earning rewards through the
-                WakeUp MakeUp platform.
+                FashionFever platform.
               </p>
 
               <p style="
@@ -540,7 +540,7 @@ export const influencerInvitationTemplate = (
                 margin-top:30px;
               ">
                 Best Regards,<br>
-                <strong>WakeUp MakeUp Team</strong>
+                <strong>FashionFever Team</strong>
               </p>
 
             </td>
@@ -559,7 +559,7 @@ export const influencerInvitationTemplate = (
                 color:#9ca3af;
                 font-size:13px;
               ">
-                © ${new Date().getFullYear()} WakeUp MakeUp. All rights reserved.
+                © ${new Date().getFullYear()} FashionFever. All rights reserved.
               </p>
 
               <p style="
@@ -569,7 +569,7 @@ export const influencerInvitationTemplate = (
                 line-height:1.6;
               ">
                 This invitation was sent because you were selected to join the
-                WakeUp MakeUp Influencer Partnership Program.
+                FashionFever Influencer Partnership Program.
               </p>
             </td>
           </tr>

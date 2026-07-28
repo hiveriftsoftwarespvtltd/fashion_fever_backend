@@ -116,17 +116,32 @@ export class AdminService {
     @InjectModel(Service.name) private serviceModel: Model<ServiceDocument>
   ) { }
 
-  async fetchAllVendors(page?: number, limit?: number) {
+  async fetchAllVendors(page?: number, limit?: number, search?: string) {
     const pageNumber = Number(page) || 1;
     const pageSize = Number(limit) || 10;
     const skip = (pageNumber - 1) * pageSize;
 
-    return await this.userModel
-      .find({ role: UserRole.VENDOR })
-      .populate('vendorId')
-      .skip(skip)
-      .limit(pageSize)
-      .lean();
+    const filter: any = { roles: UserRole.VENDOR };
+    if (search && search.trim()) {
+      const regex = new RegExp(search.trim(), 'i');
+      filter.$or = [
+        { name: regex },
+        { email: regex },
+        { phone: regex },
+      ];
+    }
+
+    const [data, total] = await Promise.all([
+      this.userModel
+        .find(filter)
+        .populate('vendorId')
+        .skip(skip)
+        .limit(pageSize)
+        .lean(),
+      this.userModel.countDocuments(filter),
+    ]);
+
+    return { data, total, page: pageNumber, limit: pageSize };
   }
 
   async fetchAllUsers(page: number = 1, limit: number = 10) {
@@ -730,15 +745,31 @@ export class AdminService {
     };
   }
 
-  async fetchPendingVendors(page?: number, limit?: number) {
+  async fetchPendingVendors(page?: number, limit?: number, search?: string) {
     const pageNumber = Number(page) || 1;
     const pageSize = Number(limit) || 10;
     const skip = (pageNumber - 1) * pageSize;
 
-    return await this.vendorModel
-      .find({ status: 'PENDING' })
-      .skip(skip)
-      .limit(pageSize);
+    const filter: any = { status: 'PENDING' };
+    if (search && search.trim()) {
+      const regex = new RegExp(search.trim(), 'i');
+      filter.$or = [
+        { businessName: regex },
+        { businessEmail: regex },
+        { businessPhone: regex },
+      ];
+    }
+
+    const [data, total] = await Promise.all([
+      this.vendorModel
+        .find(filter)
+        .skip(skip)
+        .limit(pageSize)
+        .lean(),
+      this.vendorModel.countDocuments(filter),
+    ]);
+
+    return { data, total, page: pageNumber, limit: pageSize };
   }
 
   async acceptPendingVendor(vendorId: string) {

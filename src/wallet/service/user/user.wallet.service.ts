@@ -14,7 +14,7 @@ export class UserWalletService {
         @InjectModel(WalletTransaction.name) private readonly walletTransactionModel: Model<WalletTransactionDocument>,
         @InjectModel(UserWalletTopup.name) private readonly userWalletTopupModel: Model<UserWalletTopupDocument>,
         private readonly notificationService: NotificationService,
-    ) {}
+    ) { }
 
     async initializeWallet(userId: string) {
         const existing = await this.userWalletModel.findOne({ userId: new Types.ObjectId(userId) });
@@ -39,10 +39,10 @@ export class UserWalletService {
 
     async initiateTopup(userId: string, amount: number) {
         if (amount <= 0) throw new BadRequestException('Amount must be greater than zero');
-        
+
         // Mock order ID creation - in real scenario, this comes from a payment gateway
-        const orderId = 'ORDER_' + Date.now(); 
-        
+        const orderId = 'ORDER_' + Date.now();
+
         const topup = await this.userWalletTopupModel.create({
             userId: new Types.ObjectId(userId),
             amount,
@@ -55,7 +55,7 @@ export class UserWalletService {
 
     async addBalance(userId: string, amount: number, reason: WalletTransactionReason, description?: string, session?: ClientSession) {
         if (amount <= 0) throw new BadRequestException('Amount must be greater than zero');
-        
+
         const wallet = await this.userWalletModel.findOne({ userId: new Types.ObjectId(userId) }).session(session || null);
         if (!wallet) throw new NotFoundException('Wallet not found');
 
@@ -87,7 +87,7 @@ export class UserWalletService {
 
     async deductBalance(userId: string, amount: number, reason: WalletTransactionReason, description?: string, session?: ClientSession) {
         if (amount <= 0) throw new BadRequestException('Amount must be greater than zero');
-        
+
         const wallet = await this.userWalletModel.findOne({ userId: new Types.ObjectId(userId) }).session(session || null);
         if (!wallet) throw new NotFoundException('Wallet not found');
 

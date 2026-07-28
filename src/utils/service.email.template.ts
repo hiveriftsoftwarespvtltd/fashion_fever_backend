@@ -19,7 +19,7 @@ export const serviceBookingTemplate = (
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Booking Confirmation - WakeUp MakeUp</title>
+<title>Booking Confirmation - FashionFever</title>
 </head>
 
 <body style="
@@ -48,7 +48,7 @@ export const serviceBookingTemplate = (
             text-align:center;
           ">
             <h1 style="margin:0;color:#fff;font-size:32px;">
-              WakeUp MakeUp
+              FashionFever
             </h1>
             <p style="margin-top:8px;color:#fff;font-size:15px;">
               Booking Confirmation
@@ -130,7 +130,7 @@ export const serviceBookingTemplate = (
 
             <!-- CTA -->
             <div style="text-align:center;margin:30px 0;">
-              <a href="https://wakeup-makeup.com/user/bookings" style="
+              <a href="https://fashionfever.in/user/bookings" style="
                 background:#ff4d6d;
                 color:#fff;
                 text-decoration:none;
@@ -150,7 +150,7 @@ export const serviceBookingTemplate = (
 
             <p style="margin-top:25px;color:#111827;">
               Thanks,<br/>
-              <strong>WakeUp MakeUp Team</strong>
+              <strong>FashionFever Team</strong>
             </p>
 
           </td>
@@ -165,7 +165,7 @@ export const serviceBookingTemplate = (
             text-align:center;
           ">
             <p style="margin:0;color:#9ca3af;font-size:12px;">
-              © ${new Date().getFullYear()} WakeUp MakeUp. All rights reserved.
+              © ${new Date().getFullYear()} FashionFever. All rights reserved.
             </p>
           </td>
         </tr>
@@ -212,7 +212,7 @@ export const bookingCancelledTemplate = (
 
 <tr>
 <td style="background:linear-gradient(135deg,#ef4444,#f87171);padding:40px;text-align:center;">
-<h1 style="color:#fff;margin:0;">WakeUp MakeUp</h1>
+<h1 style="color:#fff;margin:0;">FashionFever</h1>
 <p style="color:#fff;">Booking Cancelled</p>
 </td>
 </tr>
@@ -243,7 +243,7 @@ ${booking.cancellationReason
 If any payment was made, refund (if applicable) will be processed as per policy.
 </p>
 
-<p>Thanks,<br/><strong>WakeUp MakeUp Team</strong></p>
+<p>Thanks,<br/><strong>FashionFever Team</strong></p>
 
 </td>
 </tr>
@@ -290,7 +290,7 @@ export const bookingRescheduledTemplate = (
 
 <tr>
 <td style="background:linear-gradient(135deg,#f59e0b,#fbbf24);padding:40px;text-align:center;">
-<h1 style="color:#fff;margin:0;">WakeUp MakeUp</h1>
+<h1 style="color:#fff;margin:0;">FashionFever</h1>
 <p style="color:#fff;">Booking Rescheduled</p>
 </td>
 </tr>
@@ -319,7 +319,7 @@ Your booking has been successfully <strong>rescheduled</strong>.
 Please make sure to be available at the new scheduled time.
 </p>
 
-<p>Thanks,<br/><strong>WakeUp MakeUp Team</strong></p>
+<p>Thanks,<br/><strong>FashionFever Team</strong></p>
 
 </td>
 </tr>
@@ -367,7 +367,7 @@ export const bookingCompletedTemplate = (
 <!-- HEADER -->
 <tr>
 <td style="background:linear-gradient(135deg,#22c55e,#16a34a);padding:40px;text-align:center;">
-<h1 style="color:#fff;margin:0;">WakeUp MakeUp</h1>
+<h1 style="color:#fff;margin:0;">FashionFever</h1>
 <p style="color:#fff;margin-top:8px;">Service Completed</p>
 </td>
 </tr>
@@ -401,7 +401,7 @@ We hope you had a great experience with us.
 
 <!-- THANK YOU MESSAGE -->
 <p style="margin-top:25px;color:#4b5563;line-height:1.7;">
-Thank you for choosing <strong>WakeUp MakeUp</strong> 💄  
+Thank you for choosing <strong>FashionFever</strong> 💄  
 Your trust means a lot to us.
 </p>
 
@@ -423,7 +423,7 @@ Your trust means a lot to us.
 Book your next beauty appointment and keep glowing.
 </p>
 
-<a href="https://wakeup-makeup.com/" style="
+<a href="https://fashionfever.in/" style="
   display:inline-block;
   background:#ff4d6d;
   color:#ffffff;
@@ -445,7 +445,7 @@ We appreciate your support and look forward to serving you again.
 
 <p style="margin-top:20px;">
 Best Regards,<br/>
-<strong>WakeUp MakeUp Team</strong>
+<strong>FashionFever Team</strong>
 </p>
 
 </td>
@@ -455,7 +455,7 @@ Best Regards,<br/>
 <tr>
 <td style="background:#f9fafb;padding:20px;text-align:center;border-top:1px solid #e5e7eb;">
 <p style="margin:0;color:#9ca3af;font-size:12px;">
-© ${new Date().getFullYear()} WakeUp MakeUp. All rights reserved.
+© ${new Date().getFullYear()} FashionFever. All rights reserved.
 </p>
 </td>
 </tr>

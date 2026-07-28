@@ -35,6 +35,8 @@ import {
   UpdateSlabDTO,
 } from 'src/influencer/dto/influencer.dto';
 
+import { HomeBookingCardsService } from './home-booking-cards.service';
+
 @UseGuards(JwtAuthGuard, RolesGuard)
 
 @Controller('admin')
@@ -42,12 +44,17 @@ export class AdminController {
   constructor(
     private adminService: AdminService,
     private influencerService: InfluencerService,
+    private homeBookingCardsService: HomeBookingCardsService,
   ) { }
 
   @AdminAccess(AdminModule.VENDORS, AccessType.READ)
   @Get('vendors')
-  async getAllVendors(@Query('page') page: number, @Query('limit') limit: number) {
-    return await this.adminService.fetchAllVendors(page, limit);
+  async getAllVendors(
+    @Query('page') page: number,
+    @Query('limit') limit: number,
+    @Query('search') search?: string,
+  ) {
+    return await this.adminService.fetchAllVendors(page, limit, search);
   }
 
   @AdminAccess(AdminModule.USERS, AccessType.READ)
@@ -58,8 +65,12 @@ export class AdminController {
 
   @AdminAccess(AdminModule.VENDORS, AccessType.READ)
   @Get('pending-vendors')
-  async fetAllPendingVendors(@Query('page') page: number, @Query('limit') limit: number) {
-    return this.adminService.fetchPendingVendors(page, limit);
+  async fetAllPendingVendors(
+    @Query('page') page: number,
+    @Query('limit') limit: number,
+    @Query('search') search?: string,
+  ) {
+    return this.adminService.fetchPendingVendors(page, limit, search);
   }
 
   @AdminAccess(AdminModule.VENDORS, AccessType.READ)
@@ -428,5 +439,53 @@ export class AdminController {
   async getCloudinaryStorageSize() {
     const data = await this.adminService.getCloudinaryStorageSize();
     return ApiResponse.success('Storage size fetched successfully', data);
+  }
+
+  // ── Home Booking Cards Endpoints ──────────────────
+  @Get('home-booking-cards/public')
+  getPublicBookingCards() {
+    return this.homeBookingCardsService.getAllCards(true);
+  }
+
+  @Get('home-booking-cards/all')
+  getAllBookingCards() {
+    return this.homeBookingCardsService.getAllCards(false);
+  }
+
+  @Post('home-booking-cards/add')
+  @UseInterceptors(FileInterceptor('file'))
+  createBookingCard(
+    @Body() dto: any,
+    @UploadedFile() file: Express.Multer.File,
+    @Req() req: any
+  ) {
+    return this.homeBookingCardsService.createCard(dto, file, req.user?._id?.toString());
+  }
+
+  @Put('home-booking-cards/update/:id')
+  @UseInterceptors(FileInterceptor('file'))
+  updateBookingCardPut(
+    @Param('id') id: string,
+    @Body() dto: any,
+    @UploadedFile() file: Express.Multer.File,
+    @Req() req: any
+  ) {
+    return this.homeBookingCardsService.updateCard(id, dto, file, req.user?._id?.toString());
+  }
+
+  @Post('home-booking-cards/update/:id')
+  @UseInterceptors(FileInterceptor('file'))
+  updateBookingCardPost(
+    @Param('id') id: string,
+    @Body() dto: any,
+    @UploadedFile() file: Express.Multer.File,
+    @Req() req: any
+  ) {
+    return this.homeBookingCardsService.updateCard(id, dto, file, req.user?._id?.toString());
+  }
+
+  @Delete('home-booking-cards/delete/:id')
+  deleteBookingCard(@Param('id') id: string) {
+    return this.homeBookingCardsService.deleteCard(id);
   }
 }

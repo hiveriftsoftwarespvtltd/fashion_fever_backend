@@ -58,8 +58,8 @@ export class AffiliateTrackingController {
 
     //     // Redirect to the frontend homepage
     //     const frontendUrl = process.env.NODE_ENV === 'production'
-    //         ? 'https://wakeup-makeup.com'
-    //         : 'https://wakeup-makeup.com';
+    //         ? 'https://fashionfever.in'
+    //         : 'https://fashionfever.in';
 
     //     return { url: `${frontendUrl}?ref=${referralCode}`, statusCode: 302 };
     // }
@@ -97,7 +97,7 @@ export class AffiliateTrackingController {
 
         const frontendUrl =
             process.env.NODE_ENV === 'production'
-                ? 'https://wakeup-makeup.com'
+                ? 'https://fashionfever.in'
                 : 'http://localhost:5173';
 
         console.log(

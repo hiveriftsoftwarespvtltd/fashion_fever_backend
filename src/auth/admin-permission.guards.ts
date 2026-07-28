@@ -39,66 +39,59 @@ export class AdminPermissionGuard
         const user = request.user;
 
         if (!user) {
-            throw new ForbiddenException();
+            throw new ForbiddenException('Authentication required');
         }
 
-        if (
-            user.roles.includes(
-                UserRole.SUPER_ADMIN,
-            )
-        ) {
+        const userRoles: string[] = Array.isArray(user.roles)
+            ? user.roles.map((r: any) => String(r).toLowerCase())
+            : [];
+
+        // Super admin bypasses all checks
+        if (userRoles.includes(UserRole.SUPER_ADMIN)) {
             return true;
         }
 
-        if (
-            !user.roles.includes(
-                UserRole.ADMIN,
-            )
-        ) {
-            throw new ForbiddenException(
-                'Only admins can access this resource',
-            );
-        }
-
-        console.log("UserId in admin guard", user._id)
-        const admin =
-            await this.adminModel.findOne({
-                userId: user._id,
+        // Try to find admin record — primary check is DB record, not just role string
+        let admin: AdminDocument | null = null;
+        try {
+            admin = await this.adminModel.findOne({
+                userId: new Types.ObjectId(user._id.toString()),
                 isActive: true,
                 isDeleted: false,
             });
+        } catch (_e) {
+            try {
+                admin = await this.adminModel.findOne({
+                    userId: user._id,
+                    isActive: true,
+                    isDeleted: false,
+                });
+            } catch (_e2) {
+                // ignore
+            }
+        }
+
+        // If user has ADMIN role but no admin record, deny
+        // If user has neither ADMIN role nor admin record, deny with clear message
+        if (!userRoles.includes(UserRole.ADMIN) && !admin) {
+            throw new ForbiddenException('Only admins can access this resource');
+        }
 
         if (!admin) {
-            throw new ForbiddenException(
-                'Admin not found ',
-            );
+            throw new ForbiddenException('Admin record not found or inactive. Please contact super admin.');
         }
 
-        // if (admin.isSuperAdmin) {
-        //     return true;
-        // }
-
-        const moduleAccess =
-            admin.moduleAccess.find(
-                x =>
-                    x.module ===
-                    permission.module,
-            );
+        // Check module access
+        const moduleAccess = admin.moduleAccess.find(
+            x => x.module === permission.module
+        );
 
         if (!moduleAccess) {
-            throw new ForbiddenException(
-                'Module access denied',
-            );
+            throw new ForbiddenException(`Access to module '${permission.module}' is not granted`);
         }
 
-        if (
-            !moduleAccess.access.includes(
-                permission.access,
-            )
-        ) {
-            throw new ForbiddenException(
-                'Permission denied',
-            );
+        if (!moduleAccess.access.includes(permission.access)) {
+            throw new ForbiddenException(`'${permission.access}' permission denied for module '${permission.module}'`);
         }
 
         return true;

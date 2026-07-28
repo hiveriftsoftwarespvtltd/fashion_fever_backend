@@ -36,6 +36,9 @@ import { InfluencerInvitation, InfluencerInvitationSchema } from 'src/influencer
 import { HomeContentController } from './home.content.controller';
 import { HomeContentService } from './home.content.service';
 import { HomeContent, HomeContentSchema } from './schema/home.content.schema';
+import { HomeBookingCardsController } from './home-booking-cards.controller';
+import { HomeBookingCardsService } from './home-booking-cards.service';
+import { HomeBookingCard, HomeBookingCardSchema } from './schema/home-booking-cards.schema';
 import { WalletModule } from 'src/wallet/wallet.module';
 import { ServiceLead, ServiceLeadSchema } from 'src/service/schema/service-lead.schema';
 import { ServiceBooking, ServiceBookingSchema } from 'src/service/schema/service-booking.schema';
@@ -99,6 +102,7 @@ import { AdminProfileService } from './admin-profile.service';
     MongooseModule.forFeature([{ name: influencerCommissonSlab.name, schema: influencerCommissionSlabSchema }]),
     MongooseModule.forFeature([{ name: InfluencerPayout.name, schema: InfluencerPayoutSchema }, { name: InfluencerInvitation.name, schema: InfluencerInvitationSchema }, { name: ServiceLead.name, schema: ServiceLeadSchema }, { name: ServiceBooking.name, schema: ServiceBookingSchema }, { name: CoursePurchase.name, schema: CoursePurchaseSchema }, { name: UserWallet.name, schema: UserWalletSchema }, { name: WalletTransaction.name, schema: WalletTransactionSchema }, { name: Wishlist.name, schema: WishlistSchema }, { name: Cart.name, schema: cartSchema }, { name: Educator.name, schema: EducatorSchema }, { name: Course.name, schema: CourseSchema }, { name: CourseEnrollment.name, schema: CourseEnrollmentSchema }, { name: ServiceProvider.name, schema: ServiceProviderSchema }, { name: ServiceQuotation.name, schema: ServiceQuotationSchema }, { name: ProviderSubscription.name, schema: ProviderSubscriptionSchema }, { name: ServiceReview.name, schema: ServiceReviewSchema }, { name: Service.name, schema: ServiceSchema }, { name: ServiceStaff.name, schema: ServiceStaffSchema }]),
     MongooseModule.forFeature([{ name: HomeContent.name, schema: HomeContentSchema }]),
+    MongooseModule.forFeature([{ name: HomeBookingCard.name, schema: HomeBookingCardSchema }]),
     MongooseModule.forFeature([{ name: CommissionRate.name, schema: CommissionRateSchema }]),
     MongooseModule.forFeature([{ name: Admin.name, schema: AdminSchema }]),
     DocumentModule,
@@ -106,12 +110,13 @@ import { AdminProfileService } from './admin-profile.service';
     WalletModule
 
   ],
-  providers: [AdminService, AdminDashboardService, HomeContentService, AdminCleanupService, AdminSeederService, AdminCommissionRateService, SubAdminService, UserManagementService, AdminProfileService],
+  providers: [AdminService, AdminDashboardService, HomeContentService, HomeBookingCardsService, AdminCleanupService, AdminSeederService, AdminCommissionRateService, SubAdminService, UserManagementService, AdminProfileService],
   controllers: [
     AdminController,
     AdminDashboardController,
     AdminPublicController,
     HomeContentController,
+    HomeBookingCardsController,
     AdminCleanupController,
     AdminSeederController,
     AdminCommissionRateController,

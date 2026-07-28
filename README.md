@@ -141,10 +141,10 @@ PORT=9000
 
 # ─── DATABASE ────────────────────────────────────────
 # Used when NODE_ENV=development
-LOCAL_MONGO_URI=mongodb://localhost:27017/wakeup-makeup?replicaSet=rs0
+LOCAL_MONGO_URI=mongodb://localhost:27017/fashionfever?replicaSet=rs0
 
 # Used when NODE_ENV=production
-MONGO_URI=mongodb+srv://<user>:<password>@cluster.mongodb.net/wakeup-makeup
+MONGO_URI=mongodb+srv://<user>:<password>@cluster.mongodb.net/fashionfever
 
 # ─── JWT ─────────────────────────────────────────────
 JWT_SECRET=your_jwt_secret_here
@@ -881,7 +881,7 @@ POST /api/v1/admin/seed   ← Seeds default SUPER_ADMIN
 
 ```
 Development: http://localhost:5173
-Production:  https://wakeup-makeup.com
+Production:  https://fashionfever.in
 ```
 
 ---

@@ -49,3 +49,7 @@ pids
 *.seed
 *.pid.lock
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+
+# TypeScript build info
+*.tsbuildinfo
+

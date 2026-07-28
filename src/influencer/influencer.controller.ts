@@ -27,42 +27,32 @@ import { InfluencerStatus } from './schema/influencer.schema';
 @Controller('influencers')
 export class InfluencerController {
   constructor(private readonly influencerService: InfluencerService) { }
-  @UseGuards(JwtAuthGuard, RolesGuard)
 
-    @AdminAccess(AdminModule.INFLUENCERS, AccessType.WRITE)
-  // @Post('onboard-influencer')
-  // create(@Body() dto: CreateInfluencerDto) {
-  //   return this.influencerService.create(dto);
-  // }
   @UseGuards(JwtAuthGuard, RolesGuard)
-
-    @AdminAccess(AdminModule.INFLUENCERS, AccessType.READ)
+  @AdminAccess(AdminModule.INFLUENCERS, AccessType.READ)
   @Get('all-influencers')
   findAll(@Query('page') page: number, @Query('limit') limit: number) {
     return this.influencerService.findAll(page, limit);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-
-    @AdminAccess(AdminModule.INFLUENCERS, AccessType.READ)
+  @AdminAccess(AdminModule.INFLUENCERS, AccessType.READ)
   @Get('influencer-details/:id')
   findOne(@Param('id') id: string) {
     return this.influencerService.findOne(id);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-
-    @AdminAccess(AdminModule.INFLUENCERS, AccessType.WRITE)
+  @AdminAccess(AdminModule.INFLUENCERS, AccessType.WRITE)
   @Put('update-influencer/:id')
   updateInfluencer(@Param('id') id: string, @Body() dto: UpdateInfluencerDto) {
     return this.influencerService.updateInfluencer(id, dto);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-
-    @AdminAccess(AdminModule.INFLUENCERS, AccessType.WRITE)
+  @AdminAccess(AdminModule.INFLUENCERS, AccessType.WRITE)
   @Delete('delete-influencer/:id')
-  udeleteInfluencer(@Param('id') id: string) {
+  deleteInfluencer(@Param('id') id: string) {
     return this.influencerService.deleteInfluencer(id);
   }
 
@@ -77,31 +67,37 @@ export class InfluencerController {
   @Roles(UserRole.INFLUENCER)
   @Get('analytics')
   analytics(@Req() req: any, @Query('days') days: number) {
-    return this.influencerService.influencerAnalytics(req.user.influencerId, days)
+    return this.influencerService.influencerAnalytics(req.user.influencerId, days);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.INFLUENCER)
+  @Get('audience-analytics')
+  getAudienceAnalytics(@Req() req: any) {
+    return this.influencerService.getAudienceAnalytics(req.user.influencerId);
+  }
 
-    @AdminAccess(AdminModule.INFLUENCERS, AccessType.READ)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @AdminAccess(AdminModule.INFLUENCERS, AccessType.READ)
   @Get('influencer-requests')
   async getInfluencerRequests(@Query('page') page: number, @Query('limit') limit: number) {
-    return await this.influencerService.getAllPendingInfluencersRequests(page, limit)
+    return await this.influencerService.getAllPendingInfluencersRequests(page, limit);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-
-    @AdminAccess(AdminModule.INFLUENCERS, AccessType.WRITE)
+  @AdminAccess(AdminModule.INFLUENCERS, AccessType.WRITE)
   @Put('update-influencer-status/:influencerId')
   async updateInfluencerStatus(@Param('influencerId') influencerId: string, @Body('status') status: InfluencerStatus) {
-    return await this.influencerService.changeInfluencerStatus(influencerId, status)
+    return await this.influencerService.changeInfluencerStatus(influencerId, status);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.SUPER_ADMIN, UserRole.INFLUENCER)
   @Post('send-influencer-invitation-link')
   async sendInfluencerInvitationLink(@Body('email') email: string, @Body('name') name: string, @Req() req: any) {
-    return await this.influencerService.sendInfluencerInvitationLink(email, name, req.user._id)
+    return await this.influencerService.sendInfluencerInvitationLink(email, name, req.user._id);
   }
+
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.INFLUENCER)
   @Post('submit-story')
@@ -135,5 +131,4 @@ export class InfluencerController {
   async deleteProfilePicture(@Req() req: any) {
     return await this.influencerService.deleteProfilePicture(req.user.influencerId);
   }
-
 }
