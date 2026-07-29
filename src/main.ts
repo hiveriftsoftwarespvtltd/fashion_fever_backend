@@ -7,10 +7,22 @@ import { join } from 'path';
 import { Get, ValidationPipe } from '@nestjs/common';
 import { winstonLogger } from './common/logger/winston.logger';
 import cookieParser from 'cookie-parser';
+import * as fs from 'fs';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  const uploadDir = process.env.UPLOAD_DIR || join(process.cwd(), 'uploads');
+  // app.use('/uploads', express.static(join(process.cwd(), 'uploads')));
+  const getUploadDir = () => {
+    if (process.env.UPLOAD_DIR && fs.existsSync(process.env.UPLOAD_DIR)) {
+      return process.env.UPLOAD_DIR;
+    }
+    if (fs.existsSync('/home/fashionfever/uploads')) {
+      return '/home/fashionfever/uploads';
+    }
+    return join(process.cwd(), 'uploads');
+  };
+
+  const uploadDir = getUploadDir();
 
   app.use('/uploads', express.static(uploadDir));
   app.use('/api/v1/uploads', express.static(uploadDir));

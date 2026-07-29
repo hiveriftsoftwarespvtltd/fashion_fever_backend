@@ -54,8 +54,11 @@ import { StorageProvider, UploadResult } from './storage.interface';
 
 export class LocalStorage implements StorageProvider {
   private getBaseUploadDir(): string {
-    if (process.env.UPLOAD_DIR) {
+    if (process.env.UPLOAD_DIR && fs.existsSync(process.env.UPLOAD_DIR)) {
       return process.env.UPLOAD_DIR;
+    }
+    if (fs.existsSync('/home/fashionfever/uploads')) {
+      return '/home/fashionfever/uploads';
     }
     return path.join(process.cwd(), 'uploads');
   }
@@ -78,8 +81,9 @@ export class LocalStorage implements StorageProvider {
     fs.writeFileSync(filePath, file.buffer);
 
     const baseUrl =
-      process.env.SERVER_BASE_URL ||
-      `http://localhost:${process.env.PORT || 9000}`;
+      process.env.NODE_ENV === 'production'
+        ? process.env.SERVER_BASE_URL
+        : `http://localhost:${process.env.PORT}`;
 
     return {
       url: `${baseUrl}/uploads/${folder}/${fileName}`,
