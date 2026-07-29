@@ -65,14 +65,14 @@ export class CreateHomeContentDto {
     @IsBoolean()
     isActive?: boolean;
 
-    @ValidateIf((o, v) => v !== null && v !== undefined && v !== '' && v !== 'null' && v !== 'undefined')
+    @IsOptional()
     @ToDate()
-    @IsDateString()
+    @IsString()
     startDate?: string;
 
-    @ValidateIf((o, v) => v !== null && v !== undefined && v !== '' && v !== 'null' && v !== 'undefined')
+    @IsOptional()
     @ToDate()
-    @IsDateString()
+    @IsString()
     endDate?: string;
 
     @IsOptional()
