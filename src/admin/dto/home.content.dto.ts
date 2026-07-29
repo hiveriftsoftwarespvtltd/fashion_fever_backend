@@ -65,13 +65,13 @@ export class CreateHomeContentDto {
     @IsBoolean()
     isActive?: boolean;
 
-    @IsOptional()
     @ToDate()
+    @IsOptional()
     @IsDateString()
     startDate?: string;
 
-    @IsOptional()
     @ToDate()
+    @IsOptional()
     @IsDateString()
     endDate?: string;
 
