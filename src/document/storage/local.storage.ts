@@ -54,17 +54,11 @@ import { StorageProvider, UploadResult } from './storage.interface';
 
 export class LocalStorage implements StorageProvider {
   private getBaseUploadDir(): string {
-  const isProduction = process.env.NODE_ENV === 'production';
-  const storageUsed = process.env.STORAGE_USED;
-
-  // Only use external server folder when using local storage in production
-  if (isProduction && storageUsed === 'local') {
-    return process.env.UPLOAD_DIR || '/var/www/uploads';
+    if (process.env.UPLOAD_DIR) {
+      return process.env.UPLOAD_DIR;
+    }
+    return path.join(process.cwd(), 'uploads');
   }
-
-  // Development local storage
-  return path.join(process.cwd(), 'uploads');
-}
 
   async upload(
     file: any,
@@ -84,9 +78,8 @@ export class LocalStorage implements StorageProvider {
     fs.writeFileSync(filePath, file.buffer);
 
     const baseUrl =
-  process.env.NODE_ENV === 'production'
-    ? process.env.SERVER_BASE_URL
-    : `http://localhost:${process.env.PORT}`;
+      process.env.SERVER_BASE_URL ||
+      `http://localhost:${process.env.PORT || 9000}`;
 
     return {
       url: `${baseUrl}/uploads/${folder}/${fileName}`,

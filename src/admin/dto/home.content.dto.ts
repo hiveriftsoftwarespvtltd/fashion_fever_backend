@@ -1,4 +1,4 @@
-import { ToNumber, ToBoolean } from '../../utils/type-tranformer';
+import { ToNumber, ToBoolean, ToDate } from '../../utils/type-tranformer';
 import { IsString, IsOptional, IsArray, IsEnum, IsBoolean, IsNumber, IsDateString, IsObject } from 'class-validator';
 import { ContentType, RedirectType } from '../schema/home.content.schema';
 import { Type } from 'class-transformer';
@@ -66,10 +66,12 @@ export class CreateHomeContentDto {
     isActive?: boolean;
 
     @IsOptional()
+    @ToDate()
     @IsDateString()
     startDate?: string;
 
     @IsOptional()
+    @ToDate()
     @IsDateString()
     endDate?: string;
 

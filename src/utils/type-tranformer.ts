@@ -32,3 +32,13 @@ export const ToNumber = () =>
 
         return isNaN(num) ? undefined : num;
     });
+
+export const ToDate = () =>
+    Transform(({ value }) => {
+        if (value === undefined || value === null || value === '' || value === 'null' || value === 'undefined') {
+            return undefined;
+        }
+
+        const d = new Date(value);
+        return isNaN(d.getTime()) ? undefined : d.toISOString();
+    });
