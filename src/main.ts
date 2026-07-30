@@ -42,7 +42,10 @@ async function bootstrap() {
   app.use('/uploads', express.static(uploadDir));
   app.use('/api/v1/uploads', express.static(uploadDir));
 
-  app.setGlobalPrefix('/api/v1');
+  app.use((req: any, res: any, next: any) => {
+    res.setHeader('X-FashionFever-Version', 'v99');
+    next();
+  });
   app.useGlobalInterceptors(new ResponseInterceptor());
   app.useGlobalFilters(new GlobalExceptionFilter());
   app.use(cookieParser());
