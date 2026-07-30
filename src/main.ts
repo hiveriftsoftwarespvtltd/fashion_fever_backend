@@ -13,22 +13,28 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   // app.use('/uploads', express.static(join(process.cwd(), 'uploads')));
   const getUploadDir = () => {
-    if (process.env.UPLOAD_DIR) {
-      if (!fs.existsSync(process.env.UPLOAD_DIR)) {
-        try { fs.mkdirSync(process.env.UPLOAD_DIR, { recursive: true }); } catch (_) {}
+    if (process.env.NODE_ENV === 'production') {
+      if (process.env.UPLOAD_DIR) {
+        if (!fs.existsSync(process.env.UPLOAD_DIR)) {
+          try { fs.mkdirSync(process.env.UPLOAD_DIR, { recursive: true }); } catch (_) {}
+        }
+        if (fs.existsSync(process.env.UPLOAD_DIR)) {
+          return process.env.UPLOAD_DIR;
+        }
       }
-      if (fs.existsSync(process.env.UPLOAD_DIR)) {
-        return process.env.UPLOAD_DIR;
-      }
-    }
-    const userDir = '/home/fashionfever/uploads';
-    if (fs.existsSync(userDir) || process.platform === 'linux') {
+      const userDir = '/home/fashionfever/uploads';
       if (!fs.existsSync(userDir)) {
         try { fs.mkdirSync(userDir, { recursive: true }); } catch (_) {}
       }
-      return userDir;
+      if (fs.existsSync(userDir)) {
+        return userDir;
+      }
     }
-    return join(process.cwd(), 'uploads');
+    const localDir = join(process.cwd(), 'uploads');
+    if (!fs.existsSync(localDir)) {
+      try { fs.mkdirSync(localDir, { recursive: true }); } catch (_) {}
+    }
+    return localDir;
   };
 
   const uploadDir = getUploadDir();
