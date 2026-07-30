@@ -16,11 +16,11 @@ export class QuickECommerceQueryDto {
 
   @IsOptional()
   @IsString()
-  search?: string;
+  search?: string = '';
 
   @IsOptional()
   @IsString()
-  category?: string;
+  category?: string = '';
 
   @IsOptional()
   @IsNumber()
@@ -36,13 +36,13 @@ export class QuickECommerceQueryDto {
 
   @IsOptional()
   @IsString()
-  addressId?: string;
+  addressId?: string = '';
 
   @IsOptional()
   @IsString()
-  pincode?: string;
+  pincode?: string = '';
 
   @IsOptional()
   @IsString()
-  locationMode?: string; // 'gps' | 'manual' — controls fallback behavior
+  locationMode?: string = ''; // 'gps' | 'manual' — controls fallback behavior
 }
