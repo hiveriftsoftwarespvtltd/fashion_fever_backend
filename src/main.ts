@@ -13,11 +13,20 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   // app.use('/uploads', express.static(join(process.cwd(), 'uploads')));
   const getUploadDir = () => {
-    if (process.env.UPLOAD_DIR && fs.existsSync(process.env.UPLOAD_DIR)) {
-      return process.env.UPLOAD_DIR;
+    if (process.env.UPLOAD_DIR) {
+      if (!fs.existsSync(process.env.UPLOAD_DIR)) {
+        try { fs.mkdirSync(process.env.UPLOAD_DIR, { recursive: true }); } catch (_) {}
+      }
+      if (fs.existsSync(process.env.UPLOAD_DIR)) {
+        return process.env.UPLOAD_DIR;
+      }
     }
-    if (fs.existsSync('/home/fashionfever/uploads')) {
-      return '/home/fashionfever/uploads';
+    const userDir = '/home/fashionfever/uploads';
+    if (fs.existsSync(userDir) || process.platform === 'linux') {
+      if (!fs.existsSync(userDir)) {
+        try { fs.mkdirSync(userDir, { recursive: true }); } catch (_) {}
+      }
+      return userDir;
     }
     return join(process.cwd(), 'uploads');
   };

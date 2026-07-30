@@ -54,11 +54,20 @@ import { StorageProvider, UploadResult } from './storage.interface';
 
 export class LocalStorage implements StorageProvider {
   private getBaseUploadDir(): string {
-    if (process.env.UPLOAD_DIR && fs.existsSync(process.env.UPLOAD_DIR)) {
-      return process.env.UPLOAD_DIR;
+    if (process.env.UPLOAD_DIR) {
+      if (!fs.existsSync(process.env.UPLOAD_DIR)) {
+        try { fs.mkdirSync(process.env.UPLOAD_DIR, { recursive: true }); } catch (_) {}
+      }
+      if (fs.existsSync(process.env.UPLOAD_DIR)) {
+        return process.env.UPLOAD_DIR;
+      }
     }
-    if (fs.existsSync('/home/fashionfever/uploads')) {
-      return '/home/fashionfever/uploads';
+    const userDir = '/home/fashionfever/uploads';
+    if (fs.existsSync(userDir) || process.platform === 'linux') {
+      if (!fs.existsSync(userDir)) {
+        try { fs.mkdirSync(userDir, { recursive: true }); } catch (_) {}
+      }
+      return userDir;
     }
     return path.join(process.cwd(), 'uploads');
   }
