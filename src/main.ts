@@ -11,6 +11,7 @@ import * as fs from 'fs';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  app.setGlobalPrefix('api/v1');
   // app.use('/uploads', express.static(join(process.cwd(), 'uploads')));
   const getUploadDir = () => {
     if (process.env.NODE_ENV === 'production') {
