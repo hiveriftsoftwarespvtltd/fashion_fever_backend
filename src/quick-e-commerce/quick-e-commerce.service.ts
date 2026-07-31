@@ -26,16 +26,11 @@ export class QuickECommerceService {
       status: ProductStatus.ACTIVE,
     };
 
-    const cleanPincode = (pincode && pincode !== 'undefined' && pincode !== 'null') ? pincode.toString().trim() : '';
-    const cleanAddressId = (addressId && addressId !== 'undefined' && addressId !== 'null') ? addressId.toString().trim() : '';
-    const cleanCategory = (category && category !== 'undefined' && category !== 'null') ? category.toString().trim() : '';
-    const cleanSearch = (search && search !== 'undefined' && search !== 'null') ? search.toString().trim() : '';
+    let resolvedPincode = pincode;
 
-    let resolvedPincode = cleanPincode;
-
-    if (!resolvedPincode && user && cleanAddressId && Types.ObjectId.isValid(cleanAddressId)) {
+    if (!resolvedPincode && user && addressId) {
       const address = await this.addressModel.findOne({
-        _id: new Types.ObjectId(cleanAddressId),
+        _id: new Types.ObjectId(addressId),
         user: new Types.ObjectId(user._id),
       });
       if (address) {
@@ -53,7 +48,8 @@ export class QuickECommerceService {
 
     if (qcVendors.length > 0) {
       if (resolvedPincode) {
-        const pincodeMatched = qcVendors.filter(v => v.vendorPincode === resolvedPincode);
+        const cleanPincode = resolvedPincode.toString().trim();
+        const pincodeMatched = qcVendors.filter(v => v.vendorPincode === cleanPincode);
         if (pincodeMatched.length > 0) {
           matchStage.vendorId = { $in: pincodeMatched.map(v => v._id) };
         } else {
@@ -65,18 +61,18 @@ export class QuickECommerceService {
       }
     }
 
-    if (cleanCategory) {
-      if (Types.ObjectId.isValid(cleanCategory)) {
-        matchStage.categoryId = new Types.ObjectId(cleanCategory);
+    if (category) {
+      if (Types.ObjectId.isValid(category)) {
+        matchStage.categoryId = new Types.ObjectId(category);
       } else {
-        matchStage.category = { $regex: cleanCategory, $options: 'i' };
+        matchStage.category = { $regex: category, $options: 'i' };
       }
     }
 
-    if (cleanSearch) {
+    if (search) {
       matchStage.$or = [
-        { name: { $regex: cleanSearch, $options: 'i' } },
-        { tags: { $regex: cleanSearch, $options: 'i' } },
+        { name: { $regex: search, $options: 'i' } },
+        { tags: { $regex: search, $options: 'i' } },
       ];
     }
 

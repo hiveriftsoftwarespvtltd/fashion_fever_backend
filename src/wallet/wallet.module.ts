@@ -34,6 +34,8 @@ import { NotificationModule } from 'src/notification/notification.module';
 
 import { VendorWalletController } from './controller/vendor/vendor.wallet.controller';
 
+import { MarketplaceEarning, MarketplaceEarningSchema } from 'src/payout/schema/market-place-earning.schema';
+
 @Module({
   imports: [
     MongooseModule.forFeature([
@@ -50,6 +52,9 @@ import { VendorWalletController } from './controller/vendor/vendor.wallet.contro
       { name: Influencer.name, schema: InfluencerSchema },
       { name: ServiceProvider.name, schema: ServiceProviderSchema },
       { name: Educator.name, schema: EducatorSchema },
+
+      // Marketplace Earning
+      { name: MarketplaceEarning.name, schema: MarketplaceEarningSchema },
 
       // Cashback
       { name: CashbackSlab.name, schema: CashbackSlabSchema },

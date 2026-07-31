@@ -69,4 +69,28 @@ export class AdminWalletController {
     async getAllPlatformBalances() {
         return this.platformWalletService.getAllWallets();
     }
+
+    @AdminAccess(AdminModule.FINANCE, AccessType.READ)
+    @Get('balances/vendors')
+    async getVendorBalances() {
+        return this.adminWalletService.getVendorBalances();
+    }
+
+    @AdminAccess(AdminModule.FINANCE, AccessType.READ)
+    @Get('balances/influencers')
+    async getInfluencerBalances() {
+        return this.adminWalletService.getInfluencerBalances();
+    }
+
+    @AdminAccess(AdminModule.FINANCE, AccessType.READ)
+    @Get('balances/service-providers')
+    async getServiceProviderBalances() {
+        return this.adminWalletService.getServiceProviderBalances();
+    }
+
+    @AdminAccess(AdminModule.FINANCE, AccessType.READ)
+    @Get('balances/educators')
+    async getEducatorBalances() {
+        return this.adminWalletService.getEducatorBalances();
+    }
 }
