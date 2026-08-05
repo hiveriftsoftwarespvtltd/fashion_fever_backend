@@ -24,8 +24,11 @@ export class AffiliateProgramService {
             await program.save();
         }
 
-        const apiUrl = process.env.API_URL || (process.env.NODE_ENV === 'production' ? process.env.SERVER_BASE_URL : `http://localhost:${process.env.PORT}`);
-        const affiliateLink = `${apiUrl}/api/v1/affiliate-tracking/${program.referralCode}`;
+        const baseUrl = process.env.SERVER_BASE_URL || 'https://fashionfever.in/fashionfever_api/api/v1';
+        const cleanBase = baseUrl.replace(/\/+$/, '');
+        const affiliateLink = cleanBase.endsWith('/api/v1')
+          ? `${cleanBase}/affiliate-tracking/${program.referralCode}`
+          : `${cleanBase}/api/v1/affiliate-tracking/${program.referralCode}`;
 
         return {
             success: true,
