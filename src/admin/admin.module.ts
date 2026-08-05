@@ -112,17 +112,17 @@ import { AdminProfileService } from './admin-profile.service';
   ],
   providers: [AdminService, AdminDashboardService, HomeContentService, HomeBookingCardsService, AdminCleanupService, AdminSeederService, AdminCommissionRateService, SubAdminService, UserManagementService, AdminProfileService],
   controllers: [
-    AdminController,
-    AdminDashboardController,
     AdminPublicController,
     HomeContentController,
     HomeBookingCardsController,
+    AdminDashboardController,
     AdminCleanupController,
     AdminSeederController,
     AdminCommissionRateController,
     SubAdminController,
     UserManagementController,
     AdminProfileController,
+    AdminController,
   ],
   exports: [AdminService, MongooseModule]
 })
