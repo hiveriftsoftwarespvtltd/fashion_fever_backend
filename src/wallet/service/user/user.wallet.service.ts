@@ -24,8 +24,10 @@ export class UserWalletService {
     }
 
     async getBalance(userId: string) {
-        const wallet = await this.userWalletModel.findOne({ userId: new Types.ObjectId(userId) });
-        if (!wallet) throw new NotFoundException('Wallet not found');
+        let wallet = await this.userWalletModel.findOne({ userId: new Types.ObjectId(userId) });
+        if (!wallet) {
+            wallet = await this.userWalletModel.create({ userId: new Types.ObjectId(userId) });
+        }
         return { balance: wallet.balance, totalCredits: wallet.totalCredits, totalDebits: wallet.totalDebits };
     }
 
@@ -56,8 +58,11 @@ export class UserWalletService {
     async addBalance(userId: string, amount: number, reason: WalletTransactionReason, description?: string, session?: ClientSession) {
         if (amount <= 0) throw new BadRequestException('Amount must be greater than zero');
 
-        const wallet = await this.userWalletModel.findOne({ userId: new Types.ObjectId(userId) }).session(session || null);
-        if (!wallet) throw new NotFoundException('Wallet not found');
+        let wallet = await this.userWalletModel.findOne({ userId: new Types.ObjectId(userId) }).session(session || null);
+        if (!wallet) {
+            const [newW] = await this.userWalletModel.create([{ userId: new Types.ObjectId(userId) }], { session: session || null });
+            wallet = newW;
+        }
 
         wallet.balance += amount;
         wallet.totalCredits += amount;
@@ -88,8 +93,11 @@ export class UserWalletService {
     async deductBalance(userId: string, amount: number, reason: WalletTransactionReason, description?: string, session?: ClientSession) {
         if (amount <= 0) throw new BadRequestException('Amount must be greater than zero');
 
-        const wallet = await this.userWalletModel.findOne({ userId: new Types.ObjectId(userId) }).session(session || null);
-        if (!wallet) throw new NotFoundException('Wallet not found');
+        let wallet = await this.userWalletModel.findOne({ userId: new Types.ObjectId(userId) }).session(session || null);
+        if (!wallet) {
+            const [newW] = await this.userWalletModel.create([{ userId: new Types.ObjectId(userId) }], { session: session || null });
+            wallet = newW;
+        }
 
         if (wallet.balance < amount) throw new BadRequestException('Insufficient wallet balance');
 
