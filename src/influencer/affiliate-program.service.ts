@@ -24,7 +24,7 @@ export class AffiliateProgramService {
             await program.save();
         }
 
-        const baseUrl = process.env.SERVER_BASE_URL || 'https://fashionfever.in/fashionfever_api/api/v1';
+        const baseUrl = process.env.SERVER_BASE_URL || 'https://fashionfever.in/fashion_fever_api/api/v1';
         const cleanBase = baseUrl.replace(/\/+$/, '');
         const affiliateLink = cleanBase.endsWith('/api/v1')
           ? `${cleanBase}/affiliate-tracking/${program.referralCode}`

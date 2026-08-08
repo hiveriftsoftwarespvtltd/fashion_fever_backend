@@ -99,7 +99,7 @@ export class LocalStorage implements StorageProvider {
     const baseUrl = process.env.SERVER_BASE_URL
       ? process.env.SERVER_BASE_URL
       : (process.env.NODE_ENV === 'production'
-          ? 'https://fashionfever.in/fashionfever_api/api/v1'
+          ? 'https://fashionfever.in/fashion_fever_api/api/v1'
           : `http://localhost:${port}`);
 
     const cleanBaseUrl = baseUrl.replace(/\/+$/, '');
