@@ -396,6 +396,12 @@ export class AdminController {
   }
 
   @AdminAccess(AdminModule.VENDORS, AccessType.WRITE)
+  @Delete('delete-product/:productId')
+  async deleteProductDirect(@Param('productId') productId: string) {
+    return await this.adminService.deleteVendorProduct('all', productId);
+  }
+
+  @AdminAccess(AdminModule.VENDORS, AccessType.WRITE)
   @Delete('delete-product/:vendorId/:productId')
   async deleteProduct(
     @Param('vendorId') vendorId: string,

@@ -823,13 +823,19 @@ export class AdminService {
   }
 
   async deleteVendorProduct(vendorId: string, productId: string) {
-    const vendor = await this.vendorModel.findById(vendorId);
-
-    if (!vendor) {
-      throw new NotFoundException('Vendor Not Found');
+    let targetProductId = productId;
+    if (!targetProductId || targetProductId === 'undefined' || targetProductId === 'null') {
+      targetProductId = vendorId;
+    }
+    if (vendorId === '[object Object]' || vendorId === 'undefined' || vendorId === 'null') {
+      targetProductId = productId || vendorId;
     }
 
-    const product = await this.productModel.findById(productId);
+    if (!targetProductId || !Types.ObjectId.isValid(targetProductId)) {
+      throw new BadRequestException('Invalid Product ID');
+    }
+
+    const product = await this.productModel.findById(targetProductId);
 
     if (!product) {
       throw new NotFoundException('Product not found');
@@ -856,22 +862,28 @@ export class AdminService {
       return ApiResponse.success('Product soft deleted because it was ordered previously', null);
     }
 
-    // delete media + variants
+    // delete media + variants safely
     for (const variant of variants) {
       // delete thumbnail
       if (variant.thumbnail) {
-        await this.documentService.deleteMedia(variant.thumbnail.toString());
+        try {
+          await this.documentService.deleteMedia(variant.thumbnail.toString());
+        } catch (_) {}
       }
 
       // delete images
       if (variant.images?.length) {
         for (const imageId of variant.images) {
-          await this.documentService.deleteMedia(imageId.toString());
+          try {
+            await this.documentService.deleteMedia(imageId.toString());
+          } catch (_) {}
         }
       }
 
       // delete variant
-      await variant.deleteOne();
+      try {
+        await variant.deleteOne();
+      } catch (_) {}
     }
 
     // delete product

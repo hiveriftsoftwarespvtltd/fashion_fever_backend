@@ -95,11 +95,12 @@ export class LocalStorage implements StorageProvider {
 
     fs.writeFileSync(filePath, file.buffer);
 
+    const port = process.env.PORT || 9000;
     const baseUrl = process.env.SERVER_BASE_URL
       ? process.env.SERVER_BASE_URL
       : (process.env.NODE_ENV === 'production'
           ? 'https://fashionfever.in/fashionfever_api/api/v1'
-          : `http://localhost:${process.env.PORT || 9000}`);
+          : `http://localhost:${port}`);
 
     const cleanBaseUrl = baseUrl.replace(/\/+$/, '');
 

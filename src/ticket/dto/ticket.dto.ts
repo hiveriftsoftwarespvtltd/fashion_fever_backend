@@ -9,10 +9,28 @@ export class CreateTicketDto {
   @IsString()
   @IsNotEmpty()
   description: string;
+
+  @IsOptional()
+  @IsString()
+  vendorId?: string;
+
+  @IsOptional()
+  @IsString()
+  orderId?: string;
+
+  @IsOptional()
+  @IsString()
+  productId?: string;
 }
 
 export class UpdateTicketStatusDto {
   @IsEnum(TicketStatus)
   @IsNotEmpty()
   ticketStatus: TicketStatus;
+}
+
+export class AddTicketReplyDto {
+  @IsString()
+  @IsNotEmpty()
+  message: string;
 }

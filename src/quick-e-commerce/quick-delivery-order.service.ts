@@ -25,6 +25,7 @@ import { PaymentMethod as TransactionPaymentMethod } from 'src/payout/schema/pay
 import { MarketplaceEarning, MarketplaceEarningDocument, EarningRole, EarningReferenceType, EarningStatus } from 'src/payout/schema/market-place-earning.schema';
 import { Influencer, InfluencerDocument } from 'src/influencer/schema/influencer.schema';
 import { VendorOrder as StandardVendorOrder, VendorOrderDocument as StandardVendorOrderDocument } from 'src/order/schema/vendor-order.schema';
+import { OrderStatus, PaymentStatus as StandardPaymentStatus } from 'src/order/schema/order.schema';
 
 @Injectable()
 export class QuickOrderService {
@@ -679,6 +680,8 @@ export class QuickOrderService {
             const queryOpts = session ? { session } : {};
             const orderObjId = toObjectId(vendorOrderId);
             let vendorOrder: any = null;
+            let isStandardOrder = false;
+
             if (orderObjId) {
                 vendorOrder = session ? await this.vendorOrderModel.findOne({ $or: [{ _id: orderObjId }, { quickOrderId: orderObjId }] }).session(session) : await this.vendorOrderModel.findOne({ $or: [{ _id: orderObjId }, { quickOrderId: orderObjId }] });
             }
@@ -686,7 +689,43 @@ export class QuickOrderService {
                 vendorOrder = session ? await this.vendorOrderModel.findById(vendorOrderId).session(session) : await this.vendorOrderModel.findById(vendorOrderId);
             }
             if (!vendorOrder) {
+                vendorOrder = session ? await this.standardVendorOrderModel.findById(orderObjId || vendorOrderId).session(session) : await this.standardVendorOrderModel.findById(orderObjId || vendorOrderId);
+                if (vendorOrder) {
+                    isStandardOrder = true;
+                }
+            }
+            if (!vendorOrder) {
                 return { success: true, statusCode: 200, message: 'Order already completed or verified' };
+            }
+
+            if (isStandardOrder) {
+                vendorOrder.orderStatus = OrderStatus.DELIVERED;
+                vendorOrder.deliveryStatus = 'DELIVERED';
+                vendorOrder.paymentStatus = StandardPaymentStatus.PAID;
+                vendorOrder.deliveredAt = new Date();
+                if (vendorOrder.items && Array.isArray(vendorOrder.items)) {
+                    vendorOrder.items.forEach((item: any) => {
+                        item.status = OrderItemStatus.DELIVERED;
+                    });
+                    vendorOrder.markModified('items');
+                }
+                await vendorOrder.save(queryOpts);
+
+                if (vendorOrder.deliveryPersonId) {
+                    const dpId = toObjectId(vendorOrder.deliveryPersonId);
+                    if (dpId) {
+                        const dp = session ? await this.deliveryPersonModel.findById(dpId).session(session) : await this.deliveryPersonModel.findById(dpId);
+                        if (dp) {
+                            dp.status = DeliveryPersonStatus.AVAILABLE;
+                            await dp.save(queryOpts);
+                        }
+                    }
+                }
+
+                if (session) {
+                    await session.commitTransaction();
+                }
+                return { success: true, message: 'Standard order marked as delivered successfully', order: vendorOrder };
             }
 
             vendorOrder.status = VendorOrderStatus.DELIVERED;
@@ -1293,7 +1332,15 @@ export class QuickOrderService {
 
         // Query standard VendorOrders (if deliveryPersonId field is set)
         const standardQuery: any = { ...query };
-        if (standardQuery.status) delete standardQuery.status; // standard orders use orderStatus field
+        if (standardQuery.status) {
+            const requestedStatus = String(standardQuery.status).toUpperCase();
+            delete standardQuery.status;
+            if (requestedStatus === 'DELIVERED') {
+                standardQuery.orderStatus = 'delivered';
+            } else if (requestedStatus === 'PENDING' || requestedStatus === 'ACTIVE' || requestedStatus === 'OUT_FOR_DELIVERY') {
+                standardQuery.orderStatus = { $ne: 'delivered' };
+            }
+        }
         const standardOrdersPromise = this.standardVendorOrderModel.find(standardQuery)
             .populate({ path: 'items.variantId', select: 'thumbnail images sku', populate: [{ path: 'thumbnail', select: 'url publicId' }, { path: 'images', select: 'url publicId' }] })
             .populate({ path: 'items.productId', select: 'name thumbnail images variants', populate: { path: 'variants', select: 'thumbnail images', populate: [{ path: 'thumbnail', select: 'url publicId' }, { path: 'images', select: 'url publicId' }] } })
