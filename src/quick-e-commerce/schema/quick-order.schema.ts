@@ -200,6 +200,9 @@ export type QuickOrderDocument = QuickOrder & Document
 @Schema({ timestamps: true })
 export class QuickOrder {
 
+    @Prop({ unique: true, sparse: true })
+    orderNumber?: string;
+
     @Prop({ type: Types.ObjectId, ref: "User", required: true })
     customerId: Types.ObjectId;
 

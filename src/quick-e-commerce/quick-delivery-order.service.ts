@@ -155,7 +155,12 @@ export class QuickOrderService {
             }
 
             // 6. Create main QuickOrder
+            const dateStr = new Date().toISOString().slice(2, 10).replace(/-/g, '');
+            const randomDigits = Math.floor(1000 + Math.random() * 9000);
+            const mainOrderNumber = `FFQ-${dateStr}-${randomDigits}`;
+
             const newOrder = new this.quickOrderModel({
+                orderNumber: mainOrderNumber,
                 customerId: new Types.ObjectId(userId),
                 addressId: new Types.ObjectId(dto.addressId),
                 shippingAddress: {
@@ -268,7 +273,9 @@ export class QuickOrderService {
                 }
                 const vendorTotal = vendorSubtotal + vendorPackingCharge + vendorTax + vendorDeliveryCharge - vendorDiscountAmount;
                 const vendorCommissionAmount = ((vendorSubtotal - vendorDiscountAmount) * platformCommissionRate) / 100;
+                const vendorOrderNumber = `${mainOrderNumber}-V${vendorOrderIds.length + 1}`;
                 const vendorOrder = new this.vendorOrderModel({
+                    orderNumber: vendorOrderNumber,
                     quickOrderId: createdOrder._id,
                     vendorId: new Types.ObjectId(vendor._id),
                     items: vendorOrderItems,

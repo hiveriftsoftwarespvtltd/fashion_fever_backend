@@ -379,7 +379,9 @@ export class OrderService {
       const vendorOrderIds: Types.ObjectId[] = [];
       const vendorOrdersData: any[] = [];
 
-      const orderNumber = `ORD-${Date.now()}`;
+      const dateStr = new Date().toISOString().slice(2, 10).replace(/-/g, '');
+      const randomDigits = Math.floor(1000 + Math.random() * 9000);
+      const orderNumber = `FF-${dateStr}-${randomDigits}`;
 
       let orderSubTotal = 0;
       let orderDiscount = 0;
