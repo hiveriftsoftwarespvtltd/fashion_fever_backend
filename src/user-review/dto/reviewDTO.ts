@@ -27,8 +27,6 @@ export class CreateReviewDto {
   @IsOptional()
   @IsString()
   review?: string;
-
-
 }
 
 export class UpdateReviewDto extends PartialType(

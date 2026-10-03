@@ -23,7 +23,7 @@ Thumbs.db
 .temp
 .tmp
 *.zip
-uploads/
+# uploads/
 
 # Tests & Coverage
 /coverage

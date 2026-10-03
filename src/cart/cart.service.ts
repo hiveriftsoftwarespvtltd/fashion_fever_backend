@@ -467,7 +467,9 @@ export class CartService {
       }
 
       const price =
-        variant.offeredPrice
+        (variant.offeredPrice && variant.offeredPrice > 0)
+          ? variant.offeredPrice
+          : (variant.salesPrice || variant.costPrice || 0);
 
       const totalPrice = price * item.quantity;
 
@@ -638,6 +640,7 @@ export class CartService {
         totalItems: cart.items.length,
 
         subTotal,
+        subtotal: subTotal,
 
         discount: 0,
 

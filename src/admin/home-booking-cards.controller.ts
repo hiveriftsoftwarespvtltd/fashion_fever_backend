@@ -8,6 +8,7 @@ export class HomeBookingCardsController {
   constructor(private readonly cardsService: HomeBookingCardsService) {}
 
   // Public endpoint for Home Page BookingsSection
+  @UseGuards(OptionalAuthGuard)
   @Get('public')
   getPublicCards() {
     return this.cardsService.getAllCards(true);

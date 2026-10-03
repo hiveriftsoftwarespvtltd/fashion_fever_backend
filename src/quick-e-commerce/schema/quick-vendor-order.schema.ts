@@ -21,6 +21,9 @@ export type VendorOrderDocument = VendorQuickOrder & Document
 @Schema({ timestamps: true })
 export class VendorQuickOrder {
 
+    @Prop({ sparse: true })
+    orderNumber?: string;
+
     @Prop({ type: Types.ObjectId, ref: "QuickOrder" })
     quickOrderId: Types.ObjectId;
 

@@ -8,6 +8,7 @@ import { filteredObject } from 'src/utils/helper';
 import { VendorQuickOrder, VendorOrderDocument, VendorOrderStatus } from './schema/quick-vendor-order.schema';
 import { User, UserDocument, UserRole, RoleStatus } from '../user/schema/user.schema';
 import { Vendor, VendorDocument } from '../vendor/schema/vendor.schema';
+import { VendorOrder as StandardVendorOrder, VendorOrderDocument as StandardVendorOrderDocument } from '../order/schema/vendor-order.schema';
 import * as bcrypt from 'bcryptjs';
 
 export enum DeliveryPersonRole {
@@ -22,6 +23,7 @@ export class DeliveryPersonService {
     @InjectModel(VendorQuickOrder.name) private vendorOrderModel: Model<VendorOrderDocument>,
     @InjectModel(User.name) private userModel: Model<UserDocument>,
     @InjectModel(Vendor.name) private vendorModel: Model<VendorDocument>,
+    @InjectModel(StandardVendorOrder.name) private standardVendorOrderModel: Model<StandardVendorOrderDocument>,
     private documentService: DocumentService,
     @InjectConnection() private readonly connection: Connection
   ) { }
@@ -71,14 +73,20 @@ export class DeliveryPersonService {
       await newUser.save({ session });
 
       // 3. Create Delivery Person
+      let activeVendorId = vendorId;
+      if (!activeVendorId && role === DeliveryPersonRole.VENDOR) {
+        const v = await this.vendorModel.findOne({ ownerId: new Types.ObjectId(userId) }).session(session);
+        if (v) activeVendorId = v._id.toString();
+      }
+
       const payload: any = { ...dto, addedBy: new Types.ObjectId(userId), userId: newUser._id };
 
       if (profilePhotoId) {
         payload.profilePhoto = new Types.ObjectId(profilePhotoId);
       }
 
-      if (role === DeliveryPersonRole.VENDOR && vendorId) {
-        payload.assignedVendorIds = [new Types.ObjectId(vendorId)];
+      if (role === DeliveryPersonRole.VENDOR && activeVendorId) {
+        payload.assignedVendorIds = [new Types.ObjectId(activeVendorId)];
       } else if (dto.assignedVendorIds) {
         payload.assignedVendorIds = dto.assignedVendorIds.map((id: string) => new Types.ObjectId(id));
       }
@@ -97,9 +105,21 @@ export class DeliveryPersonService {
   }
 
   async getDeliveryPersons(userId: string, role: DeliveryPersonRole, vendorId?: string, page: number = 1, limit: number = 10, status?: DeliveryPersonStatus) {
+    let activeVendorId = vendorId;
+    if (!activeVendorId && role === DeliveryPersonRole.VENDOR) {
+      const v = await this.vendorModel.findOne({ ownerId: new Types.ObjectId(userId) }).lean();
+      if (v) activeVendorId = v._id.toString();
+    }
+
     const query: any = { isDeleted: false };
-    if (role === DeliveryPersonRole.VENDOR && vendorId) {
-      query.assignedVendorIds = new Types.ObjectId(vendorId);
+    if (role === DeliveryPersonRole.VENDOR) {
+      const orConditions: any[] = [
+        { addedBy: new Types.ObjectId(userId) }
+      ];
+      if (activeVendorId) {
+        orConditions.push({ assignedVendorIds: new Types.ObjectId(activeVendorId) });
+      }
+      query.$or = orConditions;
     }
 
     const skip = (page - 1) * limit;
@@ -450,12 +470,19 @@ export class DeliveryPersonService {
 
     const deliveryStats = stats[0] || { totalDeliveredOrders: 0, avgDeliveryTime: 0 };
 
+    const standardDeliveredCount = await this.standardVendorOrderModel.countDocuments({
+      deliveryPersonId: deliveryPerson._id,
+      orderStatus: 'delivered'
+    } as any);
+
+    const grandTotalDelivered = (deliveryStats.totalDeliveredOrders || 0) + standardDeliveredCount;
+
     return {
       ...deliveryPerson,
       name: deliveryPerson.name || user?.name || 'Express Rider',
       email: (deliveryPerson.userId as any)?.email || user?.email || '',
       phone: deliveryPerson.phone || user?.phone || '',
-      totalDeliveredOrders: deliveryStats.totalDeliveredOrders,
+      totalDeliveredOrders: grandTotalDelivered,
       avgDeliveryTimeInMinutes: Math.round((deliveryStats.avgDeliveryTime || 0) / (1000 * 60))
     };
   }

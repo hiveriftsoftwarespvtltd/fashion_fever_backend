@@ -8,6 +8,7 @@ import { RolesGuard } from 'src/auth/roles.guard';
 import { Roles } from 'src/auth/roles.decorator';
 import { UserRole } from 'src/user/schema/user.schema';
 import { DeliveryPersonStatus } from './schema/delivery-person.schema';
+import { ApiResponse } from 'src/common/responses/api-response';
 
 @Controller('vendor/delivery-person')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -22,25 +23,28 @@ export class VendorDeliveryPersonController {
     @Req() req: any,
     @UploadedFile() file: any
   ) {
-
-    return this.deliveryPersonService.createDeliveryPerson(req.user._id, DeliveryPersonRole.VENDOR, dto, req.user.vendorId, file);
+    const res = await this.deliveryPersonService.createDeliveryPerson(req.user._id, DeliveryPersonRole.VENDOR, dto, req.user.vendorId, file);
+    return ApiResponse.success('Delivery rider registered successfully', res);
   }
 
   @Get('list')
   async getDeliveryPersons(@Req() req: any, @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
     @Query('status') status?: DeliveryPersonStatus) {
-    return this.deliveryPersonService.getDeliveryPersons(req.user._id, DeliveryPersonRole.VENDOR, req.user.vendorId, page, limit, status);
+    const res = await this.deliveryPersonService.getDeliveryPersons(req.user._id, DeliveryPersonRole.VENDOR, req.user.vendorId, page, limit, status);
+    return ApiResponse.success('Delivery riders fetched successfully', res);
   }
 
   @Get('available')
   async getAvailableRiders() {
-    return this.deliveryPersonService.getAllActiveRiders();
+    const res = await this.deliveryPersonService.getAllActiveRiders();
+    return ApiResponse.success('Available riders fetched successfully', res);
   }
 
   @Get('details/:id')
   async getDeliveryPersonById(@Param('id') id: string, @Req() req: any) {
-    return this.deliveryPersonService.getDeliveryPersonById(req.user._id, DeliveryPersonRole.VENDOR, id, req.user.vendorId);
+    const res = await this.deliveryPersonService.getDeliveryPersonById(req.user._id, DeliveryPersonRole.VENDOR, id, req.user.vendorId);
+    return ApiResponse.success('Delivery rider details fetched successfully', res);
   }
 
   @Put('update/:id')
@@ -51,12 +55,14 @@ export class VendorDeliveryPersonController {
     @Req() req: any,
     @UploadedFile() file: any
   ) {
-    return this.deliveryPersonService.updateDeliveryPerson(req.user._id, DeliveryPersonRole.VENDOR, id, dto, file, req.user.vendorId);
+    const res = await this.deliveryPersonService.updateDeliveryPerson(req.user._id, DeliveryPersonRole.VENDOR, id, dto, file, req.user.vendorId);
+    return ApiResponse.success('Delivery rider updated successfully', res);
   }
 
   @Delete('delete/:id')
   async deleteDeliveryPerson(@Param('id') id: string, @Req() req: any) {
-    return this.deliveryPersonService.deleteDeliveryPerson(req.user._id, DeliveryPersonRole.VENDOR, id, req.user.vendorId);
+    const res = await this.deliveryPersonService.deleteDeliveryPerson(req.user._id, DeliveryPersonRole.VENDOR, id, req.user.vendorId);
+    return ApiResponse.success('Delivery rider deleted successfully', res);
   }
 }
 
