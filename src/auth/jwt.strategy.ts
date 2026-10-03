@@ -4,11 +4,16 @@ import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
 import { User, UserDocument } from 'src/user/schema/user.schema';
+import { Vendor, VendorDocument } from 'src/vendor/schema/vendor.schema';
 import { Model } from 'mongoose';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
-  constructor(configService: ConfigService, @InjectModel(User.name) private userModel: Model<UserDocument>) {
+  constructor(
+    configService: ConfigService,
+    @InjectModel(User.name) private userModel: Model<UserDocument>,
+    @InjectModel(Vendor.name) private vendorModel: Model<VendorDocument>,
+  ) {
     const secret = configService.get<string>('JWT_SECRET');
 
     if (!secret) {
@@ -23,35 +28,41 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: any) {
-
-
-
     if (!payload.sub) {
-      throw new UnauthorizedException()
+      throw new UnauthorizedException();
     }
 
-    const user = await this.userModel.findById(payload.sub).select("name email roles isActive vendorId serviceProviderId influencerId distributorId educatorId")
+    const user = await this.userModel.findById(payload.sub).select("name email roles isActive vendorId serviceProviderId influencerId distributorId educatorId");
 
     if (!user) {
-      throw new UnauthorizedException("User not found")
+      throw new UnauthorizedException("User not found");
     }
     if (!user?.isActive) {
-      throw new UnauthorizedException("User is not active")
+      throw new UnauthorizedException("User is not active");
     }
 
-
-
+    let vendorId = user.vendorId;
+    if (!vendorId) {
+      const v = await this.vendorModel.findOne({ ownerId: user._id });
+      if (v) {
+        vendorId = v._id;
+        await this.userModel.updateOne(
+          { _id: user._id },
+          { $set: { vendorId: v._id, isVendorOnboardingCompleted: true } }
+        ).catch(() => {});
+      }
+    }
 
     return {
       _id: user._id,
       email: user.email,
       name: user.name,
       roles: user.roles,
-      vendorId: user.vendorId,
+      vendorId: vendorId,
       influencerId: user.influencerId,
       serviceProviderId: user.serviceProviderId,
       distributorId: user.distributorId,
       educatorId: user.educatorId
-    }
+    };
   }
-}
+}

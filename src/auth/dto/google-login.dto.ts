@@ -10,4 +10,8 @@ export class GoogleLoginDTO {
     @IsArray()
     @IsEnum(UserRole, { each: true })
     roles?: UserRole[];
+
+    @IsOptional()
+    @IsString()
+    referralCode?: string;
 }

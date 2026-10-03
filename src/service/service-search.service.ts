@@ -36,21 +36,52 @@ export class ServiceSearchService {
     }
 
     // 1. GeoNear aggregation to find nearby approved providers
-
-    const providers = await this.providerModel.aggregate([
-      {
-        $geoNear: {
-          near: {
-            type: 'Point',
-            coordinates: [lng, lat], // GeoJSON order: [longitude, latitude]
+    let providers: any[] = [];
+    try {
+      providers = await this.providerModel.aggregate([
+        {
+          $geoNear: {
+            near: {
+              type: 'Point',
+              coordinates: [lng, lat], // GeoJSON order: [longitude, latitude]
+            },
+            distanceField: 'distance',
+            maxDistance: maxDistanceMeters,
+            spherical: true,
+            query: geoQuery,
           },
-          distanceField: 'distance',
-          maxDistance: maxDistanceMeters,
-          spherical: true,
-          query: geoQuery,
         },
-      },
-    ]);
+      ]);
+    } catch (geoErr) {
+      console.warn('geoNear aggregation fallback:', geoErr.message);
+    }
+
+    // Fallback 1: If city or query provided and geoNear was 0 (e.g. searching distant city), search directly
+    if (!providers.length && city && city.trim()) {
+      providers = await this.providerModel
+        .find({
+          isDeleted: false,
+          isActive: true,
+          verificationStatus: ServiceProviderVerificationStatus.APPROVED,
+          $or: [
+            { city: { $regex: city.trim(), $options: 'i' } },
+            { address: { $regex: city.trim(), $options: 'i' } },
+            { businessName: { $regex: city.trim(), $options: 'i' } },
+          ],
+        })
+        .lean();
+    }
+
+    // Fallback 2: If still no providers found and no specific city was requested, load all approved providers
+    if (!providers.length && (!city || !city.trim())) {
+      providers = await this.providerModel
+        .find({
+          isDeleted: false,
+          isActive: true,
+          verificationStatus: ServiceProviderVerificationStatus.APPROVED,
+        })
+        .lean();
+    }
 
     if (!providers.length) {
       return ApiResponse.success('No providers found nearby', []);
@@ -110,6 +141,24 @@ export class ServiceSearchService {
           console.error(`Failed to fetch slots for provider ${pId}:`, error);
         }
 
+        let distKm = 0;
+        if (provider.distance !== undefined) {
+          distKm = parseFloat((provider.distance / 1000).toFixed(2));
+        } else if (Array.isArray(provider.coordinates) && provider.coordinates.length === 2) {
+          const pLng = provider.coordinates[0];
+          const pLat = provider.coordinates[1];
+          const dLat = ((pLat - lat) * Math.PI) / 180;
+          const dLon = ((pLng - lng) * Math.PI) / 180;
+          const a =
+            Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos((lat * Math.PI) / 180) *
+              Math.cos((pLat * Math.PI) / 180) *
+              Math.sin(dLon / 2) *
+              Math.sin(dLon / 2);
+          const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+          distKm = parseFloat((6371 * c).toFixed(2));
+        }
+
         results.push({
           provider: {
             _id: provider._id,
@@ -119,8 +168,9 @@ export class ServiceSearchService {
             coordinates: provider.coordinates,
             rating: provider.rating,
             totalReviews: provider.totalReviews,
-            distance: provider.distance, // Distance in meters from $geoNear
+            distance: provider.distance !== undefined ? provider.distance : distKm * 1000,
           },
+          distanceKm: distKm,
           services: servicesByProvider.get(pId),
           availableSlots: slots,
           earliestSlot: earliestSlot,

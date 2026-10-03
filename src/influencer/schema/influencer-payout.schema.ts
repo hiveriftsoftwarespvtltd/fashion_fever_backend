@@ -17,6 +17,7 @@ export enum InfluencerPayoutStatus {
   PROCESSING = 'processing',
   PAID = 'paid',
   FAILED = 'failed',
+  REJECTED = 'rejected',
 }
 
 @Schema({ timestamps: true })
@@ -72,18 +73,33 @@ export class InfluencerPayout {
   @Prop()
   remarks?: string;
 
+  /**
+   * Dedicated rejection/failure reason field.
+   * Populated on admin rejection or failure; separate from general `remarks`.
+   */
+  @Prop()
+  rejectionReason?: string;
+
   @Prop({
-  type: [Types.ObjectId],
-  ref: 'InfluencerCommission',
-  default: [],
-})
-commissionIds!: Types.ObjectId[];
+    type: [Types.ObjectId],
+    ref: 'InfluencerCommission',
+    default: [],
+  })
+  commissionIds!: Types.ObjectId[];
 
-@Prop()
-settledAt?: Date;
+  @Prop()
+  settledAt?: Date;
 
-@Prop({ default: false })
-isSettled!: boolean;
+  @Prop({ default: false })
+  isSettled!: boolean;
+
+  /**
+   * Immutable snapshot of the creator's bank/UPI details
+   * taken at the exact moment of the payout request.
+   * Fields: accountHolderName, bankName, accountNumber, ifscCode, upiId (optional).
+   */
+  @Prop({ type: Object })
+  bankAccountSnapshot?: Record<string, any>;
 }
 
 export const InfluencerPayoutSchema =

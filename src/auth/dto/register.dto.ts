@@ -12,7 +12,7 @@ export class RegisterDTO {
     @MinLength(6)
     password!: string
 
-    // @IsOptional()
+    @IsOptional()
     @IsString()
     phone?: string
 

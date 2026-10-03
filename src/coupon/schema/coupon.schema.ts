@@ -23,6 +23,9 @@ export enum CouponScope {
   VENDOR = 'vendor'
 }
 
+// Discriminator used to identify service-provider owned coupons
+export const SERVICE_COUPON_SCOPE = CouponScope.SERVICE;
+
 
 export enum CouponFor {
   USER = 'user',
@@ -135,6 +138,15 @@ export class Coupon {
   @Prop({ type: Types.ObjectId, default: null })
   ownerId: Types.ObjectId
 
+  // ── Service-Provider Owned Coupon Fields ──────────────────────────────────
+  // Both fields are required when scope === 'service' (enforced via pre-save).
+  @Prop({ type: Types.ObjectId, ref: 'ServiceProvider', default: null })
+  serviceProviderId?: Types.ObjectId;
+
+  @Prop({ type: Types.ObjectId, ref: 'Service', default: null })
+  linkedServiceId?: Types.ObjectId;
+  // ─────────────────────────────────────────────────────────────────────────
+
   @Prop({ type: [Types.ObjectId], ref: 'Product', default: [] })
   appliedProducts!: Types.ObjectId[]
 
@@ -151,3 +163,18 @@ export class Coupon {
 }
 
 export const CouponSchema = SchemaFactory.createForClass(Coupon);
+
+// Compound index for fast booking-time lookup
+CouponSchema.index({ code: 1, serviceProviderId: 1, linkedServiceId: 1 });
+
+// Pre-save validator: enforce serviceProviderId + linkedServiceId when scope=SERVICE
+CouponSchema.pre('save', function () {
+  if ((this as any).scope === CouponScope.SERVICE) {
+    if (!(this as any).serviceProviderId) {
+      throw new Error('serviceProviderId is required for service-scoped coupons');
+    }
+    if (!(this as any).linkedServiceId) {
+      throw new Error('linkedServiceId is required for service-scoped coupons');
+    }
+  }
+});

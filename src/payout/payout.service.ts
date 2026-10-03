@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { NotificationService } from 'src/notification/notification.service';
 import { NotificationModuleType, NotificationType, NotificationPriority } from 'src/notification/schema/notification.schema';
 import { User, UserDocument, UserRole } from 'src/user/schema/user.schema';
@@ -261,102 +261,165 @@ export class PayoutService {
   }
 
   async settleInfluencerPayout(dto: {
-    influencerId: string;
-    commissionIds: string[];
+    payoutId?: string;
+    influencerId?: string;
+    commissionIds?: string[];
     transactionId: string;
     remarks?: string;
     month?: number;
     year?: number;
   }) {
+    if (!dto.transactionId || typeof dto.transactionId !== 'string' || dto.transactionId.trim() === '') {
+      throw new BadRequestException('Transaction ID / bank reference is required to settle payout');
+    }
+    const cleanTransactionId = dto.transactionId.trim();
+
     const session = await this.connection.startSession();
 
     try {
       session.startTransaction();
 
-      const month = dto.month || new Date().getMonth() + 1;
+      // CASE A: Settle an existing InfluencerPayout request (payoutId provided)
+      if (dto.payoutId) {
+        const payout = await this.influencerPayoutModel.findById(dto.payoutId).session(session);
+        if (!payout) {
+          throw new NotFoundException('Payout not found');
+        }
 
+        if (payout.status === InfluencerPayoutStatus.PAID) {
+          if (payout.transactionId && payout.transactionId.trim() === cleanTransactionId) {
+            await session.abortTransaction();
+            return ApiResponse.success('Influencer payout already completed (idempotent)', payout);
+          } else {
+            throw new ConflictException('Payout has already been settled with a different transaction ID.');
+          }
+        }
+
+        if (payout.status === InfluencerPayoutStatus.REJECTED || payout.status === InfluencerPayoutStatus.FAILED) {
+          throw new BadRequestException(`Cannot settle payout in status: ${payout.status}`);
+        }
+
+        if (payout.status !== InfluencerPayoutStatus.PENDING) {
+          throw new BadRequestException(`Cannot settle payout in status: ${payout.status}`);
+        }
+
+        const commissions = await this.influencerCommissionModel.find({
+          _id: { $in: payout.commissionIds },
+          isReversed: { $ne: true },
+          status: { $ne: CommissionStatus.CANCELLED },
+        }).session(session);
+
+        const payoutAmount = parseFloat(
+          commissions.reduce((sum, c) => sum + (c.commissionAmount || 0), 0).toFixed(2),
+        );
+
+        payout.status = InfluencerPayoutStatus.PAID;
+        payout.transactionId = cleanTransactionId;
+        payout.paidAt = new Date();
+        payout.settledAt = new Date();
+        payout.isSettled = true;
+        payout.totalCommission = payoutAmount;
+        if (dto.remarks) {
+          payout.remarks = dto.remarks;
+        }
+        await payout.save({ session });
+
+        await this.influencerCommissionModel.updateMany(
+          {
+            _id: { $in: commissions.map((c) => c._id) },
+            status: { $ne: CommissionStatus.PAID },
+          },
+          {
+            $set: {
+              isSettled: true,
+              settledAt: new Date(),
+              paidAt: new Date(),
+              payoutReference: cleanTransactionId,
+              status: CommissionStatus.PAID,
+            },
+          },
+          { session },
+        );
+
+        await this.influencerModel.updateOne(
+          { _id: payout.influencerId },
+          {
+            $inc: {
+              paidCommission: payoutAmount,
+              approvedCommission: -payoutAmount,
+            },
+          },
+          { session },
+        );
+
+        await session.commitTransaction();
+        return ApiResponse.success('Influencer payout completed', payout);
+      }
+
+      // CASE B: Direct settlement of commissionIds
+      if (!dto.influencerId) {
+        throw new BadRequestException('influencerId is required when settling specific commissions');
+      }
+      if (!dto.commissionIds || !dto.commissionIds.length) {
+        throw new BadRequestException('No commissions provided');
+      }
+
+      const month = dto.month || new Date().getMonth() + 1;
       const year = dto.year || new Date().getFullYear();
 
       const commissions = await this.influencerCommissionModel.find({
         _id: {
           $in: dto.commissionIds.map((id) => new Types.ObjectId(id)),
         },
-
         influencerId: new Types.ObjectId(dto.influencerId),
-
-        isDelivered: true,
-
+        status: CommissionStatus.APPROVED,
         isSettled: false,
-      });
+        isReversed: { $ne: true },
+        payoutId: null,
+      }).session(session);
 
       if (!commissions.length) {
-        throw new BadRequestException('No commissions found');
+        throw new BadRequestException('No eligible commissions found for settlement');
       }
 
-      const influencer = await this.influencerModel.findById(dto.influencerId);
+      const influencer = await this.influencerModel.findById(dto.influencerId).session(session);
+      if (!influencer) {
+        throw new NotFoundException('Influencer not found');
+      }
 
       const totalSales = commissions.reduce(
-        (sum, item) => sum + item.finalOrderAmount,
+        (sum, item) => sum + (item.finalOrderAmount || 0),
         0,
       );
 
-      const slab = await this.slabModel
-        .findOne({
-          minSales: {
-            $lte: totalSales,
-          },
-          maxSales: {
-            $gte: totalSales,
-          },
-          isActive: true,
-        })
-        .lean();
-
-      const rate = slab?.commissionRate || 0;
-
-      const totalPlatformCommission = commissions.reduce(
-        (sum, item) => sum + item.platformCommissionAmount,
+      const totalProfit = commissions.reduce(
+        (sum, item) => sum + (item.netProfit || 0),
         0,
       );
 
-      const payoutAmount = Number(
-        ((totalPlatformCommission * rate) / 100).toFixed(2),
+      // Exact sum from snapshotted commissionAmount, NEVER recompute with slabs or average!
+      const payoutAmount = parseFloat(
+        commissions.reduce((sum, item) => sum + (item.commissionAmount || 0), 0).toFixed(2),
       );
 
       const payout = await this.influencerPayoutModel.create(
         [
           {
-            influencerId: influencer!._id,
-
-            influencerUserId: influencer!.userId,
-
+            influencerId: influencer._id,
+            influencerUserId: influencer.userId,
             totalOrders: commissions.length,
-
             totalSales,
-
-            totalProfit: commissions.reduce(
-              (sum, item) => sum + item.netProfit,
-              0,
-            ),
-
-            commissionRate: rate,
-
+            totalProfit,
+            commissionRate: commissions[0]?.commissionRate || 0,
             totalCommission: payoutAmount,
-
             payoutMonth: month,
-
             payoutYear: year,
-
-            transactionId: dto.transactionId,
-
+            transactionId: cleanTransactionId,
             remarks: dto.remarks,
-
             commissionIds: commissions.map((c) => c._id),
-
             settledAt: new Date(),
-
             paidAt: new Date(),
-
+            isSettled: true,
             status: InfluencerPayoutStatus.PAID,
           },
         ],
@@ -372,37 +435,31 @@ export class PayoutService {
         {
           $set: {
             isSettled: true,
-
             settledAt: new Date(),
-
             paidAt: new Date(),
-
-            commissionRate: rate,
-
-            commissionAmount: payoutAmount / commissions.length,
-
+            payoutReference: cleanTransactionId,
+            payoutId: payout[0]._id,
             status: CommissionStatus.PAID,
           },
         },
         { session },
       );
 
+      // Debit approvedCommission, increment paidCommission, pendingCommission remains untouched!
       await this.influencerModel.updateOne(
         {
-          _id: influencer!._id,
+          _id: influencer._id,
         },
         {
           $inc: {
             paidCommission: payoutAmount,
-
-            pendingCommission: -payoutAmount,
+            approvedCommission: -payoutAmount,
           },
         },
         { session },
       );
 
       await session.commitTransaction();
-
       return ApiResponse.success('Influencer payout completed', payout[0]);
     } catch (error) {
       await session.abortTransaction();
@@ -410,6 +467,152 @@ export class PayoutService {
     } finally {
       session.endSession();
     }
+  }
+
+  async rejectInfluencerPayout(dto: { payoutId: string; reason: string }) {
+    if (!dto.reason || typeof dto.reason !== 'string' || dto.reason.trim() === '') {
+      throw new BadRequestException('Rejection reason is required');
+    }
+    const cleanReason = dto.reason.trim();
+
+    const session = await this.connection.startSession();
+    try {
+      session.startTransaction();
+
+      const payout = await this.influencerPayoutModel.findById(dto.payoutId).session(session);
+      if (!payout) {
+        throw new NotFoundException('Payout not found');
+      }
+
+      if (payout.status === InfluencerPayoutStatus.REJECTED) {
+        await session.abortTransaction();
+        return ApiResponse.success('Influencer payout already rejected (idempotent)', payout);
+      }
+
+      if (payout.status === InfluencerPayoutStatus.PAID) {
+        throw new ConflictException('Cannot reject a payout that has already been settled.');
+      }
+
+      if (payout.status !== InfluencerPayoutStatus.PENDING) {
+        throw new BadRequestException(`Cannot reject payout in status: ${payout.status}`);
+      }
+
+      payout.status = InfluencerPayoutStatus.REJECTED;
+      payout.rejectionReason = cleanReason;
+      await payout.save({ session });
+
+      // Unlock commissions: set payoutId = null, keep status = APPROVED, isSettled = false
+      await this.influencerCommissionModel.updateMany(
+        {
+          _id: { $in: payout.commissionIds },
+          isSettled: false,
+        },
+        {
+          $set: {
+            payoutId: null,
+          },
+        },
+        { session },
+      );
+
+      await session.commitTransaction();
+      return ApiResponse.success('Influencer payout rejected and commissions unlocked', payout);
+    } catch (error) {
+      await session.abortTransaction();
+      throw error;
+    } finally {
+      session.endSession();
+    }
+  }
+
+  async failInfluencerPayout(dto: { payoutId: string; reason: string }) {
+    if (!dto.reason || typeof dto.reason !== 'string' || dto.reason.trim() === '') {
+      throw new BadRequestException('Failure reason is required');
+    }
+    const cleanReason = dto.reason.trim();
+
+    const session = await this.connection.startSession();
+    try {
+      session.startTransaction();
+
+      const payout = await this.influencerPayoutModel.findById(dto.payoutId).session(session);
+      if (!payout) {
+        throw new NotFoundException('Payout not found');
+      }
+
+      if (payout.status === InfluencerPayoutStatus.FAILED) {
+        await session.abortTransaction();
+        return ApiResponse.success('Influencer payout already marked failed (idempotent)', payout);
+      }
+
+      if (payout.status === InfluencerPayoutStatus.PAID) {
+        throw new ConflictException('Cannot fail a payout that has already been settled.');
+      }
+
+      if (payout.status !== InfluencerPayoutStatus.PENDING) {
+        throw new BadRequestException(`Cannot fail payout in status: ${payout.status}`);
+      }
+
+      payout.status = InfluencerPayoutStatus.FAILED;
+      payout.rejectionReason = cleanReason;
+      await payout.save({ session });
+
+      // Unlock commissions back to APPROVED/payable state
+      await this.influencerCommissionModel.updateMany(
+        {
+          _id: { $in: payout.commissionIds },
+          isSettled: false,
+        },
+        {
+          $set: {
+            payoutId: null,
+          },
+        },
+        { session },
+      );
+
+      await session.commitTransaction();
+      return ApiResponse.success('Influencer payout marked failed and commissions unlocked', payout);
+    } catch (error) {
+      await session.abortTransaction();
+      throw error;
+    } finally {
+      session.endSession();
+    }
+  }
+
+  async getInfluencerPayouts(query: {
+    page?: number;
+    limit?: number;
+    status?: InfluencerPayoutStatus;
+    influencerId?: string;
+  } = {}) {
+    const page = Number(query.page) || 1;
+    const limit = Number(query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    const filter: any = {};
+    if (query.status) filter.status = query.status;
+    if (query.influencerId) filter.influencerId = new Types.ObjectId(query.influencerId);
+
+    const [items, total] = await Promise.all([
+      this.influencerPayoutModel
+        .find(filter)
+        .populate('influencerId', 'name referralCode')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      this.influencerPayoutModel.countDocuments(filter),
+    ]);
+
+    return ApiResponse.success('Influencer payouts retrieved', {
+      items,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    });
   }
 
 

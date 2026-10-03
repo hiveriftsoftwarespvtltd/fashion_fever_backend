@@ -1,10 +1,13 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Optional } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { AffliateProgram, AffliateProgramDocument } from './schema/affliate-program.schema';
 import { AffliateClickTracking, AffliateClickTrackingDocument } from './schema/affliate-click-tracking.schema';
+import { AffliateClickRateLimit, AffliateClickRateLimitDocument } from './schema/affliate-click-rate-limit.schema';
 import { AffliateSignup, AffliateSignupDocument } from './schema/affliate-signup.schema';
 import { AffliateCommission, AffliateCommissionDocument } from './schema/affliate-commission.schema';
+
+const BOT_USER_AGENT_REGEX = /bot|crawl|spider|slurp|facebookexternalhit|whatsapp|telegrambot|curl|wget|python-requests|node-fetch|axios|httpclient/i;
 
 @Injectable()
 export class AffiliateTrackingService {
@@ -13,67 +16,93 @@ export class AffiliateTrackingService {
         @InjectModel(AffliateClickTracking.name) private affliateClickTrackingModel: Model<AffliateClickTrackingDocument>,
         @InjectModel(AffliateSignup.name) private affliateSignupModel: Model<AffliateSignupDocument>,
         @InjectModel(AffliateCommission.name) private affliateCommissionModel: Model<AffliateCommissionDocument>,
+        @Optional()
+        @InjectModel(AffliateClickRateLimit.name)
+        private affliateRateLimitModel?: Model<AffliateClickRateLimitDocument>,
     ) { }
-
-    // async trackClick(referralCode: string, ipAddress: string, userAgent: string) {
-    //     const program = await this.affliateProgramModel.findOne({ referralCode, isActive: true, isDeleted: false });
-    //     if (!program) {
-    //         throw new NotFoundException('Affiliate program not found');
-    //     }
-
-    //     const clickTracking = new this.affliateClickTrackingModel({
-    //         programId: program._id,
-    //         influencerId: program.influencerId,
-    //         ipAddress,
-    //         userAgent: userAgent,
-    //         clickedAt: new Date()
-    //     });
-
-    //     await clickTracking.save();
-
-    //     await this.affliateProgramModel.findByIdAndUpdate(program._id, {
-    //         $inc: { totalClicks: 1 }
-    //     });
-
-    //     return { success: true, message: 'Click tracked successfully', referralCode };
-    // }
 
     async trackClick(
         referralCode: string,
         ipAddress: string,
         userAgent: string,
     ) {
-        const program =
-            await this.affliateProgramModel.findOne({
-                referralCode,
-                isActive: true,
-                isDeleted: false,
-            });
+        const program = await this.affliateProgramModel.findOne({
+            referralCode,
+            isActive: true,
+            isDeleted: false,
+        });
 
         if (!program) {
-            throw new NotFoundException(
-                'Affiliate program not found',
-            );
+            throw new NotFoundException('Affiliate program not found');
         }
 
-        const existingTracking = await this.affliateClickTrackingModel.findOne({
-            ipAddress
-        })
-
-        if (existingTracking) {
-            return
+        // 1. Bot & Crawler Rejection: Discard immediately without tracking or incrementing counters
+        if (userAgent && BOT_USER_AGENT_REGEX.test(userAgent)) {
+            return program;
         }
 
+        const now = new Date();
+        const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
 
+        // 2. Concurrency-Safe Rolling 24-Hour Sliding Window Lease
+        if (this.affliateRateLimitModel) {
+            let leaseAcquired = false;
+            try {
+                const rateLimitResult = await this.affliateRateLimitModel.findOneAndUpdate(
+                    {
+                        influencerId: program.influencerId,
+                        ipAddress,
+                        $or: [
+                            { lastEligibleClickAt: { $lt: twentyFourHoursAgo } },
+                            { lastEligibleClickAt: { $exists: false } },
+                        ],
+                    },
+                    {
+                        $set: { lastEligibleClickAt: now },
+                        $setOnInsert: { influencerId: program.influencerId, ipAddress },
+                    },
+                    { upsert: true, returnDocument: 'after' },
+                );
 
+                if (rateLimitResult) {
+                    leaseAcquired = true;
+                }
+            } catch (err: any) {
+                // Duplicate key error on concurrent upsert (code 11000) means another request won the race
+                if (err.code === 11000) {
+                    leaseAcquired = false;
+                } else {
+                    throw err;
+                }
+            }
+
+            if (!leaseAcquired) {
+                // Throttled: repeat click within rolling 24 hours or lost race condition
+                return program;
+            }
+        } else {
+            // Fallback if rate limit model is not provided (e.g. legacy/mock environments)
+            const existingTracking = await this.affliateClickTrackingModel.findOne({
+                influencerId: program.influencerId,
+                ipAddress,
+                clickedAt: { $gte: twentyFourHoursAgo },
+            });
+
+            if (existingTracking) {
+                return program;
+            }
+        }
+
+        // 3. Record tracking document for legitimate winner
         await this.affliateClickTrackingModel.create({
             programId: program._id,
             influencerId: program.influencerId,
             ipAddress,
-            userAgent,
-            clickedAt: new Date(),
+            userAgent: userAgent || '',
+            clickedAt: now,
         });
 
+        // 4. Atomically increment totalClicks
         await this.affliateProgramModel.updateOne(
             { _id: program._id },
             {

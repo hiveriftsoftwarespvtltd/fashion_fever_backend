@@ -31,4 +31,5 @@ export class AffliateClickTracking {
     clickedAt!: Date
 }
 
-export const AffliateClickTrackingSchema = SchemaFactory.createForClass(AffliateClickTracking)
+export const AffliateClickTrackingSchema = SchemaFactory.createForClass(AffliateClickTracking);
+AffliateClickTrackingSchema.index({ influencerId: 1, ipAddress: 1, clickedAt: -1 });

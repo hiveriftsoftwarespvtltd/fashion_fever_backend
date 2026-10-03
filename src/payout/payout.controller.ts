@@ -19,6 +19,9 @@ import {
   SettlementQueryDto,
   ProcessEarningsPayoutDto,
   DepositCashDto,
+  RejectInfluencerPayoutDto,
+  FailInfluencerPayoutDto,
+  InfluencerPayoutQueryDto,
 } from './dto/payout.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from 'src/auth/roles.guard';
@@ -42,6 +45,24 @@ export class PayoutController {
   @Post('influencer-payout/settle')
   settleInfluencerPayout(@Body() dto: SettleInfluencerPayoutDto) {
     return this.payoutService.settleInfluencerPayout(dto);
+  }
+
+  @AdminAccess(AdminModule.FINANCE, AccessType.WRITE)
+  @Post('influencer-payout/reject')
+  rejectInfluencerPayout(@Body() dto: RejectInfluencerPayoutDto) {
+    return this.payoutService.rejectInfluencerPayout(dto);
+  }
+
+  @AdminAccess(AdminModule.FINANCE, AccessType.WRITE)
+  @Post('influencer-payout/fail')
+  failInfluencerPayout(@Body() dto: FailInfluencerPayoutDto) {
+    return this.payoutService.failInfluencerPayout(dto);
+  }
+
+  @AdminAccess(AdminModule.FINANCE, AccessType.READ)
+  @Get('influencer-payouts')
+  getInfluencerPayouts(@Query() query: InfluencerPayoutQueryDto) {
+    return this.payoutService.getInfluencerPayouts(query);
   }
 
 

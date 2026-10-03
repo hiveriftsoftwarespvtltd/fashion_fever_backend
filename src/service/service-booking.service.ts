@@ -123,13 +123,22 @@ export class ServiceBookingService {
         );
       }
 
-      const staff = await this.serviceStaffModel
+      let staff = await this.serviceStaffModel
         .findOne({
           _id: new Types.ObjectId(dto.staffId),
           providerId: providerId,
           isActive: true,
         })
         .session(session);
+
+      if (!staff) {
+        staff = await this.serviceStaffModel
+          .findOne({
+            providerId: providerId,
+            isActive: true,
+          })
+          .session(session);
+      }
 
       if (!staff) {
         throw new NotFoundException(
@@ -264,6 +273,8 @@ export class ServiceBookingService {
       let couponDiscount = 0;
       let couponId: Types.ObjectId | undefined;
       let couponCode: string | undefined;
+      // Per-service coupon breakdowns (for booking summary line items)
+      const serviceLineCouponDiscounts: Map<string, number> = new Map();
 
       // ---------------- COUPON LOGIC ----------------
 
@@ -283,94 +294,117 @@ export class ServiceBookingService {
           );
         }
 
-        const now = new Date();
+        // ── Service-Coupon: enforce provider + service ownership ──────────
+        // CouponScope.SERVICE === 'service'
+        if (coupon.scope === 'service') {
+          // Re-verify provider ownership on the server (COUP-07)
+          if (
+            !coupon.serviceProviderId ||
+            coupon.serviceProviderId.toString() !== providerId?.toString()
+          ) {
+            throw new BadRequestException(
+              'This coupon is not valid for the selected salon',
+            );
+          }
 
-        if (
-          coupon.startsAt &&
-          now < coupon.startsAt
-        ) {
-          throw new BadRequestException(
-            'Coupon not started yet',
+          // Verify linked service is part of this booking
+          const linkedServiceStr = coupon.linkedServiceId?.toString();
+          const linkedServiceInBooking = services.find(
+            (s: any) => s._id.toString() === linkedServiceStr,
           );
-        }
+          if (!linkedServiceInBooking) {
+            throw new BadRequestException(
+              'This coupon does not apply to any of the selected services',
+            );
+          }
 
-        if (
-          coupon.expiresAt &&
-          now >= coupon.expiresAt
-        ) {
-          throw new BadRequestException(
-            'Coupon expired',
-          );
-        }
+          // Compute discount ONLY for the linked service
+          const linkedPrice =
+            linkedServiceInBooking.offeredPrice ||
+            linkedServiceInBooking.sellingPrice ||
+            0;
 
-        if (
-          coupon.totalUsageLimit > 0 &&
-          coupon.totalUsed >=
-          coupon.totalUsageLimit
-        ) {
-          throw new BadRequestException(
-            'Coupon usage limit exceeded',
-          );
-        }
+          const now = new Date();
+          if (coupon.startsAt && now < coupon.startsAt) {
+            throw new BadRequestException('Coupon not started yet');
+          }
+          if (coupon.expiresAt && now >= coupon.expiresAt) {
+            throw new BadRequestException('Coupon expired');
+          }
+          if (coupon.totalUsageLimit > 0 && coupon.totalUsed >= coupon.totalUsageLimit) {
+            throw new BadRequestException('Coupon usage limit exceeded');
+          }
 
-        const userUsage =
-          await this.couponUsageModel.countDocuments({
+          const userUsage = await this.couponUsageModel.countDocuments({
             userId: new Types.ObjectId(userId),
             couponId: coupon._id,
           });
-
-        if (
-          coupon.usageLimitPerUser > 0 &&
-          userUsage >=
-          coupon.usageLimitPerUser
-        ) {
-          throw new BadRequestException(
-            'You already used this coupon',
-          );
-        }
-
-        if (
-          coupon.minimumOrderAmount > 0 &&
-          subtotal <
-          coupon.minimumOrderAmount
-        ) {
-          throw new BadRequestException(
-            `Minimum order amount should be ₹${coupon.minimumOrderAmount}`,
-          );
-        }
-
-        if (
-          coupon.type ===
-          CouponType.PERCENTAGE
-        ) {
-          couponDiscount =
-            (subtotal * coupon.value) / 100;
-
-          if (
-            coupon.maximumDiscount &&
-            couponDiscount >
-            coupon.maximumDiscount
-          ) {
-            couponDiscount =
-              coupon.maximumDiscount;
+          if (coupon.usageLimitPerUser > 0 && userUsage >= coupon.usageLimitPerUser) {
+            throw new BadRequestException('You already used this coupon');
           }
-        } else {
-          couponDiscount = coupon.value;
-        }
 
-        couponDiscount = Math.min(
-          couponDiscount,
-          subtotal,
-        );
+          if (coupon.minimumOrderAmount > 0 && linkedPrice < coupon.minimumOrderAmount) {
+            throw new BadRequestException(
+              `Minimum service price of ₹${coupon.minimumOrderAmount} required`,
+            );
+          }
+
+          let serviceDiscount = 0;
+          if (coupon.type === CouponType.PERCENTAGE) {
+            serviceDiscount = (linkedPrice * coupon.value) / 100;
+            if (coupon.maximumDiscount && serviceDiscount > coupon.maximumDiscount) {
+              serviceDiscount = coupon.maximumDiscount;
+            }
+          } else {
+            serviceDiscount = coupon.value;
+          }
+          serviceDiscount = Math.min(serviceDiscount, linkedPrice);
+          couponDiscount = serviceDiscount;
+          serviceLineCouponDiscounts.set(linkedServiceStr!, serviceDiscount);
+
+        } else {
+          // ── Non-service coupon (platform/vendor/etc): existing logic ─────
+          const now = new Date();
+          if (coupon.startsAt && now < coupon.startsAt) {
+            throw new BadRequestException('Coupon not started yet');
+          }
+          if (coupon.expiresAt && now >= coupon.expiresAt) {
+            throw new BadRequestException('Coupon expired');
+          }
+          if (coupon.totalUsageLimit > 0 && coupon.totalUsed >= coupon.totalUsageLimit) {
+            throw new BadRequestException('Coupon usage limit exceeded');
+          }
+
+          const userUsage = await this.couponUsageModel.countDocuments({
+            userId: new Types.ObjectId(userId),
+            couponId: coupon._id,
+          });
+          if (coupon.usageLimitPerUser > 0 && userUsage >= coupon.usageLimitPerUser) {
+            throw new BadRequestException('You already used this coupon');
+          }
+          if (coupon.minimumOrderAmount > 0 && subtotal < coupon.minimumOrderAmount) {
+            throw new BadRequestException(
+              `Minimum order amount should be ₹${coupon.minimumOrderAmount}`,
+            );
+          }
+          if (coupon.type === CouponType.PERCENTAGE) {
+            couponDiscount = (subtotal * coupon.value) / 100;
+            if (coupon.maximumDiscount && couponDiscount > coupon.maximumDiscount) {
+              couponDiscount = coupon.maximumDiscount;
+            }
+          } else {
+            couponDiscount = coupon.value;
+          }
+          couponDiscount = Math.min(couponDiscount, subtotal);
+        }
 
         coupon.totalUsed += 1;
-
         await coupon.save({ session });
 
-        couponId =
-          coupon._id as Types.ObjectId;
+        couponId = coupon._id as Types.ObjectId;
         couponCode = coupon.code;
       }
+
 
       const totalAmount =
         subtotal - couponDiscount;

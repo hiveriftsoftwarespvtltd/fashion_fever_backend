@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   Param,
+  Patch,
   Post,
   Put,
   Query,
@@ -11,6 +12,7 @@ import {
 } from '@nestjs/common';
 
 import { CouponService } from './coupon.service';
+import { ServiceProviderCouponService } from './service-provider-coupon.service';
 import { CreateCouponDto, UpdateCouponDTO } from './dto/coupon.dto';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guad';
 import { Roles } from 'src/auth/roles.decorator';
@@ -23,6 +25,7 @@ import { RolesGuard } from 'src/auth/roles.guard';
 export class CouponController {
   constructor(
     private readonly couponService: CouponService,
+    private readonly spCouponService: ServiceProviderCouponService,
   ) { }
 
   @Get("all")
@@ -65,5 +68,34 @@ export class CouponController {
   @Delete('delete-coupon/:id')
   deleteCoupon(@Param('id') id: string) {
     return this.couponService.deleteCoupon(id)
+  }
+
+  // ── Admin: Service-Provider coupon management ────────────────────────────
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
+  @Get('admin/by-provider/:providerId')
+  adminByProvider(@Param('providerId') providerId: string) {
+    return this.spCouponService.adminGetByProvider(providerId);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
+  @Get('admin/service-coupons')
+  adminServiceCoupons(
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.spCouponService.adminListServiceCoupons(
+      page ? parseInt(page, 10) : 1,
+      limit ? parseInt(limit, 10) : 20,
+    );
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
+  @Patch('admin/force-deactivate/:id')
+  adminForceDeactivate(@Param('id') id: string) {
+    return this.spCouponService.adminForceDeactivate(id);
   }
 }

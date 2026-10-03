@@ -44,16 +44,34 @@ export class AffiliateDashboardService {
         // 1. Get all influencers
         const influencers = await this.influencerModel.find({ isActive: true, isDeleted: false }).lean();
 
-        // 2. Fetch all signups and map userId -> influencerId
-        const allSignups = await this.signupModel.aggregate([
-            { $lookup: { from: 'affliateprograms', localField: 'affliateProgramId', foreignField: '_id', as: 'program' } },
-            { $unwind: '$program' }
+        // 2. Fetch all signups and directly attributed users
+        const [allSignups, directlyAttributedUsers] = await Promise.all([
+            this.signupModel.aggregate([
+                { $lookup: { from: 'affliateprograms', localField: 'affliateProgramId', foreignField: '_id', as: 'program' } },
+                { $unwind: '$program' }
+            ]),
+            this.userModel.find(
+                { referredByInfluencerId: { $ne: null } },
+                { _id: 1, referredByInfluencerId: 1, referralAttributedAt: 1, referralExpiresAt: 1 }
+            ).lean()
         ]);
 
         const userToInfluencerMap: Record<string, string> = {};
+        const userExpiryMap: Record<string, Date | undefined> = {};
+
         allSignups.forEach(signup => {
             if (signup.userId && signup.program.influencerId) {
                 userToInfluencerMap[signup.userId.toString()] = signup.program.influencerId.toString();
+            }
+        });
+
+        directlyAttributedUsers.forEach(user => {
+            if (user.referredByInfluencerId) {
+                const uid = user._id.toString();
+                userToInfluencerMap[uid] = user.referredByInfluencerId.toString();
+                if (user.referralExpiresAt) {
+                    userExpiryMap[uid] = new Date(user.referralExpiresAt);
+                }
             }
         });
 
@@ -82,7 +100,7 @@ export class AffiliateDashboardService {
             educators,
             serviceProviders
         ] = await Promise.all([
-            this.orderModel.find({ ...dateMatch, userId: { $in: allReferredUserIds }, orderStatus: OrderStatus.DELIVERED, paymentStatus: PaymentStatus.PAID }, { userId: 1, grandTotal: 1, platformComissionAmount: 1 }).lean(),
+            this.orderModel.find({ ...dateMatch, userId: { $in: allReferredUserIds }, orderStatus: OrderStatus.DELIVERED, paymentStatus: PaymentStatus.PAID }, { userId: 1, grandTotal: 1, platformComissionAmount: 1, createdAt: 1 }).lean(),
             this.serviceBookingModel.find({ ...dateMatch, userId: { $in: allReferredUserIds }, bookingStatus: BookingStatus.COMPLETED, paymentStatus: BookingPaymentStatus.PAID }, { userId: 1, totalAmount: 1, platformCommissionAmount: 1 }).lean(),
             this.coursePurchaseModel.find({ ...dateMatch, learnerId: { $in: allReferredUserIds }, status: CoursePurchaseStatus.PAID }, { learnerId: 1, amount: 1, platformCommissionAmount: 1 }).lean(),
             this.userModel.find({ ...dateMatch, _id: { $in: allReferredUserIds }, isEmailVerified: true }, { _id: 1, role: 1 }).lean(),
@@ -119,6 +137,13 @@ export class AffiliateDashboardService {
         };
 
         orders.forEach(doc => {
+            const uid = doc.userId?.toString();
+            const expiry = uid ? userExpiryMap[uid] : undefined;
+            const orderDate = (doc as any).createdAt ? new Date((doc as any).createdAt) : new Date();
+            // Phase 3: Enforce strict 365-day expiry boundary (orders after expiry do not attribute)
+            if (expiry && orderDate > expiry) {
+                return;
+            }
             incStat(doc.userId, 'totalOrders');
             incStat(doc.userId, 'totalOrderValue', doc.grandTotal || 0);
             incStat(doc.userId, 'platformCommissionEarned', doc.platformComissionAmount || 0);
@@ -166,6 +191,8 @@ export class AffiliateDashboardService {
             return {
                 influencerId: inf._id,
                 name: inf.name,
+                referralCode: inf.referralCode,
+                commissionRate: inf.commissionRate !== undefined ? inf.commissionRate : null,
                 stats
             };
         });
@@ -185,20 +212,35 @@ export class AffiliateDashboardService {
         const { startDate, endDate } = this.getDateRange(month, year);
         const infIdObj = new Types.ObjectId(influencerId);
 
-        // 1. Get referred userIds for this influencer
-        const signups = await this.signupModel.aggregate([
-            { $lookup: { from: 'affliateprograms', localField: 'affliateProgramId', foreignField: '_id', as: 'program' } },
-            { $unwind: '$program' },
-            { $match: { 'program.influencerId': infIdObj } }
+        // 1. Get referred userIds for this influencer (both from legacy signups and directly attributed users)
+        const [signups, directlyAttributedUsers] = await Promise.all([
+            this.signupModel.aggregate([
+                { $lookup: { from: 'affliateprograms', localField: 'affliateProgramId', foreignField: '_id', as: 'program' } },
+                { $unwind: '$program' },
+                { $match: { 'program.influencerId': infIdObj } }
+            ]),
+            this.userModel.find(
+                { referredByInfluencerId: infIdObj },
+                { _id: 1, referralAttributedAt: 1, referralExpiresAt: 1 }
+            ).lean()
         ]);
-        const referredUserIds = signups.map(s => s.userId).filter(id => !!id);
+
+        const userExpiryMap = new Map<string, Date | undefined>();
+        signups.forEach(s => {
+            if (s.userId) userExpiryMap.set(s.userId.toString(), undefined);
+        });
+        directlyAttributedUsers.forEach(u => {
+            userExpiryMap.set(u._id.toString(), u.referralExpiresAt ? new Date(u.referralExpiresAt) : undefined);
+        });
+
+        const referredUserIds = Array.from(userExpiryMap.keys()).map(id => new Types.ObjectId(id));
 
         const dateMatch = { createdAt: { $gte: startDate, $lte: endDate } };
 
         // 2. Query independent collections
         const [
             uniqueClicksAggr,
-            ordersCount,
+            deliveredOrders,
             servicesCount,
             coursesCount,
             usersCount,
@@ -211,10 +253,12 @@ export class AffiliateDashboardService {
                 { $group: { _id: '$ipAddress' } },
                 { $count: 'uniqueClicks' }
             ]),
-            this.orderModel.aggregate([
-                { $match: { ...dateMatch, userId: { $in: referredUserIds }, orderStatus: OrderStatus.DELIVERED, paymentStatus: PaymentStatus.PAID } },
-                { $group: { _id: null, count: { $sum: 1 }, totalValue: { $sum: '$grandTotal' } } }
-            ]),
+            this.orderModel.find({
+                ...dateMatch,
+                userId: { $in: referredUserIds },
+                orderStatus: OrderStatus.DELIVERED,
+                paymentStatus: PaymentStatus.PAID
+            }, { userId: 1, grandTotal: 1, createdAt: 1 }).lean(),
             this.serviceBookingModel.aggregate([
                 { $match: { ...dateMatch, userId: { $in: referredUserIds }, bookingStatus: BookingStatus.COMPLETED, paymentStatus: BookingPaymentStatus.PAID } },
                 { $group: { _id: null, count: { $sum: 1 }, totalValue: { $sum: '$totalAmount' } } }
@@ -230,15 +274,39 @@ export class AffiliateDashboardService {
         ]);
 
         const uniqueClicks = uniqueClicksAggr[0]?.uniqueClicks || 0;
-        const totalSignups = signups.filter(s => s.signupAt >= startDate && s.signupAt <= endDate).length;
+        const legacySignups = signups.filter(s => s.signupAt >= startDate && s.signupAt <= endDate).length;
+        const directSignups = directlyAttributedUsers.filter(u => {
+            const attr = u.referralAttributedAt ? new Date(u.referralAttributedAt) : null;
+            return attr && attr >= startDate && attr <= endDate;
+        }).length;
+        const totalSignups = legacySignups + directSignups;
 
-        const orderStats = ordersCount[0] || { count: 0, totalValue: 0 };
+        // Phase 3: Filter orders respecting 365-day expiry
+        const validOrders = deliveredOrders.filter(doc => {
+            const exp = userExpiryMap.get(doc.userId?.toString());
+            if (!exp) return true;
+            const orderDate = (doc as any).createdAt ? new Date((doc as any).createdAt) : new Date();
+            return orderDate <= exp;
+        });
+
+        const orderStats = {
+            count: validOrders.length,
+            totalValue: validOrders.reduce((sum, o) => sum + (o.grandTotal || 0), 0)
+        };
         const serviceStats = servicesCount[0] || { count: 0, totalValue: 0 };
         const courseStats = coursesCount[0] || { count: 0, totalValue: 0 };
 
         const totalOrderValue = orderStats.totalValue + serviceStats.totalValue + courseStats.totalValue;
 
+        const influencer = await this.influencerModel.findById(infIdObj).select('name referralCode commissionRate').lean();
+
         return {
+            influencer: {
+                _id: infIdObj,
+                name: influencer?.name,
+                referralCode: influencer?.referralCode,
+                commissionRate: influencer?.commissionRate !== undefined ? influencer.commissionRate : null,
+            },
             stats: {
                 uniqueClicks,
                 totalSignups,

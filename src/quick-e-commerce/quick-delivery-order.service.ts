@@ -23,7 +23,8 @@ import { QuickDeliveryConfiguration, QuickDeliveryConfigurationDocument } from "
 import { PaymentMode, PaymentTransaction, PaymentTransactionDocument, ReferenceType, TransactionStatus } from 'src/payout/schema/payment-transaction.schema';
 import { PaymentMethod as TransactionPaymentMethod } from 'src/payout/schema/payment-transaction.schema';
 import { MarketplaceEarning, MarketplaceEarningDocument, EarningRole, EarningReferenceType, EarningStatus } from 'src/payout/schema/market-place-earning.schema';
-import { Influencer, InfluencerDocument } from 'src/influencer/schema/influencer.schema';
+import { Influencer, InfluencerDocument, InfluencerStatus } from 'src/influencer/schema/influencer.schema';
+import { User, UserDocument } from 'src/user/schema/user.schema';
 import { VendorOrder as StandardVendorOrder, VendorOrderDocument as StandardVendorOrderDocument } from 'src/order/schema/vendor-order.schema';
 
 @Injectable()
@@ -46,6 +47,7 @@ export class QuickOrderService {
         @InjectModel(PaymentTransaction.name) private paymentTransactionModel: Model<PaymentTransactionDocument>,
         @InjectModel(MarketplaceEarning.name) private marketplaceEarningModel: Model<MarketplaceEarningDocument>,
         @InjectModel(Influencer.name) private influencerModel: Model<InfluencerDocument>,
+        @InjectModel(User.name) private userModel: Model<UserDocument>,
         @InjectModel(StandardVendorOrder.name) private standardVendorOrderModel: Model<StandardVendorOrderDocument>,
         @InjectConnection() private connection: Connection,
         private checkoutService: QuickDeliveryCheckoutService,
@@ -722,23 +724,50 @@ export class QuickOrderService {
                 let calculatedInfluencerAmount = 0;
                 let influencerRate = 0;
 
-                if (mainOrder.appliedCoupon && mainOrder.appliedCoupon.influencerId && mainOrder.appliedCoupon.influencerCommissionRate) {
-                    try {
-                        const influencer = session ? await this.influencerModel.findById(mainOrder.appliedCoupon.influencerId).session(session) : await this.influencerModel.findById(mainOrder.appliedCoupon.influencerId);
-                        if (influencer && influencer.userId) {
-                            currentInfluencerUserId = toObjectId(influencer.userId);
-                            influencerRate = mainOrder.appliedCoupon.influencerCommissionRate;
-                            calculatedInfluencerAmount = parseFloat(((vendorOrder.total * influencerRate) / 100).toFixed(2));
-                            const safeInfluencerId = toObjectId(influencer._id);
-                            if (safeInfluencerId) {
-                                vendorOrder.influencerId = safeInfluencerId;
+                try {
+                    // Phase 3: Evaluate active 1-year referral attribution
+                    const purchasingUser = await this.userModel.findById(userId).select('referredByInfluencerId referralExpiresAt');
+                    let targetInfluencer: InfluencerDocument | null = null;
+
+                    if (purchasingUser?.referredByInfluencerId) {
+                        const isExpired = purchasingUser.referralExpiresAt ? new Date() > purchasingUser.referralExpiresAt : true;
+                        if (!isExpired) {
+                            targetInfluencer = session
+                                ? await this.influencerModel.findOne({ _id: purchasingUser.referredByInfluencerId, status: InfluencerStatus.ACTIVE, isDeleted: false }).session(session)
+                                : await this.influencerModel.findOne({ _id: purchasingUser.referredByInfluencerId, status: InfluencerStatus.ACTIVE, isDeleted: false });
+
+                            // Rule E: Prevent self-purchase commission
+                            if (targetInfluencer?.userId && targetInfluencer.userId.toString() === userId.toString()) {
+                                targetInfluencer = null;
                             }
-                            vendorOrder.influencerCommissionRate = influencerRate;
-                            vendorOrder.influencerCommissionAmount = calculatedInfluencerAmount;
                         }
-                    } catch (iErr) {
-                        console.error('Influencer resolution notice:', iErr);
                     }
+
+                    // Fallback to coupon influencer if no active referral
+                    if (!targetInfluencer && mainOrder.appliedCoupon?.influencerId) {
+                        targetInfluencer = session
+                            ? await this.influencerModel.findById(mainOrder.appliedCoupon.influencerId).session(session)
+                            : await this.influencerModel.findById(mainOrder.appliedCoupon.influencerId);
+                    }
+
+                    if (targetInfluencer && targetInfluencer.userId) {
+                        currentInfluencerUserId = toObjectId(targetInfluencer.userId);
+                        const configuredRate = (typeof targetInfluencer.commissionRate === 'number')
+                            ? targetInfluencer.commissionRate
+                            : null;
+                        influencerRate = configuredRate !== null ? configuredRate : 0;
+                        calculatedInfluencerAmount = configuredRate !== null
+                            ? parseFloat(((vendorOrder.total * configuredRate) / 100).toFixed(2))
+                            : 0;
+                        const safeInfluencerId = toObjectId(targetInfluencer._id);
+                        if (safeInfluencerId) {
+                            vendorOrder.influencerId = safeInfluencerId;
+                        }
+                        vendorOrder.influencerCommissionRate = configuredRate;
+                        vendorOrder.influencerCommissionAmount = calculatedInfluencerAmount;
+                    }
+                } catch (iErr) {
+                    console.error('Influencer resolution notice:', iErr);
                 }
 
                 let currentDeliveryPersonUserId: Types.ObjectId | null = null;

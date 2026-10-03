@@ -127,8 +127,14 @@ export class User {
   @Prop({ type: Types.ObjectId, ref: "AffliateProgram" })
   affliateProgramId?: Types.ObjectId;
 
-  @Prop({ type: Types.ObjectId, ref: 'Influencer' })
-  referredByInfluencerId?: Types.ObjectId;
+  @Prop({ type: Types.ObjectId, ref: 'Influencer', default: null })
+  referredByInfluencerId?: Types.ObjectId | null;
+
+  @Prop({ type: Date, default: null })
+  referralAttributedAt?: Date | null;
+
+  @Prop({ type: Date, default: null })
+  referralExpiresAt?: Date | null;
 
   @Prop({ default: false })
   isEducatorOnboardingCompleted!: boolean;
@@ -136,6 +142,9 @@ export class User {
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
+
+UserSchema.index({ referredByInfluencerId: 1 }, { sparse: true });
+UserSchema.index({ referralExpiresAt: 1 }, { sparse: true });
 
 UserSchema.set('toObject', {
   flattenMaps: true,

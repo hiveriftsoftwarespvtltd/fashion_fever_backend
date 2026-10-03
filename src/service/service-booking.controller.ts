@@ -18,10 +18,23 @@ import { Roles } from 'src/auth/roles.decorator';
 import { UserRole } from 'src/user/schema/user.schema';
 import { CreateBookingDTO, RescheduleBookingDTO } from './dto/service.dto';
 import { BookingPaymentStatus, BookingStatus } from './schema/service-booking.schema';
+import { ServiceProviderCouponService } from 'src/coupon/service-provider-coupon.service';
+import { ValidateServiceCouponDTO } from 'src/coupon/dto/coupon.dto';
 
 @Controller('service-booking')
 export class ServiceBookingController {
-  constructor(private readonly serviceBookingService: ServiceBookingService) { }
+  constructor(
+    private readonly serviceBookingService: ServiceBookingService,
+    private readonly spCouponService: ServiceProviderCouponService,
+  ) { }
+
+  /** Customer validates a service-specific coupon during Step 4 (Review) */
+  @Post('validate-service-coupon')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.USER)
+  validateServiceCoupon(@Req() req: any, @Body() dto: ValidateServiceCouponDTO) {
+    return this.spCouponService.validateServiceCoupon(dto, req.user._id);
+  }
 
   @Post('create-booking')
   @UseGuards(JwtAuthGuard, RolesGuard)

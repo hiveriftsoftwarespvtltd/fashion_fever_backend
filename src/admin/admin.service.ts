@@ -134,7 +134,14 @@ export class AdminService {
     const [data, total] = await Promise.all([
       this.userModel
         .find(filter)
-        .populate('vendorId')
+        .populate({
+          path: 'vendorId',
+          populate: [
+            { path: 'logo' },
+            { path: 'banner' },
+          ],
+        })
+        .sort({ createdAt: -1 })
         .skip(skip)
         .limit(pageSize)
         .lean(),
@@ -158,6 +165,8 @@ export class AdminService {
     const vendor = await this.vendorModel
       .findById(vendorId)
       .populate('ownerId', '-password -otpExpiresAt -otp')
+      .populate('logo')
+      .populate('banner')
       .lean();
 
     if (!vendor) {
@@ -757,12 +766,18 @@ export class AdminService {
         { businessName: regex },
         { businessEmail: regex },
         { businessPhone: regex },
+        { email: regex },
+        { phone: regex },
       ];
     }
 
     const [data, total] = await Promise.all([
       this.vendorModel
         .find(filter)
+        .populate('ownerId', 'name email phone avatar')
+        .populate('logo')
+        .populate('banner')
+        .sort({ createdAt: -1 })
         .skip(skip)
         .limit(pageSize)
         .lean(),
@@ -782,14 +797,23 @@ export class AdminService {
       throw new ConflictException('this vendor already approved');
     }
 
-    const user = await this.userModel.findOne({ vendorId: new Types.ObjectId(vendorId) })
+    const user = await this.userModel.findOne({
+      $or: [
+        { vendorId: new Types.ObjectId(vendorId) },
+        { _id: vendor.ownerId }
+      ]
+    });
     if (!user) {
-      throw new NotFoundException("User Not Exist")
+      throw new NotFoundException("User Not Exist");
     }
 
     vendor.status = 'APPROVED';
+    vendor.isActive = true;
     await vendor.save();
 
+    user.vendorId = vendor._id;
+    user.isVendorOnboardingCompleted = true;
+    user.isActive = true;
     user.roleStatus.set(UserRole.VENDOR, RoleStatus.APPROVED);
     if (!user.roles.includes(UserRole.VENDOR)) {
       user.roles.push(UserRole.VENDOR);
@@ -813,7 +837,12 @@ export class AdminService {
     vendor.status = 'REJECTED';
     await vendor.save();
 
-    const user = await this.userModel.findOne({ vendorId });
+    const user = await this.userModel.findOne({
+      $or: [
+        { vendorId: new Types.ObjectId(vendorId) },
+        { _id: vendor.ownerId }
+      ]
+    });
     if (user) {
       user.roleStatus.set(UserRole.VENDOR, RoleStatus.REJECTED);
       await user.save();

@@ -12,8 +12,20 @@ export enum CommissionStatus {
   REVERSED = 'reversed',
 }
 
+export enum AttributionSource {
+  REFERRAL = 'REFERRAL',
+  COUPON = 'COUPON',
+}
+
 @Schema({ timestamps: true })
 export class InfluencerCommission {
+  @Prop({
+    type: String,
+    enum: AttributionSource,
+    default: AttributionSource.REFERRAL,
+  })
+  attributionSource?: AttributionSource;
+
   @Prop({
     type: Types.ObjectId,
     ref: 'Influencer',
@@ -27,6 +39,13 @@ export class InfluencerCommission {
     required: true,
   })
   influencerUserId!: Types.ObjectId;
+
+  @Prop({
+    type: Types.ObjectId,
+    ref: 'User',
+    default: null,
+  })
+  customerId?: Types.ObjectId;
 
   @Prop({
     type: Types.ObjectId,
@@ -139,12 +158,25 @@ payoutId?: Types.ObjectId;
 
   @Prop()
   deliveredAt?: Date;
+
+  @Prop()
+  approvalEligibleAt?: Date;
 }
 
 export const InfluencerCommissionSchema =
   SchemaFactory.createForClass(InfluencerCommission);
 
-// InfluencerCommissionSchema.index({
-//   influencerId: 1,
-//   vendorId: 1,
-// }, { unique: true });
+InfluencerCommissionSchema.index(
+  {
+    orderId: 1,
+    vendorOrderId: 1,
+    influencerId: 1,
+  },
+  { unique: true, sparse: true },
+);
+
+InfluencerCommissionSchema.index({ influencerId: 1, status: 1 });
+InfluencerCommissionSchema.index({ customerId: 1 }, { sparse: true });
+InfluencerCommissionSchema.index({ approvalEligibleAt: 1 }, { sparse: true });
+// Phase 7: Efficient locking queries and reversal lookups by payoutId
+InfluencerCommissionSchema.index({ payoutId: 1 }, { sparse: true });

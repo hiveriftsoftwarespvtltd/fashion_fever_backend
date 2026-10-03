@@ -33,13 +33,13 @@ export class Influencer {
   @Prop({type:Types.ObjectId,ref:"Media"})
   profilePicture?:Types.ObjectId
 
-  // @Prop({
-  //   required: true,
-  //   unique: true,
-  //   uppercase: true,
-  //   trim: true,
-  // })
-  // referralCode!: string;
+  @Prop({
+    unique: true,
+    sparse: true,
+    uppercase: true,
+    trim: true,
+  })
+  referralCode?: string;
 
   @Prop()
   bio?: string;
@@ -64,11 +64,14 @@ export class Influencer {
   })
   followers!: number;
 
-  // default commission %
-  // @Prop({
-  //   default: 5,
-  // })
-  // commissionRate!: number;
+  // Custom commission % (strictly null by default; NO global fallback)
+  @Prop({
+    type: Number,
+    default: null,
+    min: 0,
+    max: 100,
+  })
+  commissionRate?: number | null;
 
   @Prop({
     enum: InfluencerStatus,
@@ -84,6 +87,9 @@ export class Influencer {
   @Prop({ default: 0 })
   totalOrders!: number
 
+  @Prop({ default: 0 })
+  totalSignups!: number;
+
   @Prop({
     default: 0,
   })
@@ -93,6 +99,11 @@ export class Influencer {
     default: 0,
   })
   pendingCommission!: number;
+
+  @Prop({
+    default: 0,
+  })
+  approvedCommission!: number;
 
   @Prop({
     default: 0,

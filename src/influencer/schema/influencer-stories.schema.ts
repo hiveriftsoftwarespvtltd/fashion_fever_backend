@@ -25,4 +25,5 @@ export class InfluencerStory {
     expiresAt: Date;
 }
 
-export const InfluencerStorySchema = SchemaFactory.createForClass(InfluencerStory)
+export const InfluencerStorySchema = SchemaFactory.createForClass(InfluencerStory);
+InfluencerStorySchema.index({ influencerId: 1, storyUrl: 1 });

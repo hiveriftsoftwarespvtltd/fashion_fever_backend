@@ -1457,14 +1457,29 @@ export class ServiceService {
             })
             .lean();
 
-        const staff = await this.serviceStaffModel
+        let staff = await this.serviceStaffModel
             .find({
                 providerId: new Types.ObjectId(providerId),
                 isActive: true,
                 services: { $all: requestedServiceIds }, // checks if services array contains ALL requested service IDs
             }).populate("image")
-            .select('_id name image')
+            .select('_id name image experienceYears skills gender phone')
             .lean();
+
+        // Fallback: If provider hasn't registered dedicated staff yet, treat provider/salon as lead stylist
+        if (staff.length === 0) {
+            const providerDoc = await this.serviceProviderModel.findById(providerId).lean();
+            if (providerDoc) {
+                staff = [{
+                    _id: providerDoc._id,
+                    name: providerDoc.businessName ? `${providerDoc.businessName.trim()} (Lead Specialist)` : 'Lead Stylist',
+                    experienceYears: providerDoc.experienceYears || 5,
+                    skills: ['General Salon Services'],
+                    services: requestedServiceIds,
+                    isActive: true,
+                } as any];
+            }
+        }
 
         const slots = this.generateTimeSlots(
             startOfDay,

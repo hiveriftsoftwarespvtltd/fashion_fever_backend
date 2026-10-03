@@ -9,6 +9,7 @@ import {
   ShippingAddressSchema,
 } from './order.schema';
 import { CommissionOn } from 'src/admin/schema/commission-rate.schema';
+import { AttributionSource } from 'src/influencer/schema/influencer-commision-rate.schema';
 
 
 export enum CancelledByEntity {
@@ -90,6 +91,7 @@ export class VendorOrder {
   payoutAmount!: number;
 
   @Prop({
+    type: String,
     enum: OrderStatus,
     default: OrderStatus.PENDING,
   })
@@ -99,6 +101,7 @@ export class VendorOrder {
   codCharge!: number;
 
   @Prop({
+    type: String,
     enum: PaymentStatus,
     default: PaymentStatus.PENDING,
   })
@@ -137,14 +140,31 @@ export class VendorOrder {
   @Prop({ default: 0 })
   platformCommissionRate!: number;
 
-  @Prop({ default: CommissionOn.PROFITVALUE, enum: CommissionOn })
+  @Prop({ type: String, default: CommissionOn.PROFITVALUE, enum: CommissionOn })
   platformCommissionOn!: CommissionOn;
 
   @Prop({ default: 0 })
   platformCommissionAmount!: number;
 
+  @Prop({
+    type: Types.ObjectId,
+    ref: 'Influencer',
+    default: null,
+  })
+  influencerId?: Types.ObjectId | null;
+
+  @Prop({ type: Number, default: null })
+  influencerCommissionRate?: number | null;
+
   @Prop({ default: 0 })
   influencerCommissionAmount!: number;
+
+  @Prop({
+    type: String,
+    enum: AttributionSource,
+    default: null,
+  })
+  attributionSource?: AttributionSource | null;
 
   @Prop({ default: 0 })
   netProfit?: number;

@@ -28,6 +28,9 @@ import {
   ProductVariantDocument,
 } from 'src/product/schema/product-variant.schema';
 
+import { Influencer, InfluencerDocument } from 'src/influencer/schema/influencer.schema';
+import { Optional } from '@nestjs/common';
+
 @Injectable()
 export class CouponService {
   constructor(
@@ -41,6 +44,9 @@ export class CouponService {
     private productModel: Model<ProductDocument>,
     @InjectModel(ProductVariant.name)
     private productVariantModel: Model<ProductVariantDocument>,
+    @Optional()
+    @InjectModel(Influencer.name)
+    private influencerModel?: Model<InfluencerDocument>,
   ) { }
 
   async create(dto: CreateCouponDto) {
@@ -65,7 +71,7 @@ export class CouponService {
     return coupon;
   }
 
-  async validateCoupon(code: string, total: number) {
+  async validateCoupon(code: string, total: number, userId?: string) {
     const coupon = await this.couponModel.findOne({
       code: code.toUpperCase(),
       isActive: true,
@@ -73,6 +79,14 @@ export class CouponService {
 
     if (!coupon) {
       throw new NotFoundException('Coupon not found');
+    }
+
+    // Rule E2: Block creator from using their own influencer coupon
+    if (coupon.influencerId && userId && this.influencerModel) {
+      const inf = await this.influencerModel.findById(coupon.influencerId).lean();
+      if (inf?.userId && inf.userId.toString() === userId.toString()) {
+        throw new BadRequestException('You cannot use your own influencer coupon.');
+      }
     }
 
     if (total < coupon.minimumOrderAmount) {
@@ -326,6 +340,14 @@ export class CouponService {
       throw new BadRequestException('Coupon expired');
     }
 
+    // Rule E2: Block creator from using their own influencer coupon
+    if (coupon.influencerId && userId && this.influencerModel) {
+      const inf = await this.influencerModel.findById(coupon.influencerId).lean();
+      if (inf?.userId && inf.userId.toString() === userId.toString()) {
+        throw new BadRequestException('You cannot use your own influencer coupon.');
+      }
+    }
+
     if (
       coupon.totalUsageLimit > 0 &&
       coupon.totalUsed >= coupon.totalUsageLimit
@@ -407,6 +429,14 @@ export class CouponService {
 
     if (!coupon) {
       throw new BadRequestException('Coupon not found');
+    }
+
+    // Rule E2: Block creator from using their own influencer coupon
+    if (coupon.influencerId && userId && this.influencerModel) {
+      const inf = await this.influencerModel.findById(coupon.influencerId).lean();
+      if (inf?.userId && inf.userId.toString() === userId.toString()) {
+        throw new BadRequestException('You cannot use your own influencer coupon.');
+      }
     }
 
     const now = new Date();

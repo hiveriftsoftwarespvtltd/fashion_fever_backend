@@ -18,6 +18,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 
 import { InfluencerService } from './influencer.service';
 import { CreateInfluencerDto, UpdateInfluencerDto } from './dto/influencer.dto';
+import { UpdateCommissionRateDto } from './dto/update-commission-rate.dto';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guad';
 import { RolesGuard } from 'src/auth/roles.guard';
 import { Roles } from 'src/auth/roles.decorator';
@@ -89,6 +90,22 @@ export class InfluencerController {
   @Put('update-influencer-status/:influencerId')
   async updateInfluencerStatus(@Param('influencerId') influencerId: string, @Body('status') status: InfluencerStatus) {
     return await this.influencerService.changeInfluencerStatus(influencerId, status);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
+  @AdminAccess(AdminModule.INFLUENCERS, AccessType.WRITE)
+  @Put(':id/commission-rate')
+  async updateCommissionRate(
+    @Param('id') id: string,
+    @Body() dto: UpdateCommissionRateDto,
+  ) {
+    return await this.influencerService.updateCommissionRate(id, dto.commissionRate);
+  }
+
+  @Get('check-referral/:code')
+  async checkReferral(@Param('code') code: string) {
+    return await this.influencerService.checkReferralCode(code);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)

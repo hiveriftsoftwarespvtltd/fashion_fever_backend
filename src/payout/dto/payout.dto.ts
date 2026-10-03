@@ -16,6 +16,7 @@ import { EarningRole, EarningReferenceType, EarningStatus } from '../schema/mark
 import { PayoutStatus, PaymentMethod as MarketplacePaymentMethod, PaymentMethod } from '../schema/market-place-payout.schema';
 import { CashSettlementStatus, CollectedBy } from '../schema/cash-settlement.schema';
 import { UserRole, PaymentDirection, SettlementStatus } from '../schema/settlement.schema';
+import { InfluencerPayoutStatus } from 'src/influencer/schema/influencer-payout.schema';
 
 export class DepositCashDto {
   @IsMongoId()
@@ -59,12 +60,18 @@ export class SettleVendorPayoutDto {
 }
 
 export class SettleInfluencerPayoutDto {
+  @IsOptional()
   @IsMongoId()
-  influencerId!: string;
+  payoutId?: string;
 
+  @IsOptional()
+  @IsMongoId()
+  influencerId?: string;
+
+  @IsOptional()
   @IsArray()
   @IsMongoId({ each: true })
-  commissionIds!: string[];
+  commissionIds?: string[];
 
   @IsString()
   @IsNotEmpty()
@@ -84,6 +91,41 @@ export class SettleInfluencerPayoutDto {
   @Min(2024)
   year?: number;
 }
+
+export class RejectInfluencerPayoutDto {
+  @IsMongoId()
+  payoutId!: string;
+
+  @IsString()
+  @IsNotEmpty()
+  reason!: string;
+}
+
+export class FailInfluencerPayoutDto {
+  @IsMongoId()
+  payoutId!: string;
+
+  @IsString()
+  @IsNotEmpty()
+  reason!: string;
+}
+
+export class InfluencerPayoutQueryDto {
+  @IsOptional()
+  page?: number;
+
+  @IsOptional()
+  limit?: number;
+
+  @IsOptional()
+  @IsEnum(InfluencerPayoutStatus)
+  status?: InfluencerPayoutStatus;
+
+  @IsOptional()
+  @IsMongoId()
+  influencerId?: string;
+}
+
 
 export class SettleVendorPendingBalanceDto {
   @IsMongoId()

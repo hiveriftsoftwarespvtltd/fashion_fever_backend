@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -46,11 +47,13 @@ import {
   CommissionStatus,
   InfluencerCommission,
   InfluencerCommissionDocument,
+  AttributionSource,
 } from 'src/influencer/schema/influencer-commision-rate.schema';
 import {
   Influencer,
   InfluencerDocument,
 } from 'src/influencer/schema/influencer.schema';
+import { InfluencerService } from 'src/influencer/influencer.service';
 import { UserWalletService } from 'src/wallet/service/user/user.wallet.service';
 import { CashbackSlab, CashbackSlabDocument, CashbackType } from 'src/wallet/schema/cashback/cashbacks.slabs.schema';
 import { WalletTransactionReason } from 'src/wallet/schema/user/user.wallet.transactions';
@@ -99,6 +102,7 @@ export class VendorService {
     @InjectModel(MarketplaceEarning.name) private marketplaceEarningModel: Model<MarketplaceEarningDocument>,
     @InjectModel(PaymentTransaction.name) private paymentTransactionModel: Model<PaymentTransactionDocument>,
     @InjectModel(DeliveryPerson.name) private deliveryPersonModel: Model<DeliveryPersonDocument>,
+    private readonly influencerService: InfluencerService,
   ) { }
 
   async registerVendor(
@@ -108,6 +112,10 @@ export class VendorService {
   ) {
     const isOwnerExist = await this.vendorModel.findOne({ ownerId: userId });
     if (isOwnerExist) {
+      await this.userModel.updateOne(
+        { _id: userId },
+        { $set: { vendorId: isOwnerExist._id, isVendorOnboardingCompleted: true } }
+      ).catch(() => {});
       throw new BadRequestException('This Owner Already Exist with a Vendor');
     }
 
@@ -129,15 +137,18 @@ export class VendorService {
       throw new NotFoundException('User not found');
     }
 
-    console.log("User status in line 127", user.roleStatus)
-    if (user.roleStatus.get(UserRole.VENDOR) !== RoleStatus.NOT_ONBOARDED) {
-      throw new BadRequestException('You need to register as vendor');
+    if (user.roleStatus && user.roleStatus.get(UserRole.VENDOR) === RoleStatus.APPROVED) {
+      throw new ConflictException('Your vendor account is already approved');
     }
 
     const vendor = await this.vendorModel.create({
       ownerId: userId,
       businessName: dto.businessName,
       slug: dto.slug.toLowerCase().trim(),
+      description: dto.description?.trim() || '',
+      address: dto.address?.trim() || [dto.city, dto.state, dto.vendorPincode].filter(Boolean).join(', '),
+      phone: dto.phone?.trim() || user.phone || '',
+      email: dto.email?.trim().toLowerCase() || user.email || '',
       vendorPincode: dto.vendorPincode,
       city: dto.city,
       state: dto.state,
@@ -171,7 +182,11 @@ export class VendorService {
 
     user.vendorId = vendor._id;
     user.isVendorOnboardingCompleted = true;
+    if (!user.roleStatus) user.roleStatus = new Map();
     user.roleStatus.set(UserRole.VENDOR, RoleStatus.PENDING);
+    if (!user.roles.includes(UserRole.VENDOR)) {
+      user.roles.push(UserRole.VENDOR);
+    }
     await user.save();
 
     await notifyAdmins(
@@ -191,13 +206,60 @@ export class VendorService {
     return await this.vendorModel.find().lean();
   }
 
-  async getVendorDetails(userId: string, vendorId: string) {
-    if (!vendorId) {
-      throw new ConflictException(
-        'Complete you onboarding to access this feature',
+  async getVendorDetails(userId: string, vendorId?: string) {
+    let vendor: any = null;
+    const populateOptions = [
+      { path: 'ownerId', select: 'name email phone avatar' },
+      { path: 'logo' },
+      { path: 'banner' },
+    ];
+
+    if (vendorId) {
+      vendor = await this.vendorModel
+        .findById(vendorId)
+        .populate(populateOptions)
+        .lean();
+    }
+    if (!vendor && userId) {
+      vendor = await this.vendorModel
+        .findOne({ ownerId: userId })
+        .populate(populateOptions)
+        .lean();
+      if (vendor) {
+        await this.userModel.updateOne(
+          { _id: userId },
+          { $set: { vendorId: vendor._id, isVendorOnboardingCompleted: true } }
+        ).catch(() => {});
+      }
+    }
+    if (!vendor) {
+      throw new NotFoundException(
+        'Complete your onboarding to access this feature',
       );
     }
-    return await this.vendorModel.findById(vendorId).lean();
+
+    // Auto-sync fallback details to vendor document if missing
+    const owner = typeof vendor.ownerId === 'object' ? vendor.ownerId : null;
+    const updates: any = {};
+    if (!vendor.email && owner?.email) {
+      vendor.email = owner.email;
+      updates.email = owner.email;
+    }
+    if (!vendor.phone && owner?.phone) {
+      vendor.phone = owner.phone;
+      updates.phone = owner.phone;
+    }
+    if (!vendor.address && (vendor.city || vendor.state)) {
+      const generatedAddress = [vendor.city, vendor.state, vendor.vendorPincode].filter(Boolean).join(', ');
+      vendor.address = generatedAddress;
+      updates.address = generatedAddress;
+    }
+
+    if (Object.keys(updates).length > 0) {
+      await this.vendorModel.updateOne({ _id: vendor._id }, { $set: updates }).catch(() => {});
+    }
+
+    return vendor;
   }
 
   async updateVendorDetails(
@@ -264,6 +326,18 @@ export class VendorService {
       vendor.email = dto.email.trim().toLowerCase();
     }
 
+    if (dto.vendorPincode !== undefined && dto.vendorPincode.trim() !== '') {
+      vendor.vendorPincode = dto.vendorPincode.trim();
+    }
+
+    if (dto.city !== undefined && dto.city.trim() !== '') {
+      vendor.city = dto.city.trim();
+    }
+
+    if (dto.state !== undefined && dto.state.trim() !== '') {
+      vendor.state = dto.state.trim();
+    }
+
     if (files?.banner?.length) {
       if (vendor.banner) {
         await this.documentService.replace(
@@ -310,6 +384,10 @@ export class VendorService {
       throw new ConflictException(
         'Complete Your Onboarding to access this feature',
       );
+    }
+    const vendor = await this.vendorModel.findById(vendorId);
+    if (!vendor || vendor.status !== 'APPROVED') {
+      throw new ForbiddenException('Vendor account is not approved by admin yet');
     }
 
     const pageNumber = Number(page) || 1;
@@ -403,10 +481,14 @@ export class VendorService {
       }
 
       // ======================================================
-      // PREVENT UPDATE AFTER DELIVERED
+      // PREVENT UPDATE AFTER DELIVERED (except returns)
       // ======================================================
 
-      if (vendorOrder.orderStatus === OrderStatus.DELIVERED) {
+      if (
+        vendorOrder.orderStatus === OrderStatus.DELIVERED &&
+        dto.orderStatus !== OrderStatus.RETURNED &&
+        dto.orderStatus !== OrderStatus.PARTIALLY_RETURNED
+      ) {
         throw new ConflictException('Delivered order cannot be updated');
       }
 
@@ -525,6 +607,36 @@ export class VendorService {
             }
           });
         }
+
+        // Phase 6: Pre-delivery cancellation of vendor order -> CANCELLED commission
+        if (vendorOrder._id) {
+          await this.influencerService.cancelCommissionByVendorOrderId(
+            vendorOrder._id,
+            dto.cancellationReason || 'Vendor order cancelled',
+            session,
+          );
+        }
+      }
+
+      // ======================================================
+      // RETURNED / PARTIALLY_RETURNED (Phase 6: Post-delivery reversal)
+      // ======================================================
+
+      if (
+        dto.orderStatus === OrderStatus.RETURNED ||
+        dto.orderStatus === OrderStatus.PARTIALLY_RETURNED
+      ) {
+        vendorOrder.orderStatus = dto.orderStatus;
+        if (dto.cancellationReason) {
+          vendorOrder.cancellationReason = dto.cancellationReason;
+        }
+
+        // Phase 6: Post-delivery return/refund -> REVERSED commission
+        await this.influencerService.reverseCommissionByVendorOrderId(
+          vendorOrder._id,
+          dto.cancellationReason || 'Vendor order returned/refunded',
+          session,
+        );
       }
 
       // ======================================================
@@ -533,75 +645,111 @@ export class VendorService {
 
       if (dto.paymentStatus) {
         vendorOrder.paymentStatus = dto.paymentStatus;
+        if (dto.paymentStatus === PaymentStatus.REFUNDED) {
+          await this.influencerService.reverseCommissionByVendorOrderId(
+            vendorOrder._id,
+            dto.cancellationReason || 'Vendor order payment refunded',
+            session,
+          );
+        }
       }
 
       // ======================================================
-      // SETTLE VENDOR WALLET
+      // SETTLE VENDOR WALLET & INFLUENCER COMMISSION (Phase 5)
       // ======================================================
 
       if (
         vendorOrder.orderStatus === OrderStatus.DELIVERED &&
-        vendorOrder.paymentStatus === PaymentStatus.PAID &&
-        !vendorOrder.isVendorSettled
+        vendorOrder.paymentStatus === PaymentStatus.PAID
       ) {
-        const influencerComm = await this.influencerCommisionModel.findOne({
-          vendorOrderId: vendorOrder._id,
-        });
+        // Create or fetch influencer commission record (idempotent with { orderId, vendorOrderId, influencerId })
+        if (vendorOrder.influencerId && vendorOrder.orderId) {
+          const commRecord = await this.influencerService.createCommissionRecord({
+            orderId: vendorOrder.orderId,
+            vendorOrderId: vendorOrder._id,
+            influencerId: vendorOrder.influencerId,
+            customerId: vendorOrder.userId,
+            vendorId: vendorOrder.vendorId,
+            subTotal: vendorOrder.subTotal,
+            discountAmount: vendorOrder.discount || 0,
+            totalCostPrice: vendorOrder.costPrice,
+            grossProfit: vendorOrder.grossProfit,
+            netProfit: vendorOrder.netProfit,
+            shippingCost: vendorOrder.shippingCharge,
+            taxAmount: vendorOrder.tax,
+            platformCommissionAmount: vendorOrder.platformCommissionAmount,
+            attributionSource: vendorOrder.attributionSource || AttributionSource.REFERRAL,
+            isDelivered: true,
+            deliveredAt: new Date(),
+            session,
+          });
 
-        if (influencerComm && influencerComm.commissionAmount) {
-          vendorOrder.influencerCommissionAmount = influencerComm.commissionAmount;
+          if (commRecord) {
+            vendorOrder.influencerCommissionAmount = commRecord.commissionAmount;
+            vendorOrder.influencerCommissionRate = commRecord.commissionRate;
+            if (!commRecord.isDelivered || !commRecord.approvalEligibleAt) {
+              const delDate = vendorOrder.deliveredAt ? new Date(vendorOrder.deliveredAt) : new Date();
+              commRecord.isDelivered = true;
+              commRecord.deliveredAt = delDate;
+              commRecord.approvalEligibleAt = new Date(delDate.getTime() + 7 * 24 * 60 * 60 * 1000);
+              await commRecord.save({ session });
+            }
+          }
         }
 
-        // ── Resolve commission rate from admin schema ──────────────────
-        const DEFAULT_COMMISSION_RATE = 25;
-        const DEFAULT_COMMISSION_ON = CommissionOn.PROFITVALUE;
+        if (!vendorOrder.isVendorSettled) {
+          // ── Resolve commission rate from admin schema ──────────────────
+          const DEFAULT_COMMISSION_RATE = 25;
+          const DEFAULT_COMMISSION_ON = CommissionOn.PROFITVALUE;
 
-        const commissionDoc = await this.commissionRateModel.findOne().session(session);
+          const commissionDoc = await this.commissionRateModel.findOne().session(session);
 
-        const vendorSlab = commissionDoc?.commissions?.find(
-          (s) => s.entityType === CommissionEntityType.VENDOR,
-        );
+          const vendorSlab = commissionDoc?.commissions?.find(
+            (s) => s.entityType === CommissionEntityType.VENDOR,
+          );
 
-        const commissionRate = vendorSlab?.commissionPercentage ?? DEFAULT_COMMISSION_RATE;
-        const commissionOn = vendorSlab?.commissionOn ?? DEFAULT_COMMISSION_ON;
+          const commissionRate = vendorSlab?.commissionPercentage ?? DEFAULT_COMMISSION_RATE;
+          const commissionOn = vendorSlab?.commissionOn ?? DEFAULT_COMMISSION_ON;
 
-        // ── Compute payout based on commissionOn ──────────────────────
-        let commissionBase: number;
-        if (commissionOn === CommissionOn.PROFITVALUE) {
-          // grossProfit = finalOrderAmount - costPrice
-          commissionBase = vendorOrder.grossProfit ?? 0;
-        } else {
-          // SALE_VALUE → commission on the final order amount (grandTotal - shipping - cod)
-          commissionBase = vendorOrder.grandTotal - (vendorOrder.shippingCharge ?? 0) - (vendorOrder.codCharge ?? 0);
+          // ── Compute payout based on commissionOn ──────────────────────
+          let commissionBase: number;
+          if (commissionOn === CommissionOn.PROFITVALUE) {
+            // grossProfit = finalOrderAmount - costPrice
+            commissionBase = vendorOrder.grossProfit ?? 0;
+          } else {
+            // SALE_VALUE → commission on the final order amount (grandTotal - shipping - cod)
+            commissionBase = vendorOrder.grandTotal - (vendorOrder.shippingCharge ?? 0) - (vendorOrder.codCharge ?? 0);
+          }
+
+          const platformCommissionAmount = parseFloat(((commissionBase * commissionRate) / 100).toFixed(2));
+
+          // payout = sale amount (excl. shipping/cod) minus platform commission
+          // Rule F2: Vendor payout is funded separately; influencer commission does NOT reduce vendor payout
+          const saleBase = vendorOrder.grandTotal - (vendorOrder.shippingCharge ?? 0) - (vendorOrder.codCharge ?? 0);
+          const resolvedPayout = parseFloat((saleBase - platformCommissionAmount).toFixed(2));
+
+          vendorOrder.platformCommissionRate = commissionRate;
+          vendorOrder.platformCommissionOn = commissionOn;
+          vendorOrder.platformCommissionAmount = platformCommissionAmount;
+          vendorOrder.payoutAmount = resolvedPayout > 0 ? resolvedPayout : 0;
+          vendorOrder.isVendorSettled = true;
+          vendorOrder.vendorSettledAt = new Date();
+
+          const deductionAmount = (vendorOrder.shippingCharge ?? 0) + (vendorOrder.codCharge ?? 0) + vendorOrder.platformCommissionAmount;
+
+          await this.marketplaceEarningModel.create([{
+            userId: new Types.ObjectId(userId),
+            role: EarningRole.VENDOR,
+            referenceType: EarningReferenceType.ORDER,
+            referenceId: vendorOrder._id,
+            grossAmount: vendorOrder.grandTotal || vendorOrder.payoutAmount,
+            netAmount: vendorOrder.payoutAmount,
+            platformCommission: vendorOrder.platformCommissionAmount || 0,
+            tax: vendorOrder.tax || 0,
+            deduction: deductionAmount,
+            status: EarningStatus.PENDING
+          }], { session });
         }
-
-        const platformCommissionAmount = parseFloat(((commissionBase * commissionRate) / 100).toFixed(2));
-
-        // payout = sale amount (excl. shipping/cod) minus platform commission
-        const saleBase = vendorOrder.grandTotal - (vendorOrder.shippingCharge ?? 0) - (vendorOrder.codCharge ?? 0);
-        const resolvedPayout = parseFloat((saleBase - platformCommissionAmount).toFixed(2));
-
-        vendorOrder.platformCommissionRate = commissionRate;
-        vendorOrder.platformCommissionOn = commissionOn;
-        vendorOrder.platformCommissionAmount = platformCommissionAmount;
-        vendorOrder.payoutAmount = resolvedPayout > 0 ? resolvedPayout : 0;
-        vendorOrder.isVendorSettled = true;
-        vendorOrder.vendorSettledAt = new Date();
-
-        const deductionAmount = (vendorOrder.shippingCharge ?? 0) + (vendorOrder.codCharge ?? 0) + vendorOrder.platformCommissionAmount + (vendorOrder.influencerCommissionAmount ?? 0);
-
-        await this.marketplaceEarningModel.create([{
-          userId: new Types.ObjectId(userId),
-          role: EarningRole.VENDOR,
-          referenceType: EarningReferenceType.ORDER,
-          referenceId: vendorOrder._id,
-          grossAmount: vendorOrder.grandTotal || vendorOrder.payoutAmount,
-          netAmount: vendorOrder.payoutAmount,
-          platformCommission: vendorOrder.platformCommissionAmount || 0,
-          tax: vendorOrder.tax || 0,
-          deduction: deductionAmount,
-          status: EarningStatus.PENDING
-        }], { session });
       }
 
       // ======================================================
@@ -622,7 +770,7 @@ export class VendorService {
 
       if (influencerCommission) {
         // ------------------------------------------
-        // DELIVERED + PAID
+        // DELIVERED + PAID (Stamp delivery info, maintain PENDING status)
         // ------------------------------------------
 
         if (
@@ -632,42 +780,12 @@ export class VendorService {
           // prevent duplicate updates
           if (!influencerCommission.isDelivered) {
             influencerCommission.isDelivered = true;
-
             influencerCommission.deliveredAt = new Date();
-
-            influencerCommission.status = CommissionStatus.APPROVED;
-
+            influencerCommission.approvalEligibleAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+            // Status strictly remains CommissionStatus.PENDING in Phase 5
             await influencerCommission.save({
               session,
             });
-
-            // update influencer stats
-            await this.influencerModel.findByIdAndUpdate(
-              influencerCommission.influencerId,
-              {
-                $inc: {
-                  totalSales: influencerCommission.finalOrderAmount,
-
-                  totalOrders: 1,
-                },
-              },
-              { session },
-            );
-
-            if (influencerCommission.commissionAmount && influencerCommission.commissionAmount > 0) {
-              await this.marketplaceEarningModel.create([{
-                userId: new Types.ObjectId(influencerCommission.influencerId.toString()), // the user id for the influencer
-                role: EarningRole.INFLUENCER,
-                referenceType: EarningReferenceType.ORDER,
-                referenceId: vendorOrder._id,
-                grossAmount: influencerCommission.commissionAmount,
-                netAmount: influencerCommission.commissionAmount,
-                platformCommission: 0,
-                tax: 0,
-                deduction: 0,
-                status: EarningStatus.PENDING
-              }], { session });
-            }
           }
         }
 
@@ -1019,6 +1137,13 @@ export class VendorService {
   }
 
   async overview(vendorId: string) {
+    if (!vendorId) {
+      throw new ForbiddenException('Vendor ID is required');
+    }
+    const vendor = await this.vendorModel.findById(vendorId);
+    if (!vendor || vendor.status !== 'APPROVED') {
+      throw new ForbiddenException('Vendor account is not approved by admin yet');
+    }
     const vendorObjectId = new Types.ObjectId(vendorId);
 
     const [

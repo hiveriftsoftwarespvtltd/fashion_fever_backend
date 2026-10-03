@@ -68,6 +68,7 @@ import { Admin, AdminSchema } from 'src/admin/schema/admin.schema';
 import { NotificationModule } from 'src/notification/notification.module';
 import { PaymentTransaction, PaymenttransactionSchema } from 'src/payout/schema/payment-transaction.schema';
 import { MarketplaceEarning, MarketplaceEarningSchema } from 'src/payout/schema/market-place-earning.schema';
+import { CouponModule } from 'src/coupon/coupon.module';
 
 @Module({
   imports: [
@@ -102,6 +103,7 @@ import { MarketplaceEarning, MarketplaceEarningSchema } from 'src/payout/schema/
     WalletModule,
     InfluencerModule,
     NotificationModule,
+    CouponModule,
   ],
   controllers: [ServiceController, ServiceSearchController, ServiceBookingController, ServiceLeadController, ServiceReviewController, ServiceProviderReviewController, ServiceQuotationController],
   providers: [ServiceService, ServiceSearchService, ServiceBookingService, ServiceLeadService, ServiceReviewService, ServiceProviderReviewService, ServiceQuotationService],

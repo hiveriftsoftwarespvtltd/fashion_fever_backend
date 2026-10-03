@@ -55,9 +55,10 @@ export class AdminCleanupService {
 
     async wipeAllData(excludedCollections: string[] = []) {
         try {
-            // Always preserve users (admin filtering logic)
+            // Always preserve users and admins records
             const protectedCollections = [
                 'users',
+                'admins',
                 ...excludedCollections,
             ];
 
@@ -100,8 +101,12 @@ export class AdminCleanupService {
 
             // Handle users separately (keep admins)
             if (!excludedCollections.includes('users')) {
+                const adminEmail = (process.env.ADMIN_EMAIL || 'admin@fashionfever.in').toLowerCase().trim();
                 await collections.users.deleteMany({
-                    role: { $ne: UserRole.ADMIN },
+                    $and: [
+                        { email: { $ne: adminEmail } },
+                        { roles: { $nin: [UserRole.ADMIN, UserRole.SUPER_ADMIN] } },
+                    ]
                 });
             }
 

@@ -49,7 +49,9 @@ import {
   CommissionStatus,
   InfluencerCommission,
   InfluencerCommissionDocument,
+  AttributionSource,
 } from 'src/influencer/schema/influencer-commision-rate.schema';
+import { InfluencerService } from 'src/influencer/influencer.service';
 import {
   VendorPayout,
   VendorPayoutDocument,
@@ -130,6 +132,8 @@ export class OrderService {
 
     @InjectModel(PaymentTransaction.name)
     private readonly paymentTransactionModel: Model<PaymentTransactionDocument>,
+
+    private readonly influencerService: InfluencerService,
   ) { }
 
 
@@ -308,11 +312,12 @@ export class OrderService {
       }
 
       // ─────────────────────────────────────────────────────────────
-      // 4. Resolve Coupon
+      // 4. Resolve Active Referral & Coupon Influencer Attribution (Phase 3)
       // ─────────────────────────────────────────────────────────────
-      let coupon: CouponDocument | null = null;
+      const referralAttribution = await this.influencerService.getActiveReferralAttribution(userId);
 
-      let influencer: InfluencerDocument | null = null;
+      let coupon: CouponDocument | null = null;
+      let couponInfluencer: InfluencerDocument | null = null;
 
       if (dto.couponCode) {
         coupon = await this.couponModel.findOne({
@@ -365,11 +370,44 @@ export class OrderService {
         }
 
         if (coupon.influencerId) {
-          influencer = await this.influencerModel.findById(coupon.influencerId);
+          couponInfluencer = await this.influencerModel.findById(coupon.influencerId);
 
-          if (!influencer) {
+          if (!couponInfluencer) {
             throw new NotFoundException('Influencer not found');
           }
+
+          // Rule E2: Block creator from applying their own influencer coupon
+          if (couponInfluencer.userId && couponInfluencer.userId.toString() === userId.toString()) {
+            throw new BadRequestException('You cannot use your own influencer coupon.');
+          }
+        }
+      }
+
+      // Conflict Resolution (Rule B2) & Self-Purchase Block (Rule E2):
+      // When a customer registered through Influencer A's referral link places an order and applies Influencer B's coupon:
+      // Influencer A receives 100% of the commission (Referral wins!).
+      // If customer is non-referred or referral has expired (>365 days), coupon influencer receives commission.
+      // Rule E2: If order.userId === influencer.userId, suppress attribution and create NO commission record.
+      let activeBeneficiaryInfluencer: InfluencerDocument | null = null;
+      let activeAttributionSource: AttributionSource | null = null;
+
+      if (referralAttribution.beneficiaryId && referralAttribution.influencer) {
+        if (referralAttribution.influencer.userId && referralAttribution.influencer.userId.toString() === userId.toString()) {
+          // Self-purchase via own referral link: suppress attribution, create NO commission record
+          activeBeneficiaryInfluencer = null;
+          activeAttributionSource = null;
+        } else {
+          activeBeneficiaryInfluencer = referralAttribution.influencer;
+          activeAttributionSource = AttributionSource.REFERRAL;
+        }
+      } else if (couponInfluencer) {
+        if (couponInfluencer.userId && couponInfluencer.userId.toString() === userId.toString()) {
+          // Self-purchase via own coupon: already rejected during validation above, but guarded as defense-in-depth
+          activeBeneficiaryInfluencer = null;
+          activeAttributionSource = null;
+        } else {
+          activeBeneficiaryInfluencer = couponInfluencer;
+          activeAttributionSource = AttributionSource.COUPON;
         }
       }
 
@@ -388,7 +426,6 @@ export class OrderService {
       let orderGrandTotal = 0;
 
       let appliedCouponSnapshot: any = null;
-      const influencerCommissionPayloads: any[] = [];
       for (const [vendorIdStr, bucket] of vendorBuckets) {
         const { vendor, orderItems, variantsToUpdate, subTotal } = bucket;
 
@@ -636,54 +673,20 @@ export class OrderService {
               netProfit,
 
               paymentStatus:
-                dto.paymentMethod === PaymentMethod.CASH_ON_DELIVERY
-                  ? PaymentStatus.PENDING
-                  : PaymentStatus.PAID,
+                dto.paymentMethod === PaymentMethod.WALLET
+                  ? PaymentStatus.PAID
+                  : PaymentStatus.PENDING,
+
+              influencerId: activeBeneficiaryInfluencer?._id || null,
+              influencerCommissionRate: (typeof activeBeneficiaryInfluencer?.commissionRate === 'number')
+                ? activeBeneficiaryInfluencer.commissionRate
+                : null,
+              influencerCommissionAmount: 0,
+              attributionSource: activeAttributionSource || null,
             },
           ],
           { session },
         );
-
-        if (influencer && coupon?.influencerId && vendorDiscount > 0) {
-          influencerCommissionPayloads.push({
-            influencerId: coupon.influencerId,
-
-            influencerUserId: influencer.userId,
-
-            vendorOrderId: vendorOrder._id,
-
-            vendorId: new Types.ObjectId(vendorIdStr),
-
-            couponId: coupon._id,
-
-            orderAmount: subTotal,
-
-            discountAmount: vendorDiscount,
-
-            finalOrderAmount,
-
-            totalCostPrice,
-
-            grossProfit,
-            netProfit,
-
-            shippingCost: shippingCharge,
-
-            taxAmount: tax,
-
-            platformCommissionAmount,
-
-            commissionRate: 0,
-
-            commissionAmount: 0,
-
-            status: CommissionStatus.PENDING,
-
-            commissionMonth: new Date().getMonth() + 1,
-
-            commissionYear: new Date().getFullYear(),
-          });
-        }
 
         vendorOrderIds.push(vendorOrder._id);
         vendorOrdersData.push(vendorOrder);
@@ -729,7 +732,10 @@ export class OrderService {
       // 5.5 Deduct Wallet Balance
       // ─────────────────────────────────────────────────────────────
       let walletAmountUsed = 0;
-      let actualPaymentStatus = (dto.paymentMethod === PaymentMethod.CASH_ON_DELIVERY || dto.paymentMethod === PaymentMethod.WALLET_PLUS_COD) ? PaymentStatus.PENDING : PaymentStatus.PAID;
+      let actualPaymentStatus =
+        dto.paymentMethod === PaymentMethod.WALLET
+          ? PaymentStatus.PAID
+          : PaymentStatus.PENDING;
 
       if (dto.paymentMethod === PaymentMethod.WALLET || dto.paymentMethod === PaymentMethod.WALLET_PLUS_ONLINE || dto.paymentMethod === PaymentMethod.WALLET_PLUS_COD) {
         const userWallet = await this.userWalletService.getBalance(userId);
@@ -789,9 +795,9 @@ export class OrderService {
             paymentMethod: dto.paymentMethod,
 
             paymentStatus:
-              dto.paymentMethod === PaymentMethod.CASH_ON_DELIVERY
-                ? PaymentStatus.PENDING
-                : PaymentStatus.PAID,
+              dto.paymentMethod === PaymentMethod.WALLET
+                ? PaymentStatus.PAID
+                : PaymentStatus.PENDING,
 
             orderStatus: OrderStatus.PENDING,
 
@@ -869,15 +875,48 @@ export class OrderService {
         { session },
       );
 
-      if (influencerCommissionPayloads.length) {
-        const payloads = influencerCommissionPayloads.map((item) => ({
-          ...item,
-          orderId: order._id,
+      // ─────────────────────────────────────────────────────────────
+      // 7.5 INFLUENCER COMMISSION ENGINE (Phase 5: Verified Payment Milestone)
+      // Note: ONLINE & WALLET_PLUS_ONLINE remain PENDING until future payment gateway integration.
+      // COD & WALLET_PLUS_COD remain PENDING until DELIVERED + PAID in vendor.service.
+      // Only genuine atomic WALLET payment is verified PAID at initial placement.
+      // ─────────────────────────────────────────────────────────────
+      const isVerifiedWalletPaid =
+        dto.paymentMethod === PaymentMethod.WALLET &&
+        actualPaymentStatus === PaymentStatus.PAID;
 
+      if (isVerifiedWalletPaid && activeBeneficiaryInfluencer && activeAttributionSource) {
+        for (const vOrder of vendorOrdersData) {
+          const commRecord = await this.influencerService.createCommissionRecord({
+            orderId: order._id,
+            vendorOrderId: vOrder._id,
+            influencerId: activeBeneficiaryInfluencer._id,
+            customerId: userId,
+            vendorId: vOrder.vendorId,
+            couponId: coupon?._id || null,
+            subTotal: vOrder.subTotal,
+            discountAmount: vOrder.discount || 0,
+            totalCostPrice: vOrder.costPrice,
+            grossProfit: vOrder.grossProfit,
+            netProfit: vOrder.netProfit,
+            shippingCost: vOrder.shippingCharge,
+            taxAmount: vOrder.tax,
+            platformCommissionAmount: vOrder.platformCommissionAmount,
+            attributionSource: activeAttributionSource,
+            session,
+          });
 
-        }));
-
-        await this.influencerCommisionModel.create(payloads, { session });
+          if (commRecord) {
+            await this.vendorOrderModel.updateOne(
+              { _id: vOrder._id },
+              {
+                influencerCommissionAmount: commRecord.commissionAmount,
+                influencerCommissionRate: commRecord.commissionRate,
+              },
+              { session },
+            );
+          }
+        }
       }
 
       // ─────────────────────────────────────────────────────────────
@@ -1140,6 +1179,13 @@ export class OrderService {
           $set: vendorOrderUpdateData
         },
         { session }
+      );
+
+      // Phase 6: Pre-delivery cancellation of main order -> cancel all commissions for this order
+      await this.influencerService.cancelCommissionsByOrderId(
+        order._id,
+        dto.cancellationReason || 'Order cancelled by customer',
+        session,
       );
 
       // Create notification
