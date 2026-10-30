@@ -1,7 +1,14 @@
 import { Types } from 'mongoose';
-import { CommissionStatus, AttributionSource } from './schema/influencer-commision-rate.schema';
+import {
+  CommissionStatus,
+  AttributionSource,
+} from './schema/influencer-commision-rate.schema';
 import { InfluencerStatus } from './schema/influencer.schema';
-import { OrderStatus, PaymentStatus, PaymentMethod } from '../order/schema/order.schema';
+import {
+  OrderStatus,
+  PaymentStatus,
+  PaymentMethod,
+} from '../order/schema/order.schema';
 
 describe('Phase 5: Commission Engine & Ledger Snapshot Contracts', () => {
   interface InfluencerContext {
@@ -69,7 +76,11 @@ describe('Phase 5: Commission Engine & Ledger Snapshot Contracts', () => {
     records: CommissionLedgerRecord[] = [];
 
     // Strictly enforces compound uniqueness: { orderId, vendorOrderId, influencerId }
-    findExisting(orderId: Types.ObjectId, vendorOrderId: Types.ObjectId, influencerId: Types.ObjectId) {
+    findExisting(
+      orderId: Types.ObjectId,
+      vendorOrderId: Types.ObjectId,
+      influencerId: Types.ObjectId,
+    ) {
       return this.records.find(
         (r) =>
           r.orderId.toString() === orderId.toString() &&
@@ -79,8 +90,16 @@ describe('Phase 5: Commission Engine & Ledger Snapshot Contracts', () => {
     }
 
     insertRecord(record: CommissionLedgerRecord) {
-      if (this.findExisting(record.orderId, record.vendorOrderId, record.influencerId)) {
-        const err: any = new Error('E11000 duplicate key error collection: influencercommissions');
+      if (
+        this.findExisting(
+          record.orderId,
+          record.vendorOrderId,
+          record.influencerId,
+        )
+      ) {
+        const err: any = new Error(
+          'E11000 duplicate key error collection: influencercommissions',
+        );
         err.code = 11000;
         throw err;
       }
@@ -89,8 +108,12 @@ describe('Phase 5: Commission Engine & Ledger Snapshot Contracts', () => {
     }
   }
 
-  function getInitialPlacementPaymentStatus(method: PaymentMethod): PaymentStatus {
-    return method === PaymentMethod.WALLET ? PaymentStatus.PAID : PaymentStatus.PENDING;
+  function getInitialPlacementPaymentStatus(
+    method: PaymentMethod,
+  ): PaymentStatus {
+    return method === PaymentMethod.WALLET
+      ? PaymentStatus.PAID
+      : PaymentStatus.PENDING;
   }
 
   function executeCommissionEngine(params: {
@@ -101,7 +124,14 @@ describe('Phase 5: Commission Engine & Ledger Snapshot Contracts', () => {
     attributionSource: AttributionSource;
     db: MockLedgerDatabase;
   }): CommissionLedgerRecord | null {
-    const { orderId, vendorOrder, influencer, customerUserId, attributionSource, db } = params;
+    const {
+      orderId,
+      vendorOrder,
+      influencer,
+      customerUserId,
+      attributionSource,
+      db,
+    } = params;
 
     // 1. Validate complete compound identity
     if (!orderId || !vendorOrder._id || !influencer?._id) {
@@ -121,7 +151,10 @@ describe('Phase 5: Commission Engine & Ledger Snapshot Contracts', () => {
 
     // 4. Strict Three-Tier Rate Contract:
     // null / undefined -> UNCONFIGURED -> NO record
-    if (influencer.commissionRate === null || influencer.commissionRate === undefined) {
+    if (
+      influencer.commissionRate === null ||
+      influencer.commissionRate === undefined
+    ) {
       return null;
     }
 
@@ -131,10 +164,14 @@ describe('Phase 5: Commission Engine & Ledger Snapshot Contracts', () => {
     }
 
     // 5. Commission Base: Net order amount (subTotal - vendorDiscount), excluding shipping, COD charges, and tax
-    const commissionBase = Math.max(0, parseFloat((vendorOrder.subTotal - vendorOrder.discount).toFixed(2)));
+    const commissionBase = Math.max(
+      0,
+      parseFloat((vendorOrder.subTotal - vendorOrder.discount).toFixed(2)),
+    );
 
     // Calculate commissionAmount
-    const commissionAmount = rate === 0 ? 0 : parseFloat(((commissionBase * rate) / 100).toFixed(2));
+    const commissionAmount =
+      rate === 0 ? 0 : parseFloat(((commissionBase * rate) / 100).toFixed(2));
 
     const record: CommissionLedgerRecord = {
       _id: new Types.ObjectId(),
@@ -162,17 +199,31 @@ describe('Phase 5: Commission Engine & Ledger Snapshot Contracts', () => {
     orderDate: Date;
     appliedCoupon?: CouponContext | null;
     influencers: Map<string, InfluencerContext>;
-  }): { activeInfluencer: InfluencerContext | null; attributionSource: AttributionSource | null } {
+  }): {
+    activeInfluencer: InfluencerContext | null;
+    attributionSource: AttributionSource | null;
+  } {
     const { user, orderDate, appliedCoupon, influencers } = params;
 
     // Check 365-day fixed referral attribution
     if (user.referredByInfluencerId) {
-      const isExpired = user.referralExpiresAt ? orderDate > user.referralExpiresAt : true;
+      const isExpired = user.referralExpiresAt
+        ? orderDate > user.referralExpiresAt
+        : true;
       if (!isExpired) {
-        const referralInf = influencers.get(user.referredByInfluencerId.toString());
-        if (referralInf && referralInf.status === InfluencerStatus.ACTIVE && !referralInf.isDeleted) {
+        const referralInf = influencers.get(
+          user.referredByInfluencerId.toString(),
+        );
+        if (
+          referralInf &&
+          referralInf.status === InfluencerStatus.ACTIVE &&
+          !referralInf.isDeleted
+        ) {
           // Rule B2: Active referral wins over coupon!
-          return { activeInfluencer: referralInf, attributionSource: AttributionSource.REFERRAL };
+          return {
+            activeInfluencer: referralInf,
+            attributionSource: AttributionSource.REFERRAL,
+          };
         }
       }
     }
@@ -180,8 +231,15 @@ describe('Phase 5: Commission Engine & Ledger Snapshot Contracts', () => {
     // If referral is absent or expired, coupon attribution may apply
     if (appliedCoupon?.influencerId) {
       const couponInf = influencers.get(appliedCoupon.influencerId.toString());
-      if (couponInf && couponInf.status === InfluencerStatus.ACTIVE && !couponInf.isDeleted) {
-        return { activeInfluencer: couponInf, attributionSource: AttributionSource.COUPON };
+      if (
+        couponInf &&
+        couponInf.status === InfluencerStatus.ACTIVE &&
+        !couponInf.isDeleted
+      ) {
+        return {
+          activeInfluencer: couponInf,
+          attributionSource: AttributionSource.COUPON,
+        };
       }
     }
 
@@ -497,7 +555,8 @@ describe('Phase 5: Commission Engine & Ledger Snapshot Contracts', () => {
     it('should initialize online order as paymentStatus PENDING and create zero InfluencerCommission records', () => {
       // Production Rule: Without payment gateway verification, ONLINE placement is PENDING
       const paymentMethod = PaymentMethod.ONLINE;
-      const initialPaymentStatus = getInitialPlacementPaymentStatus(paymentMethod);
+      const initialPaymentStatus =
+        getInitialPlacementPaymentStatus(paymentMethod);
 
       expect(initialPaymentStatus).toBe(PaymentStatus.PENDING);
 
@@ -550,7 +609,8 @@ describe('Phase 5: Commission Engine & Ledger Snapshot Contracts', () => {
   describe('H. WALLET_PLUS_ONLINE initial order → overall payment remains PENDING → zero records', () => {
     it('should keep WALLET_PLUS_ONLINE as paymentStatus PENDING and create zero commission records at checkout', () => {
       const paymentMethod = PaymentMethod.WALLET_PLUS_ONLINE;
-      const initialPaymentStatus = getInitialPlacementPaymentStatus(paymentMethod);
+      const initialPaymentStatus =
+        getInitialPlacementPaymentStatus(paymentMethod);
 
       expect(initialPaymentStatus).toBe(PaymentStatus.PENDING);
 
@@ -580,7 +640,13 @@ describe('Phase 5: Commission Engine & Ledger Snapshot Contracts', () => {
         executeCommissionEngine({
           orderId,
           vendorOrder,
-          influencer: { _id: influencerId, userId: influencerUserId, status: InfluencerStatus.ACTIVE, isDeleted: false, commissionRate: 10 },
+          influencer: {
+            _id: influencerId,
+            userId: influencerUserId,
+            status: InfluencerStatus.ACTIVE,
+            isDeleted: false,
+            commissionRate: 10,
+          },
           customerUserId: customerId,
           attributionSource: AttributionSource.REFERRAL,
           db,
@@ -594,7 +660,8 @@ describe('Phase 5: Commission Engine & Ledger Snapshot Contracts', () => {
   describe('H2. WALLET successful atomic deduction → verified PAID → one commission record', () => {
     it('should create exactly one commission record when internal wallet deduction succeeds', () => {
       const paymentMethod = PaymentMethod.WALLET;
-      const initialPaymentStatus = getInitialPlacementPaymentStatus(paymentMethod);
+      const initialPaymentStatus =
+        getInitialPlacementPaymentStatus(paymentMethod);
 
       expect(initialPaymentStatus).toBe(PaymentStatus.PAID);
 
@@ -647,7 +714,8 @@ describe('Phase 5: Commission Engine & Ledger Snapshot Contracts', () => {
   describe('H3. WALLET_PLUS_COD initial VendorOrder → paymentStatus PENDING', () => {
     it('should initialize VendorOrder with paymentStatus PENDING for WALLET_PLUS_COD and create zero records at placement', () => {
       const paymentMethod = PaymentMethod.WALLET_PLUS_COD;
-      const initialVendorOrderPaymentStatus = getInitialPlacementPaymentStatus(paymentMethod);
+      const initialVendorOrderPaymentStatus =
+        getInitialPlacementPaymentStatus(paymentMethod);
 
       expect(initialVendorOrderPaymentStatus).toBe(PaymentStatus.PENDING);
 
@@ -670,7 +738,8 @@ describe('Phase 5: Commission Engine & Ledger Snapshot Contracts', () => {
         paymentStatus: initialVendorOrderPaymentStatus,
       };
 
-      const isEligibleAtPlacement = initialVendorOrderPaymentStatus === PaymentStatus.PAID;
+      const isEligibleAtPlacement =
+        initialVendorOrderPaymentStatus === PaymentStatus.PAID;
       expect(isEligibleAtPlacement).toBe(false);
 
       expect(db.records.length).toBe(0);
@@ -700,14 +769,21 @@ describe('Phase 5: Commission Engine & Ledger Snapshot Contracts', () => {
 
       // Condition: For COD, create ONLY on DELIVERED && PAID
       const isCodEligible =
-        codVendorOrder.orderStatus === OrderStatus.DELIVERED && codVendorOrder.paymentStatus === PaymentStatus.PAID;
+        codVendorOrder.orderStatus === OrderStatus.DELIVERED &&
+        codVendorOrder.paymentStatus === PaymentStatus.PAID;
       expect(isCodEligible).toBe(false);
 
       if (isCodEligible) {
         executeCommissionEngine({
           orderId,
           vendorOrder: codVendorOrder,
-          influencer: { _id: influencerId, userId: influencerUserId, status: InfluencerStatus.ACTIVE, isDeleted: false, commissionRate: 10 },
+          influencer: {
+            _id: influencerId,
+            userId: influencerUserId,
+            status: InfluencerStatus.ACTIVE,
+            isDeleted: false,
+            commissionRate: 10,
+          },
           customerUserId: customerId,
           attributionSource: AttributionSource.REFERRAL,
           db,
@@ -740,14 +816,21 @@ describe('Phase 5: Commission Engine & Ledger Snapshot Contracts', () => {
       };
 
       const isCodEligible =
-        codVendorOrder.orderStatus === OrderStatus.DELIVERED && codVendorOrder.paymentStatus === PaymentStatus.PAID;
+        codVendorOrder.orderStatus === OrderStatus.DELIVERED &&
+        codVendorOrder.paymentStatus === PaymentStatus.PAID;
       expect(isCodEligible).toBe(false);
 
       if (isCodEligible) {
         executeCommissionEngine({
           orderId,
           vendorOrder: codVendorOrder,
-          influencer: { _id: influencerId, userId: influencerUserId, status: InfluencerStatus.ACTIVE, isDeleted: false, commissionRate: 10 },
+          influencer: {
+            _id: influencerId,
+            userId: influencerUserId,
+            status: InfluencerStatus.ACTIVE,
+            isDeleted: false,
+            commissionRate: 10,
+          },
           customerUserId: customerId,
           attributionSource: AttributionSource.REFERRAL,
           db,
@@ -788,7 +871,8 @@ describe('Phase 5: Commission Engine & Ledger Snapshot Contracts', () => {
       };
 
       const isCodEligible =
-        codVendorOrder.orderStatus === OrderStatus.DELIVERED && codVendorOrder.paymentStatus === PaymentStatus.PAID;
+        codVendorOrder.orderStatus === OrderStatus.DELIVERED &&
+        codVendorOrder.paymentStatus === PaymentStatus.PAID;
       expect(isCodEligible).toBe(true);
 
       const record = executeCommissionEngine({
@@ -878,11 +962,15 @@ describe('Phase 5: Commission Engine & Ledger Snapshot Contracts', () => {
       expect(db.records.length).toBe(2);
 
       // Separate vendor order IDs and respective bases
-      expect(record1!.vendorOrderId.toString()).toBe(vendorOrder1._id.toString());
+      expect(record1!.vendorOrderId.toString()).toBe(
+        vendorOrder1._id.toString(),
+      );
       expect(record1!.finalOrderAmount).toBe(900);
       expect(record1!.commissionAmount).toBe(90);
 
-      expect(record2!.vendorOrderId.toString()).toBe(vendorOrder2._id.toString());
+      expect(record2!.vendorOrderId.toString()).toBe(
+        vendorOrder2._id.toString(),
+      );
       expect(record2!.finalOrderAmount).toBe(1600);
       expect(record2!.commissionAmount).toBe(160);
     });
@@ -987,7 +1075,11 @@ describe('Phase 5: Commission Engine & Ledger Snapshot Contracts', () => {
       influencer.commissionRate = 25;
 
       // Existing historical ledger record remains unmodified
-      const historicalRecord = db.findExisting(orderId, vendorOrder._id, influencer._id);
+      const historicalRecord = db.findExisting(
+        orderId,
+        vendorOrder._id,
+        influencer._id,
+      );
       expect(historicalRecord!.commissionRate).toBe(10);
       expect(historicalRecord!.commissionAmount).toBe(100);
     });
@@ -1001,14 +1093,20 @@ describe('Phase 5: Commission Engine & Ledger Snapshot Contracts', () => {
       const codCharge = 0;
       const finalOrderAmount = subTotal - vendorDiscount; // 1800
       const platformCommissionRate = 20;
-      const platformCommissionAmount = parseFloat(((finalOrderAmount * platformCommissionRate) / 100).toFixed(2)); // 360
+      const platformCommissionAmount = parseFloat(
+        ((finalOrderAmount * platformCommissionRate) / 100).toFixed(2),
+      ); // 360
 
       // Vendor payout is calculated from sale amount minus platform commission
       const saleBase = finalOrderAmount;
-      const vendorPayout = parseFloat((saleBase - platformCommissionAmount).toFixed(2)); // 1440
+      const vendorPayout = parseFloat(
+        (saleBase - platformCommissionAmount).toFixed(2),
+      ); // 1440
 
       const influencerCommissionRate = 10;
-      const influencerCommissionAmount = parseFloat(((finalOrderAmount * influencerCommissionRate) / 100).toFixed(2)); // 180
+      const influencerCommissionAmount = parseFloat(
+        ((finalOrderAmount * influencerCommissionRate) / 100).toFixed(2),
+      ); // 180
 
       // Rule F2 Verification:
       // vendorPayout MUST remain exactly 1440. It must NOT subtract 180.

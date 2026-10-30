@@ -10,9 +10,10 @@ import {
   Max,
   Min,
 } from 'class-validator';
-import { PaymentMethod, VendorPayoutStatus } from 'src/vendor/schema/vendor-payout.schema';
-
-
+import {
+  PaymentMethod,
+  VendorPayoutStatus,
+} from 'src/vendor/schema/vendor-payout.schema';
 
 export enum VendorStatus {
   PENDING = 'PENDING',
@@ -26,7 +27,6 @@ export class UpdateVendorDTO {
 
   @IsOptional()
   @ToNumber()
-
   @IsNumber()
   @Min(0)
   @Max(100)
@@ -55,7 +55,7 @@ export class vendorPayDTO {
 
   @IsArray()
   @ArrayNotEmpty()
-  payoutIds!: []
+  payoutIds!: [];
 }
 
 export class updateVendorPayoutDTO {
@@ -66,8 +66,8 @@ export class updateVendorPayoutDTO {
   // vendorOrderId!:string
 
   @IsString()
-  vendorPayoutId!: string
+  vendorPayoutId!: string;
 
   @IsEnum(VendorPayoutStatus)
-  status!: VendorPayoutStatus
+  status!: VendorPayoutStatus;
 }

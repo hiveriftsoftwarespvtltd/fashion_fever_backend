@@ -4,9 +4,7 @@ import * as nodemailer from 'nodemailer';
 import { WeekDay } from 'src/service/schema/service-availability.schema';
 
 export const generateOTP = (): string => {
-  return Math.floor(
-    100000 + Math.random() * 900000,
-  ).toString();
+  return Math.floor(100000 + Math.random() * 900000).toString();
 };
 
 // create transporter once
@@ -33,8 +31,6 @@ export const sendMail = async (
 ): Promise<boolean> => {
   try {
     const mailTransporter = getTransporter();
-
-
 
     await mailTransporter.sendMail({
       from: process.env.GMAIL_USER,
@@ -90,21 +86,19 @@ export const getWeekDay = (date: Date): WeekDay => {
   ];
 
   return days[date.getDay()];
-}
+};
 
 export const toMinutes = (time: string): number => {
   const [h, m] = time.split(':').map(Number);
   return h * 60 + m;
-}
+};
 
 export const toTimeString = (minutes: number): string => {
   const h = Math.floor(minutes / 60);
   const m = minutes % 60;
 
-  return `${h.toString().padStart(2, '0')}:${m
-    .toString()
-    .padStart(2, '0')}`;
-}
+  return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+};
 
 export const calculateEndTime = (
   startTime: Date | string,
@@ -119,12 +113,14 @@ export const calculateEndTime = (
 
 export const formatTimeIST = (date: Date | string): string => {
   if (!date) return '';
-  return new Date(date).toLocaleTimeString('en-IN', {
-    timeZone: 'Asia/Kolkata',
-    hour: 'numeric',
-    minute: '2-digit',
-    hour12: true
-  }).toUpperCase();
+  return new Date(date)
+    .toLocaleTimeString('en-IN', {
+      timeZone: 'Asia/Kolkata',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    })
+    .toUpperCase();
 };
 
 export const formatDateIST = (date: Date | string): string => {
@@ -133,7 +129,7 @@ export const formatDateIST = (date: Date | string): string => {
     timeZone: 'Asia/Kolkata',
     day: '2-digit',
     month: 'short',
-    year: 'numeric'
+    year: 'numeric',
   });
 };
 
@@ -174,8 +170,15 @@ export const geocodePincode = async (
 };
 
 export const filteredObject = (dto: any) => {
-  return Object.fromEntries(Object.entries(dto).filter(([key, value]) => (value !== null && value !== undefined && (typeof value !== 'string' || value.trim().length > 0))))
-}
+  return Object.fromEntries(
+    Object.entries(dto).filter(
+      ([key, value]) =>
+        value !== null &&
+        value !== undefined &&
+        (typeof value !== 'string' || value.trim().length > 0),
+    ),
+  );
+};
 
 export const notifyAdmins = async (
   userModel: any,
@@ -183,8 +186,14 @@ export const notifyAdmins = async (
   html: string,
 ): Promise<void> => {
   try {
-    const admins = await userModel.find({ role: 'admin', isActive: true, isDeleted: false });
-    const emailPromises = admins.map((admin: any) => safeSendMail(admin.email, subject, html));
+    const admins = await userModel.find({
+      role: 'admin',
+      isActive: true,
+      isDeleted: false,
+    });
+    const emailPromises = admins.map((admin: any) =>
+      safeSendMail(admin.email, subject, html),
+    );
     await Promise.allSettled(emailPromises);
   } catch (error) {
     console.error('Failed to notify admins:', error);

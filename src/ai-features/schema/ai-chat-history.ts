@@ -1,5 +1,5 @@
-import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
-import { Document, Types } from "mongoose";
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Document, Types } from 'mongoose';
 
 export type AIChatHistoryDocument = AIChatHistory & Document;
 
@@ -20,7 +20,7 @@ export class ChatHistoryEntry {
 
 @Schema({ timestamps: true })
 export class AIChatHistory {
-  @Prop({ type: Types.ObjectId, ref: "User", required: true, unique: true })
+  @Prop({ type: Types.ObjectId, ref: 'User', required: true, unique: true })
   user!: Types.ObjectId;
 
   @Prop({ type: [SchemaFactory.createForClass(ChatHistoryEntry)], default: [] })

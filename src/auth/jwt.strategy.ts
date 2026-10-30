@@ -32,13 +32,17 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       throw new UnauthorizedException();
     }
 
-    const user = await this.userModel.findById(payload.sub).select("name email roles isActive vendorId serviceProviderId influencerId distributorId educatorId");
+    const user = await this.userModel
+      .findById(payload.sub)
+      .select(
+        'name email roles isActive vendorId serviceProviderId influencerId distributorId educatorId',
+      );
 
     if (!user) {
-      throw new UnauthorizedException("User not found");
+      throw new UnauthorizedException('User not found');
     }
     if (!user?.isActive) {
-      throw new UnauthorizedException("User is not active");
+      throw new UnauthorizedException('User is not active');
     }
 
     let vendorId = user.vendorId;
@@ -46,10 +50,12 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       const v = await this.vendorModel.findOne({ ownerId: user._id });
       if (v) {
         vendorId = v._id;
-        await this.userModel.updateOne(
-          { _id: user._id },
-          { $set: { vendorId: v._id, isVendorOnboardingCompleted: true } }
-        ).catch(() => {});
+        await this.userModel
+          .updateOne(
+            { _id: user._id },
+            { $set: { vendorId: v._id, isVendorOnboardingCompleted: true } },
+          )
+          .catch(() => {});
       }
     }
 
@@ -62,7 +68,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       influencerId: user.influencerId,
       serviceProviderId: user.serviceProviderId,
       distributorId: user.distributorId,
-      educatorId: user.educatorId
+      educatorId: user.educatorId,
     };
   }
-}
+}

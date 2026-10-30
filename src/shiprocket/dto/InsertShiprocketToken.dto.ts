@@ -1,11 +1,16 @@
-import { IsNotEmpty, IsString, IsOptional, IsDateString } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsString,
+  IsOptional,
+  IsDateString,
+} from 'class-validator';
 
 export class InsertShiprocketTokenDto {
-    @IsNotEmpty()
-    @IsString()
-    token: string;
+  @IsNotEmpty()
+  @IsString()
+  token: string;
 
-    @IsOptional()
-    @IsDateString()
-    expiresAt?: string;
+  @IsOptional()
+  @IsDateString()
+  expiresAt?: string;
 }

@@ -5,13 +5,13 @@ export const getSystemPrompt = (user?: any): string => {
   if (user) {
     if (user.role === 'admin') userRole = 'admin';
     else if (user.role === 'vendor' || user.vendorId) userRole = 'vendor';
-    else if (user.role === 'influencer' || user.influencerId) userRole = 'influencer';
-    else if (user.role === 'provider' || user.serviceProviderId) userRole = 'provider';
+    else if (user.role === 'influencer' || user.influencerId)
+      userRole = 'influencer';
+    else if (user.role === 'provider' || user.serviceProviderId)
+      userRole = 'provider';
     else if (user.role === 'educator' || user.educatorId) userRole = 'educator';
     else userRole = user.role || 'user';
   }
-
- 
 
   const baseContext = `
   You are the official AI Assistant for "FashionFever", a comprehensive fashion, beauty, e-commerce, and service booking platform. 

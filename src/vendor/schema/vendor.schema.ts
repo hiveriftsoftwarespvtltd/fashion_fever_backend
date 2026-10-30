@@ -1,6 +1,5 @@
-import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
-import { Types } from "mongoose";
-
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Types } from 'mongoose';
 
 export class QuickCommerceConfig {
   @Prop({ default: false })
@@ -56,7 +55,7 @@ export class Vendor {
   email?: string;
 
   @Prop({ type: Types.ObjectId, ref: 'Media' })
-  logo?: Types.ObjectId
+  logo?: Types.ObjectId;
 
   @Prop({ type: Types.ObjectId, ref: 'Media' })
   banner?: Types.ObjectId;
@@ -71,13 +70,13 @@ export class Vendor {
   commissionRate!: number;
 
   @Prop({ required: true })
-  city!: string
+  city!: string;
 
   @Prop({ required: true })
-  state!: string
+  state!: string;
 
   @Prop({ required: true })
-  vendorPincode!: string
+  vendorPincode!: string;
 
   @Prop({
     type: {
@@ -106,4 +105,3 @@ export class Vendor {
 }
 
 export const VendorSchema = SchemaFactory.createForClass(Vendor);
-

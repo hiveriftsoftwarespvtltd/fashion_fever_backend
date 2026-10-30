@@ -8,11 +8,11 @@ import { map } from 'rxjs/operators';
 import { Observable } from 'rxjs';
 import { ApiResponse } from './api-response';
 
-
 @Injectable()
-export class ResponseInterceptor<T>
-  implements NestInterceptor<T, ApiResponse<T>>
-{
+export class ResponseInterceptor<T> implements NestInterceptor<
+  T,
+  ApiResponse<T>
+> {
   intercept(
     context: ExecutionContext,
     next: CallHandler,

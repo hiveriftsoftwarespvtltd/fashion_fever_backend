@@ -1,11 +1,17 @@
 import { Types } from 'mongoose';
-import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
-import { CommissionStatus, AttributionSource } from './schema/influencer-commision-rate.schema';
+import {
+  BadRequestException,
+  ConflictException,
+  NotFoundException,
+} from '@nestjs/common';
+import {
+  CommissionStatus,
+  AttributionSource,
+} from './schema/influencer-commision-rate.schema';
 import { InfluencerPayoutStatus } from './schema/influencer-payout.schema';
 import { AffiliateTrackingService } from './affiliate-tracking.service';
 
 describe('Phase 10: Master End-to-End Creator Lifecycle & Concurrency Suite', () => {
-
   // =========================================================================
   // SHARED DOMAIN MOCKS & INTERFACES
   // =========================================================================
@@ -67,7 +73,13 @@ describe('Phase 10: Master End-to-End Creator Lifecycle & Concurrency Suite', ()
     commissions: Map<string, MockCommission> = new Map();
     payouts: Map<string, MockPayout> = new Map();
 
-    createInfluencer(data: { _id?: string; userId?: string; name: string; commissionRate: number | null; upiId?: string }): MockInfluencer {
+    createInfluencer(data: {
+      _id?: string;
+      userId?: string;
+      name: string;
+      commissionRate: number | null;
+      upiId?: string;
+    }): MockInfluencer {
       const inf: MockInfluencer = {
         _id: data._id || new Types.ObjectId().toString(),
         userId: data.userId || new Types.ObjectId().toString(),
@@ -82,7 +94,11 @@ describe('Phase 10: Master End-to-End Creator Lifecycle & Concurrency Suite', ()
       return inf;
     }
 
-    createCustomer(data: { _id?: string; referredByInfluencerId?: string | null; referralExpiresAt?: Date | null }): MockCustomer {
+    createCustomer(data: {
+      _id?: string;
+      referredByInfluencerId?: string | null;
+      referralExpiresAt?: Date | null;
+    }): MockCustomer {
       const cust: MockCustomer = {
         _id: data._id || new Types.ObjectId().toString(),
         referredByInfluencerId: data.referredByInfluencerId || null,
@@ -112,12 +128,15 @@ describe('Phase 10: Master End-to-End Creator Lifecycle & Concurrency Suite', ()
       if (params.couponInfluencerId) {
         const couponInf = this.influencers.get(params.couponInfluencerId);
         if (couponInf && couponInf.userId === params.customerId) {
-          throw new BadRequestException('You cannot use your own influencer coupon.');
+          throw new BadRequestException(
+            'You cannot use your own influencer coupon.',
+          );
         }
       }
 
       // Check active referral attribution (365-day expiry boundary)
-      const hasValidReferral = customer.referredByInfluencerId &&
+      const hasValidReferral =
+        customer.referredByInfluencerId &&
         customer.referralExpiresAt &&
         customer.referralExpiresAt > now;
 
@@ -144,7 +163,11 @@ describe('Phase 10: Master End-to-End Creator Lifecycle & Concurrency Suite', ()
       }
 
       const beneficiary = this.influencers.get(activeBeneficiaryId);
-      if (!beneficiary || beneficiary.commissionRate === null || beneficiary.commissionRate === undefined) {
+      if (
+        !beneficiary ||
+        beneficiary.commissionRate === null ||
+        beneficiary.commissionRate === undefined
+      ) {
         // UNCONFIGURED RATE: NO commission record is created!
         return { orderSuccess: true, commissionRecord: null };
       }
@@ -164,7 +187,11 @@ describe('Phase 10: Master End-to-End Creator Lifecycle & Concurrency Suite', ()
       }
 
       // ONLINE: Verified payment captured immediately -> Commission created with status PENDING, isDelivered = false
-      const commissionAmount = parseFloat(((params.finalOrderAmount * beneficiary.commissionRate) / 100).toFixed(2));
+      const commissionAmount = parseFloat(
+        ((params.finalOrderAmount * beneficiary.commissionRate) / 100).toFixed(
+          2,
+        ),
+      );
       const commId = new Types.ObjectId().toString();
       const commission: MockCommission = {
         _id: commId,
@@ -194,17 +221,27 @@ describe('Phase 10: Master End-to-End Creator Lifecycle & Concurrency Suite', ()
     }
 
     // COD Delivery + Verified Cash Collection milestone
-    confirmCodDeliveryAndPayment(deferredData: {
-      influencerId: string;
-      finalOrderAmount: number;
-      commissionRate: number;
-      attributionSource: AttributionSource;
-    }, deliveryDate = new Date()) {
+    confirmCodDeliveryAndPayment(
+      deferredData: {
+        influencerId: string;
+        finalOrderAmount: number;
+        commissionRate: number;
+        attributionSource: AttributionSource;
+      },
+      deliveryDate = new Date(),
+    ) {
       const beneficiary = this.influencers.get(deferredData.influencerId);
       if (!beneficiary) throw new NotFoundException('Influencer not found');
 
-      const commissionAmount = parseFloat(((deferredData.finalOrderAmount * deferredData.commissionRate) / 100).toFixed(2));
-      const approvalEligibleAt = new Date(deliveryDate.getTime() + 7 * 24 * 60 * 60 * 1000);
+      const commissionAmount = parseFloat(
+        (
+          (deferredData.finalOrderAmount * deferredData.commissionRate) /
+          100
+        ).toFixed(2),
+      );
+      const approvalEligibleAt = new Date(
+        deliveryDate.getTime() + 7 * 24 * 60 * 60 * 1000,
+      );
 
       const commId = new Types.ObjectId().toString();
       const commission: MockCommission = {
@@ -241,7 +278,9 @@ describe('Phase 10: Master End-to-End Creator Lifecycle & Concurrency Suite', ()
 
       comm.isDelivered = true;
       comm.deliveredAt = deliveryDate;
-      comm.approvalEligibleAt = new Date(deliveryDate.getTime() + 7 * 24 * 60 * 60 * 1000);
+      comm.approvalEligibleAt = new Date(
+        deliveryDate.getTime() + 7 * 24 * 60 * 60 * 1000,
+      );
       return comm;
     }
 
@@ -285,7 +324,9 @@ describe('Phase 10: Master End-to-End Creator Lifecycle & Concurrency Suite', ()
 
     // Creator Wallet Balance Arithmetic
     getWalletBalance(influencerId: string) {
-      const infComms = [...this.commissions.values()].filter((c) => c.influencerId === influencerId);
+      const infComms = [...this.commissions.values()].filter(
+        (c) => c.influencerId === influencerId,
+      );
 
       const pendingBalance = parseFloat(
         infComms
@@ -296,14 +337,26 @@ describe('Phase 10: Master End-to-End Creator Lifecycle & Concurrency Suite', ()
 
       const approvedBalance = parseFloat(
         infComms
-          .filter((c) => c.status === CommissionStatus.APPROVED && !c.isSettled && !c.isReversed && !c.payoutId)
+          .filter(
+            (c) =>
+              c.status === CommissionStatus.APPROVED &&
+              !c.isSettled &&
+              !c.isReversed &&
+              !c.payoutId,
+          )
           .reduce((sum, c) => sum + c.commissionAmount, 0)
           .toFixed(2),
       );
 
       const lockedInPayoutBalance = parseFloat(
         infComms
-          .filter((c) => c.status === CommissionStatus.APPROVED && !c.isSettled && !c.isReversed && c.payoutId !== null)
+          .filter(
+            (c) =>
+              c.status === CommissionStatus.APPROVED &&
+              !c.isSettled &&
+              !c.isReversed &&
+              c.payoutId !== null,
+          )
           .reduce((sum, c) => sum + c.commissionAmount, 0)
           .toFixed(2),
       );
@@ -328,23 +381,39 @@ describe('Phase 10: Master End-to-End Creator Lifecycle & Concurrency Suite', ()
     requestPayout(influencerId: string) {
       // Check for active pending payout first (Rule G3 & Concurrency safety)
       const activePending = [...this.payouts.values()].find(
-        (p) => p.influencerId === influencerId && p.status === InfluencerPayoutStatus.PENDING,
+        (p) =>
+          p.influencerId === influencerId &&
+          p.status === InfluencerPayoutStatus.PENDING,
       );
       if (activePending) {
-        throw new ConflictException('You already have a pending payout request in review.');
+        throw new ConflictException(
+          'You already have a pending payout request in review.',
+        );
       }
 
       const balance = this.getWalletBalance(influencerId);
       if (balance.approvedBalance < 500) {
-        throw new BadRequestException('Minimum payout amount is ₹500. Current approved balance: ₹' + balance.approvedBalance);
+        throw new BadRequestException(
+          'Minimum payout amount is ₹500. Current approved balance: ₹' +
+            balance.approvedBalance,
+        );
       }
 
       const eligibleComms = [...this.commissions.values()].filter(
-        (c) => c.influencerId === influencerId && c.status === CommissionStatus.APPROVED && !c.isSettled && !c.isReversed && !c.payoutId,
+        (c) =>
+          c.influencerId === influencerId &&
+          c.status === CommissionStatus.APPROVED &&
+          !c.isSettled &&
+          !c.isReversed &&
+          !c.payoutId,
       );
 
       const payoutId = new Types.ObjectId().toString();
-      const totalAmount = parseFloat(eligibleComms.reduce((sum, c) => sum + c.commissionAmount, 0).toFixed(2));
+      const totalAmount = parseFloat(
+        eligibleComms
+          .reduce((sum, c) => sum + c.commissionAmount, 0)
+          .toFixed(2),
+      );
 
       // Lock commissions
       eligibleComms.forEach((c) => {
@@ -369,7 +438,9 @@ describe('Phase 10: Master End-to-End Creator Lifecycle & Concurrency Suite', ()
     // Admin Settles Payout (Rule G3 & Idempotency)
     settlePayout(payoutId: string, transactionId: string) {
       if (!transactionId || transactionId.trim() === '') {
-        throw new BadRequestException('Transaction ID / bank reference is required');
+        throw new BadRequestException(
+          'Transaction ID / bank reference is required',
+        );
       }
       const cleanTransactionId = transactionId.trim();
 
@@ -379,14 +450,22 @@ describe('Phase 10: Master End-to-End Creator Lifecycle & Concurrency Suite', ()
       // Idempotency check
       if (payout.status === InfluencerPayoutStatus.PAID) {
         if (payout.transactionId === cleanTransactionId) {
-          return { success: true, message: 'Influencer payout already completed (idempotent)', data: payout };
+          return {
+            success: true,
+            message: 'Influencer payout already completed (idempotent)',
+            data: payout,
+          };
         } else {
-          throw new ConflictException('Payout has already been settled with a different transaction ID.');
+          throw new ConflictException(
+            'Payout has already been settled with a different transaction ID.',
+          );
         }
       }
 
       if (payout.status !== InfluencerPayoutStatus.PENDING) {
-        throw new BadRequestException(`Cannot settle payout in status: ${payout.status}`);
+        throw new BadRequestException(
+          `Cannot settle payout in status: ${payout.status}`,
+        );
       }
 
       payout.status = InfluencerPayoutStatus.PAID;
@@ -412,7 +491,11 @@ describe('Phase 10: Master End-to-End Creator Lifecycle & Concurrency Suite', ()
         inf.approvedCommission -= payout.totalCommission;
       }
 
-      return { success: true, message: 'Influencer payout completed', data: payout };
+      return {
+        success: true,
+        message: 'Influencer payout completed',
+        data: payout,
+      };
     }
 
     // Admin Rejection (Unlocks commissions back to APPROVED)
@@ -421,13 +504,21 @@ describe('Phase 10: Master End-to-End Creator Lifecycle & Concurrency Suite', ()
       if (!payout) throw new NotFoundException('Payout not found');
 
       if (payout.status === InfluencerPayoutStatus.REJECTED) {
-        return { success: true, message: 'Influencer payout already rejected (idempotent)', data: payout };
+        return {
+          success: true,
+          message: 'Influencer payout already rejected (idempotent)',
+          data: payout,
+        };
       }
       if (payout.status === InfluencerPayoutStatus.PAID) {
-        throw new ConflictException('Cannot reject a payout that has already been settled.');
+        throw new ConflictException(
+          'Cannot reject a payout that has already been settled.',
+        );
       }
       if (payout.status !== InfluencerPayoutStatus.PENDING) {
-        throw new BadRequestException(`Cannot reject payout in status: ${payout.status}`);
+        throw new BadRequestException(
+          `Cannot reject payout in status: ${payout.status}`,
+        );
       }
 
       payout.status = InfluencerPayoutStatus.REJECTED;
@@ -440,7 +531,11 @@ describe('Phase 10: Master End-to-End Creator Lifecycle & Concurrency Suite', ()
         }
       });
 
-      return { success: true, message: 'Influencer payout rejected and commissions unlocked', data: payout };
+      return {
+        success: true,
+        message: 'Influencer payout rejected and commissions unlocked',
+        data: payout,
+      };
     }
   }
 
@@ -546,7 +641,8 @@ describe('Phase 10: Master End-to-End Creator Lifecycle & Concurrency Suite', ()
 
       mockAffliateProgramModel = {
         findOne: jest.fn().mockImplementation((q) => {
-          if (q.referralCode === programDoc.referralCode && q.isActive) return Promise.resolve(programDoc);
+          if (q.referralCode === programDoc.referralCode && q.isActive)
+            return Promise.resolve(programDoc);
           return Promise.resolve(null);
         }),
         updateOne: jest.fn().mockImplementation((q, u) => {
@@ -560,7 +656,9 @@ describe('Phase 10: Master End-to-End Creator Lifecycle & Concurrency Suite', ()
       };
 
       mockAffliateRateLimitModel = {
-        findOneAndUpdate: jest.fn().mockResolvedValue({ _id: new Types.ObjectId() }),
+        findOneAndUpdate: jest
+          .fn()
+          .mockResolvedValue({ _id: new Types.ObjectId() }),
       };
 
       trackingService = new AffiliateTrackingService(
@@ -573,14 +671,22 @@ describe('Phase 10: Master End-to-End Creator Lifecycle & Concurrency Suite', ()
     });
 
     it('Scenario 4: Bot user agents are dropped immediately from click counts', async () => {
-      const res = await trackingService.trackClick('REF-CREATOR-01', '10.0.0.1', 'Googlebot/2.1');
+      const res = await trackingService.trackClick(
+        'REF-CREATOR-01',
+        '10.0.0.1',
+        'Googlebot/2.1',
+      );
       expect(res).toBe(programDoc);
       expect(programDoc.totalClicks).toBe(0);
       expect(mockAffliateClickTrackingModel.create).not.toHaveBeenCalled();
     });
 
     it('Scenario 5: Legitimate browser click claims rolling 24h lease and increments totalClicks', async () => {
-      const res = await trackingService.trackClick('REF-CREATOR-01', '49.36.10.5', 'Mozilla/5.0 Chrome/120.0');
+      const res = await trackingService.trackClick(
+        'REF-CREATOR-01',
+        '49.36.10.5',
+        'Mozilla/5.0 Chrome/120.0',
+      );
       expect(res).toBe(programDoc);
       expect(programDoc.totalClicks).toBe(1);
       expect(mockAffliateClickTrackingModel.create).toHaveBeenCalled();
@@ -588,10 +694,15 @@ describe('Phase 10: Master End-to-End Creator Lifecycle & Concurrency Suite', ()
 
     it('Scenario 6: Customer registration binds customer to referrer with 365-day expiry window', () => {
       const harness = new MockEcommerceLifecycleHarness();
-      const creator = harness.createInfluencer({ name: 'Creator A', commissionRate: 10 });
+      const creator = harness.createInfluencer({
+        name: 'Creator A',
+        commissionRate: 10,
+      });
 
       const now = new Date();
-      const expectedExpiry = new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000);
+      const expectedExpiry = new Date(
+        now.getTime() + 365 * 24 * 60 * 60 * 1000,
+      );
 
       const customer = harness.createCustomer({
         referredByInfluencerId: creator._id,
@@ -599,7 +710,9 @@ describe('Phase 10: Master End-to-End Creator Lifecycle & Concurrency Suite', ()
       });
 
       expect(customer.referredByInfluencerId).toBe(creator._id);
-      expect(customer.referralExpiresAt?.getTime()).toBeGreaterThan(now.getTime());
+      expect(customer.referralExpiresAt?.getTime()).toBeGreaterThan(
+        now.getTime(),
+      );
     });
   });
 
@@ -613,8 +726,14 @@ describe('Phase 10: Master End-to-End Creator Lifecycle & Concurrency Suite', ()
 
     beforeEach(() => {
       harness = new MockEcommerceLifecycleHarness();
-      creator = harness.createInfluencer({ name: 'Primary Referrer', commissionRate: 12 });
-      otherCreator = harness.createInfluencer({ name: 'Coupon Creator', commissionRate: 8 });
+      creator = harness.createInfluencer({
+        name: 'Primary Referrer',
+        commissionRate: 12,
+      });
+      otherCreator = harness.createInfluencer({
+        name: 'Coupon Creator',
+        commissionRate: 8,
+      });
     });
 
     it('Scenario 7: Purchases on Day 180 and Day 364 attribute commission to referrer', () => {
@@ -682,7 +801,9 @@ describe('Phase 10: Master End-to-End Creator Lifecycle & Concurrency Suite', ()
 
       // Referring creator gets 100% of the commission; coupon influencer gets 0
       expect(order.commissionRecord?.influencerId).toBe(creator._id);
-      expect(order.commissionRecord?.attributionSource).toBe(AttributionSource.REFERRAL);
+      expect(order.commissionRecord?.attributionSource).toBe(
+        AttributionSource.REFERRAL,
+      );
       expect(order.commissionRecord?.commissionAmount).toBe(120);
     });
 
@@ -724,7 +845,10 @@ describe('Phase 10: Master End-to-End Creator Lifecycle & Concurrency Suite', ()
 
     beforeEach(() => {
       harness = new MockEcommerceLifecycleHarness();
-      creator = harness.createInfluencer({ name: 'Online Creator', commissionRate: 10 });
+      creator = harness.createInfluencer({
+        name: 'Online Creator',
+        commissionRate: 10,
+      });
     });
 
     it('Scenario 11: Simulated verified online capture creates commission in status PENDING, isDelivered=false', () => {
@@ -782,11 +906,16 @@ describe('Phase 10: Master End-to-End Creator Lifecycle & Concurrency Suite', ()
       });
 
       const deliveryDate = new Date('2026-10-01T10:00:00Z');
-      const updatedComm = harness.markOnlineOrderDelivered(order.commissionRecord!._id, deliveryDate);
+      const updatedComm = harness.markOnlineOrderDelivered(
+        order.commissionRecord!._id,
+        deliveryDate,
+      );
 
       expect(updatedComm.isDelivered).toBe(true);
       expect(updatedComm.deliveredAt).toEqual(deliveryDate);
-      expect(updatedComm.approvalEligibleAt).toEqual(new Date('2026-10-08T10:00:00Z')); // exactly 7 days
+      expect(updatedComm.approvalEligibleAt).toEqual(
+        new Date('2026-10-08T10:00:00Z'),
+      ); // exactly 7 days
     });
   });
 
@@ -799,7 +928,10 @@ describe('Phase 10: Master End-to-End Creator Lifecycle & Concurrency Suite', ()
 
     beforeEach(() => {
       harness = new MockEcommerceLifecycleHarness();
-      creator = harness.createInfluencer({ name: 'COD Creator', commissionRate: 15 });
+      creator = harness.createInfluencer({
+        name: 'COD Creator',
+        commissionRate: 15,
+      });
     });
 
     it('Scenario 14: COD order placement defers commission record creation', () => {
@@ -834,7 +966,10 @@ describe('Phase 10: Master End-to-End Creator Lifecycle & Concurrency Suite', ()
 
       const deliveryDate = new Date('2026-10-02T12:00:00Z');
       // Delivery verified + cash collected
-      const comm = harness.confirmCodDeliveryAndPayment(order.deferredCODData!, deliveryDate);
+      const comm = harness.confirmCodDeliveryAndPayment(
+        order.deferredCODData!,
+        deliveryDate,
+      );
 
       expect(comm).toBeDefined();
       expect(comm.commissionAmount).toBe(150);
@@ -857,7 +992,10 @@ describe('Phase 10: Master End-to-End Creator Lifecycle & Concurrency Suite', ()
       });
 
       const deliveryDate = new Date('2026-10-02T12:00:00Z');
-      const comm = harness.confirmCodDeliveryAndPayment(order.deferredCODData!, deliveryDate);
+      const comm = harness.confirmCodDeliveryAndPayment(
+        order.deferredCODData!,
+        deliveryDate,
+      );
       expect(creator.pendingCommission).toBe(150);
 
       // Customer returns product 3 days later
@@ -879,7 +1017,10 @@ describe('Phase 10: Master End-to-End Creator Lifecycle & Concurrency Suite', ()
 
     beforeEach(() => {
       harness = new MockEcommerceLifecycleHarness();
-      creator = harness.createInfluencer({ name: 'Maturation Creator', commissionRate: 10 });
+      creator = harness.createInfluencer({
+        name: 'Maturation Creator',
+        commissionRate: 10,
+      });
 
       const customer = harness.createCustomer({
         referredByInfluencerId: creator._id,
@@ -894,25 +1035,34 @@ describe('Phase 10: Master End-to-End Creator Lifecycle & Concurrency Suite', ()
 
       commId = order.commissionRecord!._id;
       // Delivered on Day 1
-      harness.markOnlineOrderDelivered(commId, new Date('2026-10-01T00:00:00Z'));
+      harness.markOnlineOrderDelivered(
+        commId,
+        new Date('2026-10-01T00:00:00Z'),
+      );
     });
 
     it('Scenario 17: Commission remains strictly PENDING during 7-day hold (Day 3, Day 6, Day 7)', () => {
       // Day 3 check
       harness.runMaturationCron(new Date('2026-10-04T00:00:00Z'));
-      expect(harness.commissions.get(commId)?.status).toBe(CommissionStatus.PENDING);
+      expect(harness.commissions.get(commId)?.status).toBe(
+        CommissionStatus.PENDING,
+      );
       expect(creator.pendingCommission).toBe(300);
       expect(creator.approvedCommission).toBe(0);
 
       // Day 7 check (last day of return hold)
       harness.runMaturationCron(new Date('2026-10-07T23:59:59Z'));
-      expect(harness.commissions.get(commId)?.status).toBe(CommissionStatus.PENDING);
+      expect(harness.commissions.get(commId)?.status).toBe(
+        CommissionStatus.PENDING,
+      );
       expect(creator.approvedCommission).toBe(0);
     });
 
     it('Scenario 18: Daily Cron shifts commission to APPROVED on Day 8 (approvalEligibleAt <= now)', () => {
       // Day 8 (2026-10-08T00:00:01Z): 7 full days have elapsed
-      const maturedCount = harness.runMaturationCron(new Date('2026-10-08T00:00:01Z'));
+      const maturedCount = harness.runMaturationCron(
+        new Date('2026-10-08T00:00:01Z'),
+      );
       expect(maturedCount).toBe(1);
 
       const comm = harness.commissions.get(commId);
@@ -931,25 +1081,55 @@ describe('Phase 10: Master End-to-End Creator Lifecycle & Concurrency Suite', ()
 
     beforeEach(() => {
       harness = new MockEcommerceLifecycleHarness();
-      creator = harness.createInfluencer({ name: 'Wallet Creator', commissionRate: 10, upiId: 'wallet@upi' });
+      creator = harness.createInfluencer({
+        name: 'Wallet Creator',
+        commissionRate: 10,
+        upiId: 'wallet@upi',
+      });
     });
 
     it('Scenario 19: Real-time wallet arithmetic calculates pending, approved, locked, and paid balances', () => {
       // Approved comm: 400
       const c1: MockCommission = {
-        _id: 'c1', orderId: 'o1', vendorOrderId: 'vo1', influencerId: creator._id,
-        finalOrderAmount: 4000, commissionRate: 10, commissionAmount: 400,
-        attributionSource: AttributionSource.REFERRAL, status: CommissionStatus.APPROVED,
-        isDelivered: true, deliveredAt: new Date(), approvalEligibleAt: new Date(),
-        isSettled: false, isReversed: false, payoutId: null, payoutReference: null, settledAt: null, paidAt: null,
+        _id: 'c1',
+        orderId: 'o1',
+        vendorOrderId: 'vo1',
+        influencerId: creator._id,
+        finalOrderAmount: 4000,
+        commissionRate: 10,
+        commissionAmount: 400,
+        attributionSource: AttributionSource.REFERRAL,
+        status: CommissionStatus.APPROVED,
+        isDelivered: true,
+        deliveredAt: new Date(),
+        approvalEligibleAt: new Date(),
+        isSettled: false,
+        isReversed: false,
+        payoutId: null,
+        payoutReference: null,
+        settledAt: null,
+        paidAt: null,
       };
       // Pending comm: 200
       const c2: MockCommission = {
-        _id: 'c2', orderId: 'o2', vendorOrderId: 'vo2', influencerId: creator._id,
-        finalOrderAmount: 2000, commissionRate: 10, commissionAmount: 200,
-        attributionSource: AttributionSource.REFERRAL, status: CommissionStatus.PENDING,
-        isDelivered: false, deliveredAt: null, approvalEligibleAt: null,
-        isSettled: false, isReversed: false, payoutId: null, payoutReference: null, settledAt: null, paidAt: null,
+        _id: 'c2',
+        orderId: 'o2',
+        vendorOrderId: 'vo2',
+        influencerId: creator._id,
+        finalOrderAmount: 2000,
+        commissionRate: 10,
+        commissionAmount: 200,
+        attributionSource: AttributionSource.REFERRAL,
+        status: CommissionStatus.PENDING,
+        isDelivered: false,
+        deliveredAt: null,
+        approvalEligibleAt: null,
+        isSettled: false,
+        isReversed: false,
+        payoutId: null,
+        payoutReference: null,
+        settledAt: null,
+        paidAt: null,
       };
 
       harness.commissions.set('c1', c1);
@@ -963,25 +1143,55 @@ describe('Phase 10: Master End-to-End Creator Lifecycle & Concurrency Suite', ()
 
     it('Scenario 20: Payout request blocked if approved balance < ₹500 (Rule G2)', () => {
       const c1: MockCommission = {
-        _id: 'c1', orderId: 'o1', vendorOrderId: 'vo1', influencerId: creator._id,
-        finalOrderAmount: 4000, commissionRate: 10, commissionAmount: 400, // ₹400 < ₹500
-        attributionSource: AttributionSource.REFERRAL, status: CommissionStatus.APPROVED,
-        isDelivered: true, deliveredAt: new Date(), approvalEligibleAt: new Date(),
-        isSettled: false, isReversed: false, payoutId: null, payoutReference: null, settledAt: null, paidAt: null,
+        _id: 'c1',
+        orderId: 'o1',
+        vendorOrderId: 'vo1',
+        influencerId: creator._id,
+        finalOrderAmount: 4000,
+        commissionRate: 10,
+        commissionAmount: 400, // ₹400 < ₹500
+        attributionSource: AttributionSource.REFERRAL,
+        status: CommissionStatus.APPROVED,
+        isDelivered: true,
+        deliveredAt: new Date(),
+        approvalEligibleAt: new Date(),
+        isSettled: false,
+        isReversed: false,
+        payoutId: null,
+        payoutReference: null,
+        settledAt: null,
+        paidAt: null,
       };
       harness.commissions.set('c1', c1);
 
-      expect(() => harness.requestPayout(creator._id)).toThrow(BadRequestException);
-      expect(() => harness.requestPayout(creator._id)).toThrow('Minimum payout amount is ₹500');
+      expect(() => harness.requestPayout(creator._id)).toThrow(
+        BadRequestException,
+      );
+      expect(() => harness.requestPayout(creator._id)).toThrow(
+        'Minimum payout amount is ₹500',
+      );
     });
 
     it('Scenario 21: Payout request for ₹500+ locks commissions with payoutId and snapshots UPI', () => {
       const c1: MockCommission = {
-        _id: 'c1', orderId: 'o1', vendorOrderId: 'vo1', influencerId: creator._id,
-        finalOrderAmount: 6000, commissionRate: 10, commissionAmount: 600, // ₹600 >= ₹500
-        attributionSource: AttributionSource.REFERRAL, status: CommissionStatus.APPROVED,
-        isDelivered: true, deliveredAt: new Date(), approvalEligibleAt: new Date(),
-        isSettled: false, isReversed: false, payoutId: null, payoutReference: null, settledAt: null, paidAt: null,
+        _id: 'c1',
+        orderId: 'o1',
+        vendorOrderId: 'vo1',
+        influencerId: creator._id,
+        finalOrderAmount: 6000,
+        commissionRate: 10,
+        commissionAmount: 600, // ₹600 >= ₹500
+        attributionSource: AttributionSource.REFERRAL,
+        status: CommissionStatus.APPROVED,
+        isDelivered: true,
+        deliveredAt: new Date(),
+        approvalEligibleAt: new Date(),
+        isSettled: false,
+        isReversed: false,
+        payoutId: null,
+        payoutReference: null,
+        settledAt: null,
+        paidAt: null,
       };
       harness.commissions.set('c1', c1);
 
@@ -1010,15 +1220,31 @@ describe('Phase 10: Master End-to-End Creator Lifecycle & Concurrency Suite', ()
 
     beforeEach(() => {
       harness = new MockEcommerceLifecycleHarness();
-      creator = harness.createInfluencer({ name: 'Settlement Creator', commissionRate: 10 });
+      creator = harness.createInfluencer({
+        name: 'Settlement Creator',
+        commissionRate: 10,
+      });
       creator.approvedCommission = 800;
 
       const c1: MockCommission = {
-        _id: 'c1', orderId: 'o1', vendorOrderId: 'vo1', influencerId: creator._id,
-        finalOrderAmount: 8000, commissionRate: 10, commissionAmount: 800,
-        attributionSource: AttributionSource.REFERRAL, status: CommissionStatus.APPROVED,
-        isDelivered: true, deliveredAt: new Date(), approvalEligibleAt: new Date(),
-        isSettled: false, isReversed: false, payoutId: null, payoutReference: null, settledAt: null, paidAt: null,
+        _id: 'c1',
+        orderId: 'o1',
+        vendorOrderId: 'vo1',
+        influencerId: creator._id,
+        finalOrderAmount: 8000,
+        commissionRate: 10,
+        commissionAmount: 800,
+        attributionSource: AttributionSource.REFERRAL,
+        status: CommissionStatus.APPROVED,
+        isDelivered: true,
+        deliveredAt: new Date(),
+        approvalEligibleAt: new Date(),
+        isSettled: false,
+        isReversed: false,
+        payoutId: null,
+        payoutReference: null,
+        settledAt: null,
+        paidAt: null,
       };
       harness.commissions.set('c1', c1);
 
@@ -1124,7 +1350,11 @@ describe('Phase 10: Master End-to-End Creator Lifecycle & Concurrency Suite', ()
 
       // Launch 10 simultaneous requests
       const promises = Array.from({ length: 10 }).map(() =>
-        trackingService.trackClick('REF-STRESS-01', '124.50.20.1', 'Mozilla/5.0 Chrome/120.0'),
+        trackingService.trackClick(
+          'REF-STRESS-01',
+          '124.50.20.1',
+          'Mozilla/5.0 Chrome/120.0',
+        ),
       );
 
       await Promise.all(promises);
@@ -1135,15 +1365,31 @@ describe('Phase 10: Master End-to-End Creator Lifecycle & Concurrency Suite', ()
 
     it('Scenario 26: Concurrent Payout Requests (5 simultaneous requests from same creator) results in exactly 1 PENDING payout', async () => {
       const harness = new MockEcommerceLifecycleHarness();
-      const creator = harness.createInfluencer({ name: 'Race Creator', commissionRate: 10 });
+      const creator = harness.createInfluencer({
+        name: 'Race Creator',
+        commissionRate: 10,
+      });
       creator.approvedCommission = 1000;
 
       const c1: MockCommission = {
-        _id: 'c1', orderId: 'o1', vendorOrderId: 'vo1', influencerId: creator._id,
-        finalOrderAmount: 10000, commissionRate: 10, commissionAmount: 1000,
-        attributionSource: AttributionSource.REFERRAL, status: CommissionStatus.APPROVED,
-        isDelivered: true, deliveredAt: new Date(), approvalEligibleAt: new Date(),
-        isSettled: false, isReversed: false, payoutId: null, payoutReference: null, settledAt: null, paidAt: null,
+        _id: 'c1',
+        orderId: 'o1',
+        vendorOrderId: 'vo1',
+        influencerId: creator._id,
+        finalOrderAmount: 10000,
+        commissionRate: 10,
+        commissionAmount: 1000,
+        attributionSource: AttributionSource.REFERRAL,
+        status: CommissionStatus.APPROVED,
+        isDelivered: true,
+        deliveredAt: new Date(),
+        approvalEligibleAt: new Date(),
+        isSettled: false,
+        isReversed: false,
+        payoutId: null,
+        payoutReference: null,
+        settledAt: null,
+        paidAt: null,
       };
       harness.commissions.set('c1', c1);
 
@@ -1172,15 +1418,31 @@ describe('Phase 10: Master End-to-End Creator Lifecycle & Concurrency Suite', ()
 
     it('Scenario 27: Race-condition settlement attempts with matching UTR resolve idempotently without double ledger debit', async () => {
       const harness = new MockEcommerceLifecycleHarness();
-      const creator = harness.createInfluencer({ name: 'Settle Race Creator', commissionRate: 10 });
+      const creator = harness.createInfluencer({
+        name: 'Settle Race Creator',
+        commissionRate: 10,
+      });
       creator.approvedCommission = 500;
 
       const c1: MockCommission = {
-        _id: 'c1', orderId: 'o1', vendorOrderId: 'vo1', influencerId: creator._id,
-        finalOrderAmount: 5000, commissionRate: 10, commissionAmount: 500,
-        attributionSource: AttributionSource.REFERRAL, status: CommissionStatus.APPROVED,
-        isDelivered: true, deliveredAt: new Date(), approvalEligibleAt: new Date(),
-        isSettled: false, isReversed: false, payoutId: null, payoutReference: null, settledAt: null, paidAt: null,
+        _id: 'c1',
+        orderId: 'o1',
+        vendorOrderId: 'vo1',
+        influencerId: creator._id,
+        finalOrderAmount: 5000,
+        commissionRate: 10,
+        commissionAmount: 500,
+        attributionSource: AttributionSource.REFERRAL,
+        status: CommissionStatus.APPROVED,
+        isDelivered: true,
+        deliveredAt: new Date(),
+        approvalEligibleAt: new Date(),
+        isSettled: false,
+        isReversed: false,
+        payoutId: null,
+        payoutReference: null,
+        settledAt: null,
+        paidAt: null,
       };
       harness.commissions.set('c1', c1);
 

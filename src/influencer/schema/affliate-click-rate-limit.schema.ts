@@ -15,5 +15,10 @@ export class AffliateClickRateLimit {
   lastEligibleClickAt!: Date;
 }
 
-export const AffliateClickRateLimitSchema = SchemaFactory.createForClass(AffliateClickRateLimit);
-AffliateClickRateLimitSchema.index({ influencerId: 1, ipAddress: 1 }, { unique: true });
+export const AffliateClickRateLimitSchema = SchemaFactory.createForClass(
+  AffliateClickRateLimit,
+);
+AffliateClickRateLimitSchema.index(
+  { influencerId: 1, ipAddress: 1 },
+  { unique: true },
+);

@@ -8,7 +8,10 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { UserReview, UserReviewDocument } from './schema/user-review.schema';
 import { Product, ProductDocument } from 'src/product/schema/product.schema';
-import { VendorOrder, VendorOrderDocument } from 'src/order/schema/vendor-order.schema';
+import {
+  VendorOrder,
+  VendorOrderDocument,
+} from 'src/order/schema/vendor-order.schema';
 import { CreateReviewDto, UpdateReviewDto } from './dto/reviewDTO';
 import { OrderStatus, PaymentStatus } from 'src/order/schema/order.schema';
 import { DocumentService } from 'src/document/document.service';
@@ -26,16 +29,10 @@ export class ReviewService {
     private vendorOrderModel: Model<VendorOrderDocument>,
 
     private documentService: DocumentService,
-  ) { }
+  ) {}
 
-  async createReview(
-    userId: string,
-    dto: CreateReviewDto,
-    files?: any[]
-  ) {
-    const product = await this.productModel.findById(
-      dto.productId,
-    );
+  async createReview(userId: string, dto: CreateReviewDto, files?: any[]) {
+    const product = await this.productModel.findById(dto.productId);
 
     if (!product) {
       throw new NotFoundException('Product not found');
@@ -49,9 +46,7 @@ export class ReviewService {
     });
 
     if (existingReview) {
-      throw new BadRequestException(
-        'You already reviewed this product',
-      );
+      throw new BadRequestException('You already reviewed this product');
     }
 
     // verified purchase check
@@ -71,7 +66,11 @@ export class ReviewService {
     const imageIds: Types.ObjectId[] = [];
     if (files && files.length > 0) {
       for (const file of files) {
-        const uploaded = await this.documentService.upload(file, 'reviews', userId);
+        const uploaded = await this.documentService.upload(
+          file,
+          'reviews',
+          userId,
+        );
         imageIds.push(new Types.ObjectId(uploaded._id as any));
       }
     }
@@ -96,7 +95,7 @@ export class ReviewService {
     userId: string,
     reviewId: string,
     dto: UpdateReviewDto,
-    files?: any[]
+    files?: any[],
   ) {
     const review = await this.reviewModel.findOne({
       _id: new Types.ObjectId(reviewId),
@@ -115,7 +114,11 @@ export class ReviewService {
     if (files && files.length > 0) {
       const imageIds: Types.ObjectId[] = [];
       for (const file of files) {
-        const uploaded = await this.documentService.upload(file, 'reviews', userId);
+        const uploaded = await this.documentService.upload(
+          file,
+          'reviews',
+          userId,
+        );
         imageIds.push(new Types.ObjectId(uploaded._id as any));
       }
       review.images = imageIds;
@@ -123,16 +126,12 @@ export class ReviewService {
 
     await review.save();
 
-    await this.updateProductRating(
-      review.productId.toString(),
-    );
+    await this.updateProductRating(review.productId.toString());
 
     return review;
   }
 
-  async deleteReview(
-    reviewId: string,
-  ) {
+  async deleteReview(reviewId: string) {
     const review = await this.reviewModel.findOne({
       _id: new Types.ObjectId(reviewId),
       isDeleted: false,
@@ -146,9 +145,7 @@ export class ReviewService {
 
     await review.save();
 
-    await this.updateProductRating(
-      review.productId.toString(),
-    );
+    await this.updateProductRating(review.productId.toString());
 
     return {
       message: 'Review deleted successfully',
@@ -171,7 +168,9 @@ export class ReviewService {
     let userReview: any = null;
 
     if (userId) {
-      userReview = reviews.find(r => r.userId?._id?.toString() === userId.toString()) || null;
+      userReview =
+        reviews.find((r) => r.userId?._id?.toString() === userId.toString()) ||
+        null;
       if (userReview) {
         isReviewed = true;
       }
@@ -208,21 +207,13 @@ export class ReviewService {
     ]);
 
     const averageRating =
-      stats.length > 0
-        ? Number(stats[0].averageRating.toFixed(1))
-        : 0;
+      stats.length > 0 ? Number(stats[0].averageRating.toFixed(1)) : 0;
 
-    const totalReviews =
-      stats.length > 0
-        ? stats[0].totalReviews
-        : 0;
+    const totalReviews = stats.length > 0 ? stats[0].totalReviews : 0;
 
-    await this.productModel.findByIdAndUpdate(
-      productId,
-      {
-        averageRating,
-        totalReviews,
-      },
-    );
+    await this.productModel.findByIdAndUpdate(productId, {
+      averageRating,
+      totalReviews,
+    });
   }
 }

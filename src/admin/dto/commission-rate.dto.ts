@@ -8,7 +8,10 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { CommissionEntityType, CommissionOn } from '../schema/commission-rate.schema';
+import {
+  CommissionEntityType,
+  CommissionOn,
+} from '../schema/commission-rate.schema';
 
 export class CommissionRateSlabDto {
   @IsEnum(CommissionEntityType)

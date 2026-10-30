@@ -8,7 +8,10 @@ import { Admin, AdminSchema } from 'src/admin/schema/admin.schema';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([{ name: Ticket.name, schema: TicketSchema },{ name: Admin.name, schema: AdminSchema },]),
+    MongooseModule.forFeature([
+      { name: Ticket.name, schema: TicketSchema },
+      { name: Admin.name, schema: AdminSchema },
+    ]),
     DocumentModule,
   ],
   controllers: [TicketController],

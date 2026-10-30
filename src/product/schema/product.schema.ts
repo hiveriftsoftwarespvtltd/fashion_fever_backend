@@ -1,18 +1,17 @@
-import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
-import { Types, Document } from "mongoose";
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Types, Document } from 'mongoose';
 
 export type ProductDocument = Product & Document;
 
 export enum ProductStatus {
-  DRAFT = "DRAFT",
-  ACTIVE = "ACTIVE",
-  INACTIVE = "INACTIVE",
-  ARCHIVED = "ARCHIVED",
+  DRAFT = 'DRAFT',
+  ACTIVE = 'ACTIVE',
+  INACTIVE = 'INACTIVE',
+  ARCHIVED = 'ARCHIVED',
 }
 
 @Schema({ timestamps: true })
 export class Product {
-
   @Prop({ required: true })
   name!: string;
 
@@ -24,27 +23,27 @@ export class Product {
 
   @Prop({
     type: Types.ObjectId,
-    ref: "Vendor",
-    required: true
+    ref: 'Vendor',
+    required: true,
   })
   vendorId!: Types.ObjectId;
 
   @Prop({
     type: Types.ObjectId,
-    ref: "User",
-    required: true
+    ref: 'User',
+    required: true,
   })
   createdBy!: Types.ObjectId;
 
   @Prop({
     type: [String],
     default: [],
-    lowercase: true
+    lowercase: true,
   })
-  tags!: string[]
+  tags!: string[];
 
   @Prop({ default: 'brandless' })
-  brand?: string
+  brand?: string;
   // @Prop({
   //   type: Types.ObjectId,
   //   ref: "Brand",
@@ -54,15 +53,15 @@ export class Product {
 
   @Prop({
     type: Types.ObjectId,
-    ref: "Category",
-    required: true
+    ref: 'Category',
+    required: true,
   })
   categoryId!: Types.ObjectId;
 
   @Prop({
     type: [Types.ObjectId],
-    ref: "ProductVariant",
-    default: []
+    ref: 'ProductVariant',
+    default: [],
   })
   variants!: Types.ObjectId[];
 
@@ -74,7 +73,7 @@ export class Product {
 
   @Prop({
     enum: ProductStatus,
-    default: ProductStatus.DRAFT
+    default: ProductStatus.DRAFT,
   })
   status!: ProductStatus;
 
@@ -87,9 +86,8 @@ export class Product {
   @Prop({ default: false })
   isDeleted!: boolean;
 
-
   @Prop({ default: true })
-  isShippingApply!: boolean
+  isShippingApply!: boolean;
 
   @Prop({ default: 0 })
   averageRating!: number;
@@ -98,6 +96,3 @@ export class Product {
   totalReviews!: number;
 }
 export const ProductSchema = SchemaFactory.createForClass(Product);
-
-
-

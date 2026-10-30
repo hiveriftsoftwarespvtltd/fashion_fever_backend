@@ -13,12 +13,14 @@ export class AiFeaturesService {
 
   constructor(
     private configService: ConfigService,
-    @InjectModel(AIChatHistory.name) private aiChatHistoryModel: Model<AIChatHistoryDocument>
+    @InjectModel(AIChatHistory.name)
+    private aiChatHistoryModel: Model<AIChatHistoryDocument>,
   ) {
-
     const apiKey = process.env.GROQ_API_KEY;
     if (!apiKey) {
-      throw new Error('GROQ_API_KEY is not defined in the environment variables.');
+      throw new Error(
+        'GROQ_API_KEY is not defined in the environment variables.',
+      );
     }
     this.groq = new Groq({
       apiKey,
@@ -27,28 +29,32 @@ export class AiFeaturesService {
 
   async handleChatQuery(chatQueryDto: ChatQueryDto, user?: any) {
     try {
-
       const { query } = chatQueryDto;
 
       const systemInstruction = getSystemPrompt(user);
 
-      let messages: any[] = [];
+      const messages: any[] = [];
       messages.push({ role: 'system', content: systemInstruction });
 
       let dbHistoryDoc: AIChatHistoryDocument | null = null;
 
       // Handle DB History
       if (user && user._id) {
-        dbHistoryDoc = await this.aiChatHistoryModel.findOne({ user: user._id }).sort({ createdAt: -1 });
+        dbHistoryDoc = await this.aiChatHistoryModel
+          .findOne({ user: user._id })
+          .sort({ createdAt: -1 });
         if (!dbHistoryDoc) {
-          dbHistoryDoc = new this.aiChatHistoryModel({ user: user._id, history: [] });
+          dbHistoryDoc = new this.aiChatHistoryModel({
+            user: user._id,
+            history: [],
+          });
         }
 
         // Add DB history to messages
-        dbHistoryDoc.history.slice(-10).forEach(entry => {
+        dbHistoryDoc.history.slice(-10).forEach((entry) => {
           messages.push({
             role: entry.role === 'model' ? 'assistant' : 'user',
-            content: entry.parts.map(p => p.text).join('\n'),
+            content: entry.parts.map((p) => p.text).join('\n'),
           });
         });
       }
@@ -59,7 +65,6 @@ export class AiFeaturesService {
         content: query,
       });
 
-
       const chatCompletion = await this.groq.chat.completions.create({
         messages: messages,
         model: 'llama-3.1-8b-instant',
@@ -68,7 +73,10 @@ export class AiFeaturesService {
       // Save back to DB if user is logged in
       if (dbHistoryDoc) {
         dbHistoryDoc.history.push({ role: 'user', parts: [{ text: query }] });
-        dbHistoryDoc.history.push({ role: 'model', parts: [{ text: replyText }] });
+        dbHistoryDoc.history.push({
+          role: 'model',
+          parts: [{ text: replyText }],
+        });
         // Keep only the last 20 messages (10 turns) to prevent exceeding token limits over time
         if (dbHistoryDoc.history.length > 20) {
           dbHistoryDoc.history = dbHistoryDoc.history.slice(-20);
@@ -87,4 +95,3 @@ export class AiFeaturesService {
     }
   }
 }
-

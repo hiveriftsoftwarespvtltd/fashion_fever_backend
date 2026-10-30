@@ -1,7 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { ServiceProvider, ServiceProviderDocument, ServiceProviderVerificationStatus } from './schema/service-provider.schema';
+import {
+  ServiceProvider,
+  ServiceProviderDocument,
+  ServiceProviderVerificationStatus,
+} from './schema/service-provider.schema';
 import { Service, ServiceDocument } from './schema/service.schema';
 import { ServiceService } from './service.service';
 import { ApiResponse } from 'src/common/responses/api-response';
@@ -9,10 +13,11 @@ import { ApiResponse } from 'src/common/responses/api-response';
 @Injectable()
 export class ServiceSearchService {
   constructor(
-    @InjectModel(ServiceProvider.name) private providerModel: Model<ServiceProviderDocument>,
+    @InjectModel(ServiceProvider.name)
+    private providerModel: Model<ServiceProviderDocument>,
     @InjectModel(Service.name) private serviceModel: Model<ServiceDocument>,
     private serviceService: ServiceService,
-  ) { }
+  ) {}
 
   async searchServices(
     lat: number,
@@ -132,7 +137,10 @@ export class ServiceSearchService {
           const providerServices = servicesByProvider.get(pId) || [];
           if (providerServices.length > 0) {
             const firstServiceId = providerServices[0]._id.toString();
-            const slotsRes = await this.serviceService.getAvailableSlots(pId, { serviceIds: [firstServiceId], date: targetDate });
+            const slotsRes = await this.serviceService.getAvailableSlots(pId, {
+              serviceIds: [firstServiceId],
+              date: targetDate,
+            });
             slots = slotsRes.data?.slots || [];
             earliestSlot = slotsRes.data?.earliestSlot || null;
           }
@@ -144,7 +152,10 @@ export class ServiceSearchService {
         let distKm = 0;
         if (provider.distance !== undefined) {
           distKm = parseFloat((provider.distance / 1000).toFixed(2));
-        } else if (Array.isArray(provider.coordinates) && provider.coordinates.length === 2) {
+        } else if (
+          Array.isArray(provider.coordinates) &&
+          provider.coordinates.length === 2
+        ) {
           const pLng = provider.coordinates[0];
           const pLat = provider.coordinates[1];
           const dLat = ((pLat - lat) * Math.PI) / 180;
@@ -168,7 +179,10 @@ export class ServiceSearchService {
             coordinates: provider.coordinates,
             rating: provider.rating,
             totalReviews: provider.totalReviews,
-            distance: provider.distance !== undefined ? provider.distance : distKm * 1000,
+            distance:
+              provider.distance !== undefined
+                ? provider.distance
+                : distKm * 1000,
           },
           distanceKm: distKm,
           services: servicesByProvider.get(pId),

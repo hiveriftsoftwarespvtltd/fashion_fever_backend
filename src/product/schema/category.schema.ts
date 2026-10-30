@@ -1,5 +1,5 @@
-import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
-import { Types, Document } from "mongoose";
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Types, Document } from 'mongoose';
 
 export type CategoryDocument = Category & Document;
 
@@ -15,11 +15,11 @@ export type CategoryDocument = Category & Document;
 
 @Schema({ timestamps: true })
 export class Category {
-  @Prop({ required: true,lowercase:true })
+  @Prop({ required: true, lowercase: true })
   name!: string;
 
-  @Prop({required:true})
-  label!:string
+  @Prop({ required: true })
+  label!: string;
 
   @Prop({ required: true })
   slug!: string;
@@ -28,11 +28,11 @@ export class Category {
   description?: string;
 
   @Prop({
-    type:[String],
-    default:[],
-    lowercase:true
+    type: [String],
+    default: [],
+    lowercase: true,
   })
-  tags!:string[]
+  tags!: string[];
 
   // @Prop({
   //   type:[
@@ -45,7 +45,6 @@ export class Category {
   //   values:string[]
   // }[]
 
- 
   // 🌳 Parent category (for tree structure)
   // @Prop({ type: Types.ObjectId, ref: "Category", default: null })
   // parentId?: Types.ObjectId;
@@ -58,7 +57,7 @@ export class Category {
   // ownerId!:Types.ObjectId
 
   // 🖼️ Category Image
-  @Prop({ type: Types.ObjectId, ref: "Media" })
+  @Prop({ type: Types.ObjectId, ref: 'Media' })
   image?: Types.ObjectId;
 
   @Prop({ default: true })
@@ -69,6 +68,3 @@ export class Category {
 }
 
 export const CategorySchema = SchemaFactory.createForClass(Category);
-
-
-

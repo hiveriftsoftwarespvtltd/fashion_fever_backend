@@ -1,4 +1,11 @@
-import { IsMongoId, IsNotEmpty, IsNumber, IsOptional, IsString, Min } from 'class-validator';
+import {
+  IsMongoId,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
+  Min,
+} from 'class-validator';
 
 export class CartItemDto {
   @IsNotEmpty()
@@ -19,6 +26,6 @@ export class AddToCartDto extends CartItemDto {
   quantity?: number;
 }
 
-export class DecreaseCartItemDto extends CartItemDto { }
+export class DecreaseCartItemDto extends CartItemDto {}
 
-export class RemoveCartItemDto extends CartItemDto { }
+export class RemoveCartItemDto extends CartItemDto {}

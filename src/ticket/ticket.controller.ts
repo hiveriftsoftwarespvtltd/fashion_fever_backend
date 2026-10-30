@@ -1,9 +1,26 @@
 import { AdminAccess } from 'src/auth/admin-access.decorator';
 import { AdminModule, AccessType } from 'src/admin/schema/admin.schema';
-import { Body, Controller, Delete, Get, Param, Post, Put, Query, Req, UploadedFiles, UseGuards, UseInterceptors } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Put,
+  Query,
+  Req,
+  UploadedFiles,
+  UseGuards,
+  UseInterceptors,
+} from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { TicketService } from './ticket.service';
-import { CreateTicketDto, UpdateTicketStatusDto, AddTicketReplyDto } from './dto/ticket.dto';
+import {
+  CreateTicketDto,
+  UpdateTicketStatusDto,
+  AddTicketReplyDto,
+} from './dto/ticket.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guad';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
@@ -12,7 +29,7 @@ import { UserRole } from '../user/schema/user.schema';
 @UseGuards(JwtAuthGuard)
 @Controller('ticket')
 export class TicketController {
-  constructor(private readonly ticketService: TicketService) { }
+  constructor(private readonly ticketService: TicketService) {}
 
   @Post('raise-a-ticket')
   @UseInterceptors(FilesInterceptor('mediaFiles', 4))

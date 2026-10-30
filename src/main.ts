@@ -1,3 +1,6 @@
+import * as dns from 'dns';
+dns.setServers(['8.8.8.8', '1.1.1.1']);
+
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ResponseInterceptor } from './common/responses/response.interceptor';
@@ -19,7 +22,9 @@ async function bootstrap() {
     }
     const localDir = join(process.cwd(), 'uploads');
     if (!fs.existsSync(localDir)) {
-      try { fs.mkdirSync(localDir, { recursive: true }); } catch (_) {}
+      try {
+        fs.mkdirSync(localDir, { recursive: true });
+      } catch (_) {}
     }
     return localDir;
   };
@@ -44,15 +49,17 @@ async function bootstrap() {
     }),
   );
   app.enableCors({
-    origin: (origin, callback) => {
-      // Allow any origin dynamically to support credentials: true
-      callback(null, true);
-    },
+    origin: true,
     credentials: true,
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+    allowedHeaders:
+      'Content-Type,Accept,Authorization,X-Requested-With,X-FashionFever-Version',
   });
   await app.listen(process.env.PORT ?? 3000);
 
-  console.log(`backend running on http://localhost:${process.env.PORT ?? 3000}`);
+  console.log(
+    `backend running on http://localhost:${process.env.PORT ?? 3000}`,
+  );
 }
 
 process.on('unhandledRejection', (reason: any) => {
@@ -61,9 +68,9 @@ process.on('unhandledRejection', (reason: any) => {
     reason:
       reason instanceof Error
         ? {
-          message: reason.message,
-          stack: reason.stack,
-        }
+            message: reason.message,
+            stack: reason.stack,
+          }
         : reason,
   });
 });

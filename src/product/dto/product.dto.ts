@@ -19,13 +19,9 @@ import { ProductStatus } from '../schema/product.schema';
 
 import { PartialType } from '@nestjs/mapped-types';
 
-
-
-
 // ================= VARIANT DTO =================
 
 export class CreateVariantDto {
-
   @IsString()
   sku!: string;
 
@@ -44,7 +40,7 @@ export class CreateVariantDto {
   @ToNumber()
   @IsNumber()
   @Min(0)
-  offeredPrice!: number
+  offeredPrice!: number;
 
   @ToNumber()
   @IsNumber()
@@ -91,11 +87,9 @@ export class CreateVariantDto {
   isActive?: boolean;
 }
 
-
 // ================= PRODUCT DTO =================
 
 export class CreateProductDto {
-
   @IsOptional()
   @IsMongoId()
   _id?: string;
@@ -112,13 +106,12 @@ export class CreateProductDto {
 
   @IsOptional()
   @IsString()
-  brand?: string
+  brand?: string;
 
   @IsOptional()
   @ToBoolean()
-
   @IsBoolean()
-  isShippingApply?: boolean
+  isShippingApply?: boolean;
 
   @IsMongoId()
   categoryId!: string;
@@ -153,9 +146,6 @@ export class CreateProductDto {
   tags?: string[];
 }
 
-
 // ================= UPDATE DTO =================
 
-export class UpdateProductDto extends PartialType(
-  CreateProductDto,
-) { }
+export class UpdateProductDto extends PartialType(CreateProductDto) {}

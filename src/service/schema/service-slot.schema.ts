@@ -1,11 +1,9 @@
-import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
-import { Document, Types } from "mongoose";
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Document, Types } from 'mongoose';
 
-
-export type ServiceSlotDocument = ServiceSlot & Document
+export type ServiceSlotDocument = ServiceSlot & Document;
 @Schema()
 export class ServiceSlot {
-
   @Prop({
     type: Types.ObjectId,
     ref: 'ServiceProvider',
@@ -30,4 +28,4 @@ export class ServiceSlot {
   isBooked!: boolean;
 }
 
-export const ServcieSlotSchema = SchemaFactory.createForClass(ServiceSlot)
+export const ServcieSlotSchema = SchemaFactory.createForClass(ServiceSlot);

@@ -26,7 +26,10 @@ import {
 } from 'src/wishlist/schema/wishlist.schema';
 import { ShiprocketService } from 'src/shiprocket/shiprocket.service';
 import { Address, AddressDocument } from 'src/address/schema/address.schema';
-import { VendorOrder, VendorOrderDocument } from 'src/order/schema/vendor-order.schema';
+import {
+  VendorOrder,
+  VendorOrderDocument,
+} from 'src/order/schema/vendor-order.schema';
 import { Cart, CartDocument } from 'src/cart/schema/cart.schema';
 import { OrderStatus } from 'src/order/schema/order.schema';
 
@@ -42,9 +45,10 @@ export class UserService {
     private StorageFactory: StorageFactory,
     private addressService: AddressService,
     private shiprocketService: ShiprocketService,
-    @InjectModel(VendorOrder.name) private vendorOrderModel: Model<VendorOrderDocument>,
+    @InjectModel(VendorOrder.name)
+    private vendorOrderModel: Model<VendorOrderDocument>,
     @InjectModel(Cart.name) private cartModel: Model<CartDocument>,
-  ) { }
+  ) {}
 
   async create(dto: CreateUserDto) {
     return this.userModel.create(dto);
@@ -175,7 +179,6 @@ export class UserService {
     return ApiResponse.success('User avatar fetched successfully', user, 200);
   }
 
-
   async fetchProducts(
     userId: string,
     category?: string,
@@ -194,10 +197,28 @@ export class UserService {
 
     // Soft delete old test seed products
     try {
-      await this.productModel.updateMany(
-        { name: { $in: ['Eye Liner', 'Eye_Liner', 'Hair Oil', 'Suns Cream', 'Serum'] } },
-        { $set: { isDeleted: true, isActive: false, status: ProductStatus.INACTIVE } }
-      ).exec();
+      await this.productModel
+        .updateMany(
+          {
+            name: {
+              $in: [
+                'Eye Liner',
+                'Eye_Liner',
+                'Hair Oil',
+                'Suns Cream',
+                'Serum',
+              ],
+            },
+          },
+          {
+            $set: {
+              isDeleted: true,
+              isActive: false,
+              status: ProductStatus.INACTIVE,
+            },
+          },
+        )
+        .exec();
     } catch (e) {
       // Ignore cleanup error if any
     }
@@ -213,29 +234,28 @@ export class UserService {
         $match: matchStage,
       },
 
-
       // Brand Filter
       ...(brand
         ? [
-          {
-            $match: {
-              brand: {
-                $regex: brand,
-                $options: 'i',
+            {
+              $match: {
+                brand: {
+                  $regex: brand,
+                  $options: 'i',
+                },
               },
             },
-          },
-        ]
+          ]
         : []),
 
       ...(isShippingApply !== undefined
         ? [
-          {
-            $match: {
-              isShippingApply,
+            {
+              $match: {
+                isShippingApply,
+              },
             },
-          },
-        ]
+          ]
         : []),
 
       // Category Lookup
@@ -258,15 +278,15 @@ export class UserService {
       // Category Filter
       ...(category
         ? [
-          {
-            $match: {
-              'category.name': {
-                $regex: category,
-                $options: 'i',
+            {
+              $match: {
+                'category.name': {
+                  $regex: category,
+                  $options: 'i',
+                },
               },
             },
-          },
-        ]
+          ]
         : []),
 
       // Variants Lookup
@@ -282,61 +302,57 @@ export class UserService {
       // Search Filter
       ...(search
         ? [
-          {
-            $match: {
-              $or: [
-                {
-                  name: {
-                    $regex: search,
-                    $options: 'i',
-                  },
-                },
-                {
-                  tags: {
-                    $elemMatch: {
+            {
+              $match: {
+                $or: [
+                  {
+                    name: {
                       $regex: search,
                       $options: 'i',
                     },
                   },
-                },
-                {
-                  'category.name': {
-                    $regex: search,
-                    $options: 'i',
+                  {
+                    tags: {
+                      $elemMatch: {
+                        $regex: search,
+                        $options: 'i',
+                      },
+                    },
                   },
-                },
-                {
-                  'variants.sku': {
-                    $regex: search,
-                    $options: 'i',
+                  {
+                    'category.name': {
+                      $regex: search,
+                      $options: 'i',
+                    },
                   },
-                },
-              ],
+                  {
+                    'variants.sku': {
+                      $regex: search,
+                      $options: 'i',
+                    },
+                  },
+                ],
+              },
             },
-          },
-        ]
+          ]
         : []),
 
       // Offered Price Filter
       ...(minPrice || maxPrice
         ? [
-          {
-            $match: {
-              variants: {
-                $elemMatch: {
-                  offeredPrice: {
-                    ...(minPrice
-                      ? { $gte: Number(minPrice) }
-                      : {}),
-                    ...(maxPrice
-                      ? { $lte: Number(maxPrice) }
-                      : {}),
+            {
+              $match: {
+                variants: {
+                  $elemMatch: {
+                    offeredPrice: {
+                      ...(minPrice ? { $gte: Number(minPrice) } : {}),
+                      ...(maxPrice ? { $lte: Number(maxPrice) } : {}),
+                    },
                   },
                 },
               },
             },
-          },
-        ]
+          ]
         : []),
 
       // Vendor Lookup
@@ -429,10 +445,7 @@ export class UserService {
                             input: '$thumbnails',
                             as: 'thumb',
                             cond: {
-                              $eq: [
-                                '$$thumb._id',
-                                '$$variant.thumbnail',
-                              ],
+                              $eq: ['$$thumb._id', '$$variant.thumbnail'],
                             },
                           },
                         },
@@ -445,10 +458,7 @@ export class UserService {
                         input: '$images',
                         as: 'image',
                         cond: {
-                          $in: [
-                            '$$image._id',
-                            '$$variant.images',
-                          ],
+                          $in: ['$$image._id', '$$variant.images'],
                         },
                       },
                     },
@@ -461,29 +471,29 @@ export class UserService {
               cond:
                 minPrice || maxPrice
                   ? {
-                    $and: [
-                      ...(minPrice
-                        ? [
-                          {
-                            $gte: [
-                              '$$variant.offeredPrice',
-                              Number(minPrice),
-                            ],
-                          },
-                        ]
-                        : []),
-                      ...(maxPrice
-                        ? [
-                          {
-                            $lte: [
-                              '$$variant.offeredPrice',
-                              Number(maxPrice),
-                            ],
-                          },
-                        ]
-                        : []),
-                    ],
-                  }
+                      $and: [
+                        ...(minPrice
+                          ? [
+                              {
+                                $gte: [
+                                  '$$variant.offeredPrice',
+                                  Number(minPrice),
+                                ],
+                              },
+                            ]
+                          : []),
+                        ...(maxPrice
+                          ? [
+                              {
+                                $lte: [
+                                  '$$variant.offeredPrice',
+                                  Number(maxPrice),
+                                ],
+                              },
+                            ]
+                          : []),
+                      ],
+                    }
                   : true,
             },
           },
@@ -493,12 +503,12 @@ export class UserService {
       // Remove products having no variants after filtering
       ...(minPrice || maxPrice
         ? [
-          {
-            $match: {
-              'variants.0': { $exists: true },
+            {
+              $match: {
+                'variants.0': { $exists: true },
+              },
             },
-          },
-        ]
+          ]
         : []),
 
       {
@@ -531,8 +541,7 @@ export class UserService {
 
     const products = result?.[0]?.data || [];
 
-    const total =
-      result?.[0]?.totalCount?.[0]?.count || 0;
+    const total = result?.[0]?.totalCount?.[0]?.count || 0;
 
     const totalPages = Math.ceil(total / limit);
 
@@ -586,20 +595,17 @@ export class UserService {
       }),
     );
 
-    return ApiResponse.success(
-      'Products fetched successfully',
-      {
-        products: updatedProducts,
-        pagination: {
-          total,
-          page,
-          limit,
-          totalPages,
-          hasNextPage: page < totalPages,
-          hasPrevPage: page > 1,
-        },
+    return ApiResponse.success('Products fetched successfully', {
+      products: updatedProducts,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1,
       },
-    );
+    });
   }
   async fetchProductDetails(userId: string, productId: string) {
     const product = await this.productModel
@@ -611,12 +617,12 @@ export class UserService {
         populate: [
           {
             path: 'thumbnail',
-            select: '_id url publicId'
+            select: '_id url publicId',
           },
           {
             path: 'images',
-            select: '_id url publicId'
-          }
+            select: '_id url publicId',
+          },
         ],
       })
       .lean();
@@ -641,7 +647,6 @@ export class UserService {
     if (userId) {
       const defaultAddress = await this.addressModel.findOne({
         user: new Types.ObjectId(userId),
-
       });
 
       if (defaultAddress) {
@@ -737,10 +742,7 @@ export class UserService {
       },
     ]);
 
-    return ApiResponse.success(
-      'Brands fetched successfully',
-      brands,
-    );
+    return ApiResponse.success('Brands fetched successfully', brands);
   }
 
   async addAddress(dto: AddAddressDTO, userId: string) {
@@ -773,7 +775,14 @@ export class UserService {
 
     const matchStage = {
       createdAt: { $gte: thirtyDaysAgo },
-      orderStatus: { $nin: [OrderStatus.CANCELLED, OrderStatus.PARTIALLY_CANCELLED, OrderStatus.RETURNED, OrderStatus.PARTIALLY_RETURNED] }
+      orderStatus: {
+        $nin: [
+          OrderStatus.CANCELLED,
+          OrderStatus.PARTIALLY_CANCELLED,
+          OrderStatus.RETURNED,
+          OrderStatus.PARTIALLY_RETURNED,
+        ],
+      },
     };
 
     const topSelling = await this.vendorOrderModel.aggregate([
@@ -782,8 +791,8 @@ export class UserService {
       {
         $group: {
           _id: '$items.productId',
-          totalQuantitySold: { $sum: '$items.quantity' }
-        }
+          totalQuantitySold: { $sum: '$items.quantity' },
+        },
       },
       { $sort: { totalQuantitySold: -1 } },
       { $limit: limit },
@@ -792,8 +801,8 @@ export class UserService {
           from: 'products',
           localField: '_id',
           foreignField: '_id',
-          as: 'product'
-        }
+          as: 'product',
+        },
       },
       { $unwind: '$product' },
       {
@@ -801,24 +810,24 @@ export class UserService {
           from: 'productvariants',
           localField: 'product.variants',
           foreignField: '_id',
-          as: 'product.variants'
-        }
+          as: 'product.variants',
+        },
       },
       {
         $lookup: {
           from: 'media',
           localField: 'product.variants.thumbnail',
           foreignField: '_id',
-          as: 'thumbnails'
-        }
+          as: 'thumbnails',
+        },
       },
       {
         $lookup: {
           from: 'media',
           localField: 'product.variants.images',
           foreignField: '_id',
-          as: 'images'
-        }
+          as: 'images',
+        },
       },
       {
         $project: {
@@ -852,19 +861,21 @@ export class UserService {
                               $filter: {
                                 input: '$thumbnails',
                                 as: 'thumb',
-                                cond: { $eq: ['$$thumb._id', '$$variant.thumbnail'] }
-                              }
+                                cond: {
+                                  $eq: ['$$thumb._id', '$$variant.thumbnail'],
+                                },
+                              },
                             },
-                            0
-                          ]
-                        }
+                            0,
+                          ],
+                        },
                       },
                       in: {
                         _id: '$$thumb._id',
                         publicId: '$$thumb.publicId',
-                        url: '$$thumb.url'
-                      }
-                    }
+                        url: '$$thumb.url',
+                      },
+                    },
                   },
                   images: {
                     $map: {
@@ -872,26 +883,29 @@ export class UserService {
                         $filter: {
                           input: '$images',
                           as: 'image',
-                          cond: { $in: ['$$image._id', '$$variant.images'] }
-                        }
+                          cond: { $in: ['$$image._id', '$$variant.images'] },
+                        },
                       },
                       as: 'image',
                       in: {
                         _id: '$$image._id',
                         publicId: '$$image.publicId',
-                        url: '$$image.url'
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
+                        url: '$$image.url',
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
     ]);
 
-    return ApiResponse.success('Top selling products fetched successfully', topSelling);
+    return ApiResponse.success(
+      'Top selling products fetched successfully',
+      topSelling,
+    );
   }
 
   async getTrendingProducts(limit: number = 10) {
@@ -902,46 +916,53 @@ export class UserService {
       {
         $match: {
           createdAt: { $gte: sevenDaysAgo },
-          orderStatus: { $nin: [OrderStatus.CANCELLED, OrderStatus.PARTIALLY_CANCELLED, OrderStatus.RETURNED, OrderStatus.PARTIALLY_RETURNED] }
-        }
+          orderStatus: {
+            $nin: [
+              OrderStatus.CANCELLED,
+              OrderStatus.PARTIALLY_CANCELLED,
+              OrderStatus.RETURNED,
+              OrderStatus.PARTIALLY_RETURNED,
+            ],
+          },
+        },
       },
       { $unwind: '$items' },
       {
         $group: {
           _id: '$items.productId',
-          score: { $sum: { $multiply: ['$items.quantity', 3] } } // Weight purchases by 3
-        }
-      }
+          score: { $sum: { $multiply: ['$items.quantity', 3] } }, // Weight purchases by 3
+        },
+      },
     ];
 
     const cartsQuery = [
       {
         $match: {
-          updatedAt: { $gte: sevenDaysAgo }
-        }
+          updatedAt: { $gte: sevenDaysAgo },
+        },
       },
       { $unwind: '$items' },
       {
         $group: {
           _id: '$items.product',
-          score: { $sum: '$items.quantity' } // Weight cart adds by 1
-        }
-      }
+          score: { $sum: '$items.quantity' }, // Weight cart adds by 1
+        },
+      },
     ];
 
     const [recentSales, recentCarts] = await Promise.all([
       this.vendorOrderModel.aggregate(ordersQuery),
-      this.cartModel.aggregate(cartsQuery)
+      this.cartModel.aggregate(cartsQuery),
     ]);
 
     const productScores = new Map<string, number>();
 
-    recentSales.forEach(item => {
+    recentSales.forEach((item) => {
       const id = item._id.toString();
       productScores.set(id, (productScores.get(id) || 0) + item.score);
     });
 
-    recentCarts.forEach(item => {
+    recentCarts.forEach((item) => {
       const id = item._id.toString();
       productScores.set(id, (productScores.get(id) || 0) + item.score);
     });
@@ -950,39 +971,48 @@ export class UserService {
     const sortedProducts = Array.from(productScores.entries())
       .sort((a, b) => b[1] - a[1])
       .slice(0, limit)
-      .map(entry => ({ productId: entry[0], trendScore: entry[1] }));
+      .map((entry) => ({ productId: entry[0], trendScore: entry[1] }));
 
     if (sortedProducts.length === 0) {
       return ApiResponse.success('Trending products fetched successfully', []);
     }
 
-    const productIds = sortedProducts.map(p => new Types.ObjectId(p.productId));
+    const productIds = sortedProducts.map(
+      (p) => new Types.ObjectId(p.productId),
+    );
 
     const productsData = await this.productModel.aggregate([
-      { $match: { _id: { $in: productIds }, isDeleted: false, isActive: true, status: ProductStatus.ACTIVE } },
+      {
+        $match: {
+          _id: { $in: productIds },
+          isDeleted: false,
+          isActive: true,
+          status: ProductStatus.ACTIVE,
+        },
+      },
       {
         $lookup: {
           from: 'productvariants',
           localField: 'variants',
           foreignField: '_id',
-          as: 'variants'
-        }
+          as: 'variants',
+        },
       },
       {
         $lookup: {
           from: 'media',
           localField: 'variants.thumbnail',
           foreignField: '_id',
-          as: 'thumbnails'
-        }
+          as: 'thumbnails',
+        },
       },
       {
         $lookup: {
           from: 'media',
           localField: 'variants.images',
           foreignField: '_id',
-          as: 'images'
-        }
+          as: 'images',
+        },
       },
       {
         $project: {
@@ -1012,19 +1042,21 @@ export class UserService {
                             $filter: {
                               input: '$thumbnails',
                               as: 'thumb',
-                              cond: { $eq: ['$$thumb._id', '$$variant.thumbnail'] }
-                            }
+                              cond: {
+                                $eq: ['$$thumb._id', '$$variant.thumbnail'],
+                              },
+                            },
                           },
-                          0
-                        ]
-                      }
+                          0,
+                        ],
+                      },
                     },
                     in: {
                       _id: '$$thumb._id',
                       publicId: '$$thumb.publicId',
-                      url: '$$thumb.url'
-                    }
-                  }
+                      url: '$$thumb.url',
+                    },
+                  },
                 },
                 images: {
                   $map: {
@@ -1032,31 +1064,38 @@ export class UserService {
                       $filter: {
                         input: '$images',
                         as: 'image',
-                        cond: { $in: ['$$image._id', '$$variant.images'] }
-                      }
+                        cond: { $in: ['$$image._id', '$$variant.images'] },
+                      },
                     },
                     as: 'image',
                     in: {
                       _id: '$$image._id',
                       publicId: '$$image.publicId',
-                      url: '$$image.url'
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
+                      url: '$$image.url',
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
     ]);
 
     // Map back the scores to the products and order them
-    const trendingList = sortedProducts.map(sp => {
-      const prod = productsData.find(p => p._id.toString() === sp.productId);
-      return prod ? { ...prod, trendScore: sp.trendScore } : null;
-    }).filter(p => p !== null);
+    const trendingList = sortedProducts
+      .map((sp) => {
+        const prod = productsData.find(
+          (p) => p._id.toString() === sp.productId,
+        );
+        return prod ? { ...prod, trendScore: sp.trendScore } : null;
+      })
+      .filter((p) => p !== null);
 
-    return ApiResponse.success('Trending products fetched successfully', trendingList);
+    return ApiResponse.success(
+      'Trending products fetched successfully',
+      trendingList,
+    );
   }
 
   async getRequestedRoles(userId: string) {
@@ -1065,7 +1104,10 @@ export class UserService {
       throw new NotFoundException('User not found');
     }
     const roleStatus = user.roleStatus;
-    return ApiResponse.success('Requested roles fetched successfully', roleStatus);
+    return ApiResponse.success(
+      'Requested roles fetched successfully',
+      roleStatus,
+    );
   }
 
   async applyRoles(userId: string, roles: UserRole[]) {
@@ -1074,19 +1116,27 @@ export class UserService {
       throw new NotFoundException('User not found');
     }
 
-    const allowedRoles = [UserRole.EDUCATOR, UserRole.VENDOR, UserRole.SERVICE_PROVIDER];
+    const allowedRoles = [
+      UserRole.EDUCATOR,
+      UserRole.VENDOR,
+      UserRole.SERVICE_PROVIDER,
+    ];
     let isModified = false;
 
     for (const role of roles) {
       if (!allowedRoles.includes(role)) {
-        throw new BadRequestException(`You cannot apply for the ${role} role directly.`);
+        throw new BadRequestException(
+          `You cannot apply for the ${role} role directly.`,
+        );
       }
 
       if (!user.roleStatus.has(role)) {
         user.roleStatus.set(role, RoleStatus.NOT_ONBOARDED);
         isModified = true;
       } else {
-        throw new BadRequestException(`You have already applied for the ${role} role.`);
+        throw new BadRequestException(
+          `You have already applied for the ${role} role.`,
+        );
       }
     }
 
@@ -1094,6 +1144,9 @@ export class UserService {
       await user.save();
     }
 
-    return ApiResponse.success('Applied for roles successfully', user.roleStatus);
+    return ApiResponse.success(
+      'Applied for roles successfully',
+      user.roleStatus,
+    );
   }
 }

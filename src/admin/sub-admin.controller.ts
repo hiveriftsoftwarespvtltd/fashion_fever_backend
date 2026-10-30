@@ -1,4 +1,13 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Put,
+  UseGuards,
+} from '@nestjs/common';
 import { SubAdminService } from './sub-admin.service';
 import { CreateSubAdminDto, UpdateSubAdminDto } from './dto/sub-admin.dto';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guad';
@@ -10,7 +19,7 @@ import { UserRole } from 'src/user/schema/user.schema';
 @Roles(UserRole.SUPER_ADMIN)
 @Controller('admin/sub-admins')
 export class SubAdminController {
-  constructor(private readonly subAdminService: SubAdminService) { }
+  constructor(private readonly subAdminService: SubAdminService) {}
 
   @Post('add')
   async createAdmin(@Body() dto: CreateSubAdminDto) {
@@ -34,6 +43,11 @@ export class SubAdminController {
 
   @Delete('delete-sub-admin/:id')
   async deleteAdmin(@Param('id') id: string) {
+    return await this.subAdminService.deleteAdmin(id);
+  }
+
+  @Delete(':id')
+  async deleteAdminAlias(@Param('id') id: string) {
     return await this.subAdminService.deleteAdmin(id);
   }
 }

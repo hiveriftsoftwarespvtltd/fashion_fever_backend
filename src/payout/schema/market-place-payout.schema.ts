@@ -2,7 +2,6 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
 import { EarningRole } from './market-place-earning.schema';
 
-
 export type MarketplacePayoutDocument = MarketplacePayout & Document;
 
 export enum PayoutStatus {
@@ -27,7 +26,6 @@ export class MarketplacePayout {
     type: Types.ObjectId,
     ref: 'User',
     required: true,
-    
   })
   userId!: Types.ObjectId;
 
@@ -51,7 +49,6 @@ export class MarketplacePayout {
   @Prop({
     enum: PayoutStatus,
     default: PayoutStatus.PENDING,
-    
   })
   status!: PayoutStatus;
 
@@ -68,8 +65,6 @@ export class MarketplacePayout {
 
   @Prop()
   paidAt?: Date;
-
-
 }
 
 export const MarketplacePayoutSchema =

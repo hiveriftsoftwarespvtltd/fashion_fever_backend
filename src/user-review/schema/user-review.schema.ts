@@ -73,8 +73,7 @@ export class UserReview {
   isDeleted!: boolean;
 }
 
-export const UserReviewSchema =
-  SchemaFactory.createForClass(UserReview);
+export const UserReviewSchema = SchemaFactory.createForClass(UserReview);
 
 UserReviewSchema.index(
   {

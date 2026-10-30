@@ -6,8 +6,15 @@ import {
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { Connection, Model, Types } from 'mongoose';
 import { ApiResponse } from 'src/common/responses/api-response';
-import { Coupon, CouponDocument, CouponType } from 'src/coupon/schema/coupon.schema';
-import { CouponUsage, CouponUsageDocument } from 'src/coupon/schema/coupon-usage.schema';
+import {
+  Coupon,
+  CouponDocument,
+  CouponType,
+} from 'src/coupon/schema/coupon.schema';
+import {
+  CouponUsage,
+  CouponUsageDocument,
+} from 'src/coupon/schema/coupon-usage.schema';
 import {
   ServiceBooking,
   ServiceBookingDocument,
@@ -15,19 +22,47 @@ import {
   BookingPaymentStatus,
 } from './schema/service-booking.schema';
 import { PaymentMethod } from 'src/order/schema/order.schema';
-import { StaffAllocation, StaffAllocationDocument, AllocationType, StaffAllocationStatus } from './schema/staff-allocation.schema';
+import {
+  StaffAllocation,
+  StaffAllocationDocument,
+  AllocationType,
+  StaffAllocationStatus,
+} from './schema/staff-allocation.schema';
 import { UserWalletService } from 'src/wallet/service/user/user.wallet.service';
-import { CashbackSlab, CashbackSlabDocument, CashbackType } from 'src/wallet/schema/cashback/cashbacks.slabs.schema';
+import {
+  CashbackSlab,
+  CashbackSlabDocument,
+  CashbackType,
+} from 'src/wallet/schema/cashback/cashbacks.slabs.schema';
 import { WalletTransactionReason } from 'src/wallet/schema/user/user.wallet.transactions';
-import { ServiceReview, ServiceReviewDocument } from './schema/service-review.schema';
+import {
+  ServiceReview,
+  ServiceReviewDocument,
+} from './schema/service-review.schema';
 import { Service, ServiceDocument } from './schema/service.schema';
-import { ServiceStaff, ServiceStaffDocument } from './schema/service-staff.schema';
+import {
+  ServiceStaff,
+  ServiceStaffDocument,
+} from './schema/service-staff.schema';
 import { User, UserDocument, UserRole } from 'src/user/schema/user.schema';
-import { ServiceProvider, ServiceProviderDocument } from './schema/service-provider.schema';
+import {
+  ServiceProvider,
+  ServiceProviderDocument,
+} from './schema/service-provider.schema';
 import { CreateBookingDTO, RescheduleBookingDTO } from './dto/service.dto';
-import { calculateEndTime, safeSendMail, sendMail, toMinutes, toTimeString } from 'src/utils/helper';
+import {
+  calculateEndTime,
+  safeSendMail,
+  sendMail,
+  toMinutes,
+  toTimeString,
+} from 'src/utils/helper';
 import { ServiceService } from './service.service';
-import { bookingCancelledTemplate, bookingCompletedTemplate, bookingRescheduledTemplate } from 'src/utils/service.email.template';
+import {
+  bookingCancelledTemplate,
+  bookingCompletedTemplate,
+  bookingRescheduledTemplate,
+} from 'src/utils/service.email.template';
 import {
   CommissionRate,
   CommissionRateDocument,
@@ -36,10 +71,26 @@ import {
 } from 'src/admin/schema/commission-rate.schema';
 import { AffiliateTrackingService } from 'src/influencer/affiliate-tracking.service';
 import { NotificationService } from 'src/notification/notification.service';
-import { NotificationModuleType, NotificationType, NotificationPriority } from 'src/notification/schema/notification.schema';
-import { PaymentMode, PaymentTransaction, PaymentTransactionDocument, ReferenceType, TransactionStatus } from 'src/payout/schema/payment-transaction.schema';
+import {
+  NotificationModuleType,
+  NotificationType,
+  NotificationPriority,
+} from 'src/notification/schema/notification.schema';
+import {
+  PaymentMode,
+  PaymentTransaction,
+  PaymentTransactionDocument,
+  ReferenceType,
+  TransactionStatus,
+} from 'src/payout/schema/payment-transaction.schema';
 import { PaymentMethod as TransactionPaymentMethod } from 'src/payout/schema/payment-transaction.schema';
-import { MarketplaceEarning, MarketplaceEarningDocument, EarningRole, EarningReferenceType, EarningStatus } from 'src/payout/schema/market-place-earning.schema';
+import {
+  MarketplaceEarning,
+  MarketplaceEarningDocument,
+  EarningRole,
+  EarningReferenceType,
+  EarningStatus,
+} from 'src/payout/schema/market-place-earning.schema';
 
 @Injectable()
 export class ServiceBookingService {
@@ -53,27 +104,29 @@ export class ServiceBookingService {
     @InjectModel(CouponUsage.name)
     private couponUsageModel: Model<CouponUsageDocument>,
     @InjectModel(User.name) private userModel: Model<UserDocument>,
-    @InjectModel(ServiceProvider.name) private providerModel: Model<ServiceProviderDocument>,
-    @InjectModel(CashbackSlab.name) private cashbackSlabModel: Model<CashbackSlabDocument>,
-    @InjectModel(CommissionRate.name) private commissionRateModel: Model<CommissionRateDocument>,
-    @InjectModel(ServiceReview.name) private reviewModel: Model<ServiceReviewDocument>,
+    @InjectModel(ServiceProvider.name)
+    private providerModel: Model<ServiceProviderDocument>,
+    @InjectModel(CashbackSlab.name)
+    private cashbackSlabModel: Model<CashbackSlabDocument>,
+    @InjectModel(CommissionRate.name)
+    private commissionRateModel: Model<CommissionRateDocument>,
+    @InjectModel(ServiceReview.name)
+    private reviewModel: Model<ServiceReviewDocument>,
     private service: ServiceService,
     private userWalletService: UserWalletService,
-    @InjectModel(StaffAllocation.name) private staffAllocationModel: Model<StaffAllocationDocument>,
-    @InjectModel(PaymentTransaction.name) private paymentTransactionModel: Model<PaymentTransactionDocument>,
-    @InjectModel(MarketplaceEarning.name) private marketplaceEarningModel: Model<MarketplaceEarningDocument>,
+    @InjectModel(StaffAllocation.name)
+    private staffAllocationModel: Model<StaffAllocationDocument>,
+    @InjectModel(PaymentTransaction.name)
+    private paymentTransactionModel: Model<PaymentTransactionDocument>,
+    @InjectModel(MarketplaceEarning.name)
+    private marketplaceEarningModel: Model<MarketplaceEarningDocument>,
 
     @InjectConnection() private connection: Connection,
     private affiliateTrackingService: AffiliateTrackingService,
     private notificationService: NotificationService,
-  ) { }
+  ) {}
 
-
-
-  async createBooking(
-    userId: string,
-    dto: CreateBookingDTO,
-  ) {
+  async createBooking(userId: string, dto: CreateBookingDTO) {
     const session = await this.connection.startSession();
 
     try {
@@ -81,7 +134,7 @@ export class ServiceBookingService {
 
       const requestedServiceIds: string[] = [];
       if (dto.items && dto.items.length > 0) {
-        dto.items.forEach(item => {
+        dto.items.forEach((item) => {
           if (!requestedServiceIds.includes(item.serviceId)) {
             requestedServiceIds.push(item.serviceId);
           }
@@ -93,7 +146,9 @@ export class ServiceBookingService {
       }
 
       const services: any = await this.serviceModel
-        .find({ _id: { $in: requestedServiceIds.map(id => new Types.ObjectId(id)) } })
+        .find({
+          _id: { $in: requestedServiceIds.map((id) => new Types.ObjectId(id)) },
+        })
         .session(session);
 
       if (services.length !== requestedServiceIds.length) {
@@ -109,18 +164,21 @@ export class ServiceBookingService {
 
       const providerId = primaryService?.providerId;
 
-
-      const providerMismatch = services.some(s => s.providerId.toString() !== providerId?.toString());
+      const providerMismatch = services.some(
+        (s) => s.providerId.toString() !== providerId?.toString(),
+      );
       if (providerMismatch) {
-        throw new BadRequestException('All services must belong to the same provider');
+        throw new BadRequestException(
+          'All services must belong to the same provider',
+        );
       }
 
-      const user = await this.userModel.findById(new Types.ObjectId(userId)).session(session);
+      const user = await this.userModel
+        .findById(new Types.ObjectId(userId))
+        .session(session);
 
       if (!user) {
-        throw new NotFoundException(
-          'User not found or inactive',
-        );
+        throw new NotFoundException('User not found or inactive');
       }
 
       let staff = await this.serviceStaffModel
@@ -141,17 +199,13 @@ export class ServiceBookingService {
       }
 
       if (!staff) {
-        throw new NotFoundException(
-          'Staff not found or inactive',
-        );
+        throw new NotFoundException('Staff not found or inactive');
       }
 
       // Validate staff skill for ALL services
       for (const service of services) {
         const canPerformService = staff.services?.some(
-          (sId) =>
-            sId.toString() ===
-            service._id.toString(),
+          (sId) => sId.toString() === service._id.toString(),
         );
 
         if (!canPerformService) {
@@ -184,35 +238,57 @@ export class ServiceBookingService {
       const slotStartTime = new Date(dto.slotStartTime);
 
       const slotEndTime = new Date(
-        slotStartTime.getTime() +
-        totalDurationMinutes * 60 * 1000,
+        slotStartTime.getTime() + totalDurationMinutes * 60 * 1000,
       );
 
       // Verify slot exists and staff is available
-      const availableSlotsResponse =
-        await this.service.getAvailableSlots(
-          providerId!.toString(),
-          { serviceIds: requestedServiceIds, date: dto.bookingDate }
-        );
-
-      const availableSlots =
-        availableSlotsResponse.data?.slots || [];
-
-      const selectedSlot = availableSlots.find(
-        (slot) =>
-          new Date(slot.utcStartTime || slot.startTime).getTime() ===
-          new Date(dto.slotStartTime).getTime() &&
-          slot.availableStaff.some(
-            (s: any) =>
-              s._id.toString() ===
-              staff._id.toString(),
-          ),
+      const availableSlotsResponse = await this.service.getAvailableSlots(
+        providerId!.toString(),
+        { serviceIds: requestedServiceIds, date: dto.bookingDate },
       );
 
+      const availableSlots = availableSlotsResponse.data?.slots || [];
+
+      const requestedTime = new Date(dto.slotStartTime).getTime();
+
+      // Check slot matching by time (within 2-minute tolerance for ISO timestamp parsing variations)
+      const selectedSlot = availableSlots.find((slot) => {
+        const slotTime = new Date(slot.utcStartTime || slot.startTime).getTime();
+        return Math.abs(slotTime - requestedTime) <= 2 * 60 * 1000;
+      });
+
       if (!selectedSlot) {
-        throw new BadRequestException(
-          'Selected slot is not available',
-        );
+        throw new BadRequestException('Selected slot is not available');
+      }
+
+      // Check if slot has already passed
+      if (
+        new Date(selectedSlot.utcStartTime || selectedSlot.startTime).getTime() <=
+        Date.now()
+      ) {
+        throw new BadRequestException('Cannot book a past time slot');
+      }
+
+      // Verify or assign available staff for this specific slot
+      const currentStaffId = staff?._id?.toString() || '';
+      const isStaffAvailable = selectedSlot.availableStaff.some(
+        (s: any) => s._id?.toString() === currentStaffId,
+      );
+
+      if (!isStaffAvailable) {
+        const altStaff = selectedSlot.availableStaff[0];
+        if (altStaff) {
+          const altStaffDoc = await this.serviceStaffModel
+            .findById(altStaff._id)
+            .session(session);
+          if (altStaffDoc) {
+            staff = altStaffDoc;
+          }
+        }
+      }
+
+      if (!staff) {
+        throw new BadRequestException('Selected slot is not available');
       }
 
       const bookingDate = new Date(dto.bookingDate);
@@ -223,51 +299,38 @@ export class ServiceBookingService {
       const endOfDay = new Date(bookingDate);
       endOfDay.setHours(23, 59, 59, 999);
 
-      const staffBookings =
-        await this.serviceBookingModel
-          .find({
-            staffId: staff._id,
-            bookingDate: {
-              $gte: startOfDay,
-              $lte: endOfDay,
-            },
-            bookingStatus: {
-              $in: [
-                BookingStatus.PENDING,
-                BookingStatus.CONFIRMED,
-                BookingStatus.ONGOING,
-              ],
-            },
-          })
-          .session(session);
+      const staffBookings = await this.serviceBookingModel
+        .find({
+          staffId: staff._id,
+          bookingDate: {
+            $gte: startOfDay,
+            $lte: endOfDay,
+          },
+          bookingStatus: {
+            $in: [
+              BookingStatus.PENDING,
+              BookingStatus.CONFIRMED,
+              BookingStatus.ONGOING,
+            ],
+          },
+        })
+        .session(session);
 
-      // 
-      const requestedStart =
-        slotStartTime.getTime();
+      //
+      const requestedStart = slotStartTime.getTime();
 
-      const requestedEnd =
-        slotEndTime.getTime();
+      const requestedEnd = slotEndTime.getTime();
 
-      const conflictingBooking =
-        staffBookings.find((booking) => {
-          const existingStart = new Date(
-            booking.slotStartTime,
-          ).getTime();
+      const conflictingBooking = staffBookings.find((booking) => {
+        const existingStart = new Date(booking.slotStartTime).getTime();
 
-          const existingEnd = new Date(
-            booking.slotEndTime,
-          ).getTime();
+        const existingEnd = new Date(booking.slotEndTime).getTime();
 
-          return (
-            requestedStart < existingEnd &&
-            requestedEnd > existingStart
-          );
-        });
+        return requestedStart < existingEnd && requestedEnd > existingStart;
+      });
 
       if (conflictingBooking) {
-        throw new BadRequestException(
-          'Selected slot is already booked',
-        );
+        throw new BadRequestException('Selected slot is already booked');
       }
 
       let couponDiscount = 0;
@@ -281,17 +344,13 @@ export class ServiceBookingService {
       if (dto.couponCode) {
         const coupon = await this.couponModel
           .findOne({
-            code: dto.couponCode
-              .trim()
-              .toUpperCase(),
+            code: dto.couponCode.trim().toUpperCase(),
             isActive: true,
           })
           .session(session);
 
         if (!coupon) {
-          throw new BadRequestException(
-            'Coupon not found',
-          );
+          throw new BadRequestException('Coupon not found');
         }
 
         // ── Service-Coupon: enforce provider + service ownership ──────────
@@ -331,7 +390,10 @@ export class ServiceBookingService {
           if (coupon.expiresAt && now >= coupon.expiresAt) {
             throw new BadRequestException('Coupon expired');
           }
-          if (coupon.totalUsageLimit > 0 && coupon.totalUsed >= coupon.totalUsageLimit) {
+          if (
+            coupon.totalUsageLimit > 0 &&
+            coupon.totalUsed >= coupon.totalUsageLimit
+          ) {
             throw new BadRequestException('Coupon usage limit exceeded');
           }
 
@@ -339,11 +401,17 @@ export class ServiceBookingService {
             userId: new Types.ObjectId(userId),
             couponId: coupon._id,
           });
-          if (coupon.usageLimitPerUser > 0 && userUsage >= coupon.usageLimitPerUser) {
+          if (
+            coupon.usageLimitPerUser > 0 &&
+            userUsage >= coupon.usageLimitPerUser
+          ) {
             throw new BadRequestException('You already used this coupon');
           }
 
-          if (coupon.minimumOrderAmount > 0 && linkedPrice < coupon.minimumOrderAmount) {
+          if (
+            coupon.minimumOrderAmount > 0 &&
+            linkedPrice < coupon.minimumOrderAmount
+          ) {
             throw new BadRequestException(
               `Minimum service price of ₹${coupon.minimumOrderAmount} required`,
             );
@@ -352,7 +420,10 @@ export class ServiceBookingService {
           let serviceDiscount = 0;
           if (coupon.type === CouponType.PERCENTAGE) {
             serviceDiscount = (linkedPrice * coupon.value) / 100;
-            if (coupon.maximumDiscount && serviceDiscount > coupon.maximumDiscount) {
+            if (
+              coupon.maximumDiscount &&
+              serviceDiscount > coupon.maximumDiscount
+            ) {
               serviceDiscount = coupon.maximumDiscount;
             }
           } else {
@@ -361,7 +432,6 @@ export class ServiceBookingService {
           serviceDiscount = Math.min(serviceDiscount, linkedPrice);
           couponDiscount = serviceDiscount;
           serviceLineCouponDiscounts.set(linkedServiceStr!, serviceDiscount);
-
         } else {
           // ── Non-service coupon (platform/vendor/etc): existing logic ─────
           const now = new Date();
@@ -371,7 +441,10 @@ export class ServiceBookingService {
           if (coupon.expiresAt && now >= coupon.expiresAt) {
             throw new BadRequestException('Coupon expired');
           }
-          if (coupon.totalUsageLimit > 0 && coupon.totalUsed >= coupon.totalUsageLimit) {
+          if (
+            coupon.totalUsageLimit > 0 &&
+            coupon.totalUsed >= coupon.totalUsageLimit
+          ) {
             throw new BadRequestException('Coupon usage limit exceeded');
           }
 
@@ -379,17 +452,26 @@ export class ServiceBookingService {
             userId: new Types.ObjectId(userId),
             couponId: coupon._id,
           });
-          if (coupon.usageLimitPerUser > 0 && userUsage >= coupon.usageLimitPerUser) {
+          if (
+            coupon.usageLimitPerUser > 0 &&
+            userUsage >= coupon.usageLimitPerUser
+          ) {
             throw new BadRequestException('You already used this coupon');
           }
-          if (coupon.minimumOrderAmount > 0 && subtotal < coupon.minimumOrderAmount) {
+          if (
+            coupon.minimumOrderAmount > 0 &&
+            subtotal < coupon.minimumOrderAmount
+          ) {
             throw new BadRequestException(
               `Minimum order amount should be ₹${coupon.minimumOrderAmount}`,
             );
           }
           if (coupon.type === CouponType.PERCENTAGE) {
             couponDiscount = (subtotal * coupon.value) / 100;
-            if (coupon.maximumDiscount && couponDiscount > coupon.maximumDiscount) {
+            if (
+              coupon.maximumDiscount &&
+              couponDiscount > coupon.maximumDiscount
+            ) {
               couponDiscount = coupon.maximumDiscount;
             }
           } else {
@@ -401,13 +483,11 @@ export class ServiceBookingService {
         coupon.totalUsed += 1;
         await coupon.save({ session });
 
-        couponId = coupon._id as Types.ObjectId;
+        couponId = coupon._id;
         couponCode = coupon.code;
       }
 
-
-      const totalAmount =
-        subtotal - couponDiscount;
+      const totalAmount = subtotal - couponDiscount;
 
       const advanceAmount = parseFloat((totalAmount * 0.2).toFixed(2));
       const remainingAmount = parseFloat(
@@ -418,9 +498,12 @@ export class ServiceBookingService {
       const DEFAULT_COMMISSION_RATE = 25;
       const DEFAULT_COMMISSION_ON = CommissionOn.PROFITVALUE;
 
-      const commissionDoc = await this.commissionRateModel.findOne().session(session);
+      const commissionDoc = await this.commissionRateModel
+        .findOne()
+        .session(session);
       const providerSlab = commissionDoc?.commissions?.find(
-        (s) => s.entityType === CommissionEntityType.SERVICE_PROVIDER,);
+        (s) => s.entityType === CommissionEntityType.SERVICE_PROVIDER,
+      );
 
       const platformCommissionRate =
         providerSlab?.commissionPercentage ?? DEFAULT_COMMISSION_RATE;
@@ -445,8 +528,6 @@ export class ServiceBookingService {
       const providerPayoutAmount = parseFloat(
         (totalAmount - platformCommissionAmount).toFixed(2),
       );
-
-
 
       let walletAmountUsed = 0;
 
@@ -473,55 +554,47 @@ export class ServiceBookingService {
           ? BookingPaymentStatus.PARTIALLY_PAID
           : BookingPaymentStatus.PENDING;
 
+      const [booking] = await this.serviceBookingModel.create(
+        [
+          {
+            userId: new Types.ObjectId(userId),
+            providerId: providerId,
+            items: bookingItems,
+            staffId: staff._id,
 
+            bookingDate,
 
-      const [booking] =
-        await this.serviceBookingModel.create(
-          [
-            {
-              userId:
-                new Types.ObjectId(userId),
-              providerId:
-                providerId,
-              items: bookingItems,
-              staffId: staff._id,
+            slotStartTime,
 
-              bookingDate,
+            slotEndTime,
 
-              slotStartTime,
+            serviceAddress: dto.serviceAddress,
 
-              slotEndTime,
+            subtotal,
+            couponId,
+            couponCode,
+            couponDiscount,
+            influencerDiscount: 0,
+            platformCommissionRate,
+            platformCommissionOn,
+            platformCommissionAmount,
+            providerPayoutAmount,
+            totalAmount,
+            advanceAmount,
+            remainingAmount,
 
-              serviceAddress:
-                dto.serviceAddress,
+            bookingStatus: BookingStatus.CONFIRMED,
 
-              subtotal,
-              couponId,
-              couponCode,
-              couponDiscount,
-              influencerDiscount: 0,
-              platformCommissionRate,
-              platformCommissionOn,
-              platformCommissionAmount,
-              providerPayoutAmount,
-              totalAmount,
-              advanceAmount,
-              remainingAmount,
-
-              bookingStatus:
-                BookingStatus.CONFIRMED,
-
-              paymentMethod: PaymentMethod.WALLET,
-              paymentStatus: actualPaymentStatus,
-              walletAmountUsed,
-              paymentMeta: {
-                cashbackAwarded: false
-              },
-
+            paymentMethod: PaymentMethod.WALLET,
+            paymentStatus: actualPaymentStatus,
+            walletAmountUsed,
+            paymentMeta: {
+              cashbackAwarded: false,
             },
-          ],
-          { session },
-        );
+          },
+        ],
+        { session },
+      );
 
       if (walletAmountUsed > 0) {
         await this.paymentTransactionModel.create(
@@ -534,9 +607,9 @@ export class ServiceBookingService {
               paymentMethod: TransactionPaymentMethod.WALLET,
               amount: walletAmountUsed,
               status: TransactionStatus.SUCCESS,
-            }
+            },
           ],
-          { session }
+          { session },
         );
       }
 
@@ -551,9 +624,9 @@ export class ServiceBookingService {
               paymentMethod: TransactionPaymentMethod.CASH,
               amount: remainingAmount,
               status: TransactionStatus.PENDING,
-            }
+            },
           ],
-          { session }
+          { session },
         );
       }
 
@@ -582,12 +655,17 @@ export class ServiceBookingService {
             slotEndTime: slotEndTime,
             status: StaffAllocationStatus.CONFIRMED,
             allocationType: AllocationType.SERVICE_BOOKING,
-          }
+          },
         ],
         { session },
       );
 
-      await this.affiliateTrackingService.createPendingCommission(userId, 'SERVICE', booking._id, totalAmount);
+      await this.affiliateTrackingService.createPendingCommission(
+        userId,
+        'SERVICE',
+        booking._id,
+        totalAmount,
+      );
 
       await session.commitTransaction();
 
@@ -598,7 +676,7 @@ export class ServiceBookingService {
         body: `Your service booking for ${dto.bookingDate} has been confirmed.`,
         moduleType: NotificationModuleType.SERVICE_BOOKINGS,
         type: NotificationType.SYSTEM,
-        priority: NotificationPriority.HIGH
+        priority: NotificationPriority.HIGH,
       });
 
       const provider = await this.providerModel.findById(providerId);
@@ -609,7 +687,7 @@ export class ServiceBookingService {
           body: `You have a new service booking for ${dto.bookingDate}.`,
           moduleType: NotificationModuleType.SERVICE_BOOKINGS,
           type: NotificationType.SYSTEM,
-          priority: NotificationPriority.HIGH
+          priority: NotificationPriority.HIGH,
         });
       }
 
@@ -667,7 +745,9 @@ export class ServiceBookingService {
       }
 
       if (booking.userId.toString() !== userId.toString()) {
-        throw new BadRequestException('You are not authorized to cancel this booking');
+        throw new BadRequestException(
+          'You are not authorized to cancel this booking',
+        );
       }
 
       if (
@@ -681,13 +761,17 @@ export class ServiceBookingService {
 
       booking.bookingStatus = BookingStatus.CANCELLED;
 
-      if (booking.walletAmountUsed && booking.walletAmountUsed > 0 && (!booking.walletRefundedAmount || booking.walletRefundedAmount === 0)) {
+      if (
+        booking.walletAmountUsed &&
+        booking.walletAmountUsed > 0 &&
+        (!booking.walletRefundedAmount || booking.walletRefundedAmount === 0)
+      ) {
         await this.userWalletService.addBalance(
           userId,
           booking.walletAmountUsed,
           WalletTransactionReason.REFUND,
           `Refund for cancelled Service Booking`,
-          session
+          session,
         );
         booking.walletRefundedAmount = booking.walletAmountUsed;
         booking.paymentStatus = BookingPaymentStatus.REFUNDED;
@@ -706,9 +790,9 @@ export class ServiceBookingService {
               paymentMethod: TransactionPaymentMethod.WALLET,
               amount: booking.walletAmountUsed,
               status: TransactionStatus.REFUNDED,
-            }
+            },
           ],
-          { session }
+          { session },
         );
       }
 
@@ -716,7 +800,7 @@ export class ServiceBookingService {
       await this.staffAllocationModel.updateMany(
         { serviceBookingId: booking._id },
         { $set: { status: StaffAllocationStatus.CANCELLED } },
-        { session }
+        { session },
       );
 
       await session.commitTransaction();
@@ -732,7 +816,7 @@ export class ServiceBookingService {
           slotStartTime: booking.slotStartTime.toISOString(),
           slotEndTime: booking.slotEndTime.toISOString(),
           bookingId: booking._id.toString(),
-        })
+        }),
       ).then((res) => {
         if (!res.success) {
           console.log('Booking cancellation email failed but flow is safe');
@@ -786,7 +870,7 @@ export class ServiceBookingService {
       }
 
       // Fetch all services to calculate duration
-      const serviceIds = booking.items.map(i => i.serviceId);
+      const serviceIds = booking.items.map((i) => i.serviceId);
       const services = await this.serviceModel
         .find({ _id: { $in: serviceIds } })
         .session(session);
@@ -795,7 +879,10 @@ export class ServiceBookingService {
         throw new NotFoundException('Services not found');
       }
 
-      const totalDurationMinutes = services.reduce((acc, s) => acc + s.durationMinutes, 0);
+      const totalDurationMinutes = services.reduce(
+        (acc, s) => acc + s.durationMinutes,
+        0,
+      );
 
       // DATE RANGE
       const bookingDate = new Date(dto.bookingDate);
@@ -851,7 +938,7 @@ export class ServiceBookingService {
       await this.staffAllocationModel.updateMany(
         { serviceBookingId: booking._id },
         { $set: { status: StaffAllocationStatus.CANCELLED } },
-        { session }
+        { session },
       );
 
       await this.staffAllocationModel.create(
@@ -865,9 +952,9 @@ export class ServiceBookingService {
             slotEndTime: slotEndTime,
             status: StaffAllocationStatus.CONFIRMED,
             allocationType: AllocationType.SERVICE_BOOKING,
-          }
+          },
         ],
-        { session }
+        { session },
       );
 
       await session.commitTransaction();
@@ -891,10 +978,7 @@ export class ServiceBookingService {
         }
       });
 
-      return ApiResponse.success(
-        'Booking rescheduled successfully',
-        booking,
-      );
+      return ApiResponse.success('Booking rescheduled successfully', booking);
     } catch (error) {
       await session.abortTransaction();
       throw error;
@@ -904,7 +988,9 @@ export class ServiceBookingService {
   }
 
   async confirmBooking(providerId: string, bookingId: string) {
-    const booking = await this.serviceBookingModel.findById(bookingId).populate('items.serviceId');
+    const booking = await this.serviceBookingModel
+      .findById(bookingId)
+      .populate('items.serviceId');
 
     if (!booking) {
       throw new NotFoundException('Booking not found');
@@ -912,8 +998,13 @@ export class ServiceBookingService {
 
     // Optional: check if the providerId matches booking.providerId if needed
 
-    if (booking.bookingStatus !== BookingStatus.PENDING && booking.bookingStatus !== ('RESCHEDULED' as any)) {
-      throw new BadRequestException(`Cannot confirm booking from status ${booking.bookingStatus}`);
+    if (
+      booking.bookingStatus !== BookingStatus.PENDING &&
+      booking.bookingStatus !== ('RESCHEDULED' as any)
+    ) {
+      throw new BadRequestException(
+        `Cannot confirm booking from status ${booking.bookingStatus}`,
+      );
     }
 
     booking.bookingStatus = BookingStatus.CONFIRMED;
@@ -945,7 +1036,7 @@ export class ServiceBookingService {
     userId: string,
     status?: string,
     startDateStr?: string,
-    endDateStr?: string
+    endDateStr?: string,
   ) {
     const filter: any = { userId: new Types.ObjectId(userId) };
 
@@ -973,21 +1064,26 @@ export class ServiceBookingService {
       $lte: end,
     };
 
-
     const bookings = await this.serviceBookingModel
       .find(filter)
       .populate('providerId', 'businessName address phone')
-      .populate('items.serviceId', 'title description offeredPrice sellingPrice')
+      .populate(
+        'items.serviceId',
+        'title description offeredPrice sellingPrice',
+      )
       .populate('staffId', 'name')
       .sort({ bookingDate: -1 })
       .lean();
 
     // Fetch all reviews by this user for the fetched bookings
-    const bookingIds = bookings.map(b => b._id);
-    const reviews = await this.reviewModel.find({
-      userId: new Types.ObjectId(userId),
-      bookingId: { $in: bookingIds }
-    }).populate('images', 'url _id').lean();
+    const bookingIds = bookings.map((b) => b._id);
+    const reviews = await this.reviewModel
+      .find({
+        userId: new Types.ObjectId(userId),
+        bookingId: { $in: bookingIds },
+      })
+      .populate('images', 'url _id')
+      .lean();
 
     // Group reviews by bookingId
     const reviewsByBooking = reviews.reduce((acc, review) => {
@@ -997,29 +1093,38 @@ export class ServiceBookingService {
       return acc;
     }, {} as any);
 
-    const enrichedBookings = bookings.map(booking => {
+    const enrichedBookings = bookings.map((booking) => {
       const bId = booking._id.toString();
       const bookingReviews = reviewsByBooking[bId] || [];
       return {
         ...booking,
         isReviewed: bookingReviews.length > 0,
-        reviews: bookingReviews
+        reviews: bookingReviews,
       };
     });
 
-    return ApiResponse.success('Booking history fetched successfully', enrichedBookings);
+    return ApiResponse.success(
+      'Booking history fetched successfully',
+      enrichedBookings,
+    );
   }
 
-  async updateServiceBooking(providerId: string, serviceBookingId: string, bookingStatus?: BookingStatus, paymentStatus?: BookingPaymentStatus) {
+  async updateServiceBooking(
+    providerId: string,
+    serviceBookingId: string,
+    bookingStatus?: BookingStatus,
+    paymentStatus?: BookingPaymentStatus,
+  ) {
     const session = await this.connection.startSession();
     try {
       session.startTransaction();
 
-
-      const booking = await this.serviceBookingModel.findOne({
-        _id: new Types.ObjectId(serviceBookingId),
-        providerId: new Types.ObjectId(providerId)
-      }).session(session);
+      const booking = await this.serviceBookingModel
+        .findOne({
+          _id: new Types.ObjectId(serviceBookingId),
+          providerId: new Types.ObjectId(providerId),
+        })
+        .session(session);
 
       if (!booking) {
         throw new NotFoundException('Service Booking not found');
@@ -1033,13 +1138,17 @@ export class ServiceBookingService {
       }
 
       if (bookingStatus === BookingStatus.CANCELLED) {
-        if (booking.walletAmountUsed && booking.walletAmountUsed > 0 && (!booking.walletRefundedAmount || booking.walletRefundedAmount === 0)) {
+        if (
+          booking.walletAmountUsed &&
+          booking.walletAmountUsed > 0 &&
+          (!booking.walletRefundedAmount || booking.walletRefundedAmount === 0)
+        ) {
           await this.userWalletService.addBalance(
             booking.userId.toString(),
             booking.walletAmountUsed,
             WalletTransactionReason.REFUND,
             `Refund for cancelled Service Booking`,
-            session
+            session,
           );
           booking.walletRefundedAmount = booking.walletAmountUsed;
           booking.paymentStatus = BookingPaymentStatus.REFUNDED;
@@ -1054,16 +1163,16 @@ export class ServiceBookingService {
                 paymentMethod: TransactionPaymentMethod.WALLET,
                 amount: booking.walletAmountUsed,
                 status: TransactionStatus.REFUNDED,
-              }
+              },
             ],
-            { session }
+            { session },
           );
         }
 
         await this.staffAllocationModel.updateMany(
           { serviceBookingId: booking._id },
           { $set: { status: StaffAllocationStatus.CANCELLED } },
-          { session }
+          { session },
         );
       }
 
@@ -1075,13 +1184,20 @@ export class ServiceBookingService {
         booking.paymentStatus === BookingPaymentStatus.PAID &&
         !booking.paymentMeta?.cashbackAwarded
       ) {
-        const slabs = await this.cashbackSlabModel.find({ isActive: true }).sort({ minValue: -1 }).session(session);
+        const slabs = await this.cashbackSlabModel
+          .find({ isActive: true })
+          .sort({ minValue: -1 })
+          .session(session);
         let awardedCashback = 0;
 
         for (const slab of slabs) {
-          if (booking.totalAmount >= slab.minValue && booking.totalAmount <= slab.maxValue) {
+          if (
+            booking.totalAmount >= slab.minValue &&
+            booking.totalAmount <= slab.maxValue
+          ) {
             if (slab.cashbackType === CashbackType.PERCENTAGE) {
-              awardedCashback = (booking.totalAmount * slab.cashbackValue) / 100;
+              awardedCashback =
+                (booking.totalAmount * slab.cashbackValue) / 100;
             } else {
               awardedCashback = slab.cashbackValue;
             }
@@ -1098,13 +1214,13 @@ export class ServiceBookingService {
             awardedCashback,
             WalletTransactionReason.CASHBACK,
             `Cashback for Service Booking ${booking._id}`,
-            session
+            session,
           );
 
           await this.serviceBookingModel.findByIdAndUpdate(
             booking._id,
             { $set: { 'paymentMeta.cashbackAwarded': true } },
-            { session }
+            { session },
           );
         }
       }
@@ -1118,7 +1234,9 @@ export class ServiceBookingService {
         const DEFAULT_COMMISSION_RATE = 25;
         const DEFAULT_COMMISSION_ON = CommissionOn.PROFITVALUE;
 
-        const commissionDoc = await this.commissionRateModel.findOne().session(session);
+        const commissionDoc = await this.commissionRateModel
+          .findOne()
+          .session(session);
         const providerSlab = commissionDoc?.commissions?.find(
           (s) => s.entityType === CommissionEntityType.SERVICE_PROVIDER,
         );
@@ -1161,28 +1279,42 @@ export class ServiceBookingService {
           { session },
         );
 
-        const providerDetails = await this.providerModel.findById(new Types.ObjectId(booking.providerId)).session(session);
+        const providerDetails = await this.providerModel
+          .findById(new Types.ObjectId(booking.providerId))
+          .session(session);
 
         if (!providerDetails) {
-          throw new NotFoundException("Provider Not found")
+          throw new NotFoundException('Provider Not found');
         }
 
-        await this.marketplaceEarningModel.create([{
-          userId: new Types.ObjectId(providerDetails.userId),
-          role: EarningRole.SERVICE_PROVIDER,
-          referenceType: EarningReferenceType.BOOKING,
-          referenceId: booking._id,
-          grossAmount: totalAmount,
-          netAmount: providerPayoutAmount > 0 ? providerPayoutAmount : 0,
-          platformCommission: platformCommissionAmount,
-          tax: 0,
-          deduction: platformCommissionAmount,
-          status: EarningStatus.PENDING
-        }], { session });
+        await this.marketplaceEarningModel.create(
+          [
+            {
+              userId: new Types.ObjectId(providerDetails.userId),
+              role: EarningRole.SERVICE_PROVIDER,
+              referenceType: EarningReferenceType.BOOKING,
+              referenceId: booking._id,
+              grossAmount: totalAmount,
+              netAmount: providerPayoutAmount > 0 ? providerPayoutAmount : 0,
+              platformCommission: platformCommissionAmount,
+              tax: 0,
+              deduction: platformCommissionAmount,
+              status: EarningStatus.PENDING,
+            },
+          ],
+          { session },
+        );
       }
 
-      if (booking.bookingStatus === BookingStatus.COMPLETED && booking.paymentStatus === BookingPaymentStatus.PAID) {
-        await this.affiliateTrackingService.updateCommissionStatus(booking._id, 'SERVICE', 'PAID');
+      if (
+        booking.bookingStatus === BookingStatus.COMPLETED &&
+        booking.paymentStatus === BookingPaymentStatus.PAID
+      ) {
+        await this.affiliateTrackingService.updateCommissionStatus(
+          booking._id,
+          'SERVICE',
+          'PAID',
+        );
       }
 
       await session.commitTransaction();
@@ -1194,11 +1326,14 @@ export class ServiceBookingService {
           body: `Your service booking status has been updated.`,
           moduleType: NotificationModuleType.SERVICE_BOOKINGS,
           type: NotificationType.SYSTEM,
-          priority: NotificationPriority.HIGH
+          priority: NotificationPriority.HIGH,
         });
       }
 
-      return ApiResponse.success('Service Booking updated successfully', booking);
+      return ApiResponse.success(
+        'Service Booking updated successfully',
+        booking,
+      );
     } catch (error) {
       await session.abortTransaction();
       throw error;
@@ -1302,20 +1437,33 @@ export class ServiceBookingService {
     }
 
     // Access control check
-    if (user.role === UserRole.USER && booking.userId?._id?.toString() !== user._id.toString()) {
-      throw new BadRequestException('You are not authorized to view this booking');
+    if (
+      user.role === UserRole.USER &&
+      booking.userId?._id?.toString() !== user._id.toString()
+    ) {
+      throw new BadRequestException(
+        'You are not authorized to view this booking',
+      );
     }
 
-    if (user.role === UserRole.SERVICE_PROVIDER && booking.providerId?._id?.toString() !== user.serviceProviderId?.toString()) {
-      throw new BadRequestException('You are not authorized to view this booking');
+    if (
+      user.role === UserRole.SERVICE_PROVIDER &&
+      booking.providerId?._id?.toString() !== user.serviceProviderId?.toString()
+    ) {
+      throw new BadRequestException(
+        'You are not authorized to view this booking',
+      );
     }
 
-    const reviews = await this.reviewModel.find({ bookingId: new Types.ObjectId(bookingId) }).populate('images', 'url _id').lean();
+    const reviews = await this.reviewModel
+      .find({ bookingId: new Types.ObjectId(bookingId) })
+      .populate('images', 'url _id')
+      .lean();
 
     return ApiResponse.success('Booking details fetched successfully', {
       ...booking,
       reviews,
-      isReviewed: reviews.length > 0
+      isReviewed: reviews.length > 0,
     });
   }
 }

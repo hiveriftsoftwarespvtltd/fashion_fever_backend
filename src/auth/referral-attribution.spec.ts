@@ -55,25 +55,48 @@ describe('Phase 2: Referral Link Ingestion & Signup Hook Contracts', () => {
     }) {
       const { referralCode, registeringEmail, influencerRecord } = params;
       if (!referralCode || typeof referralCode !== 'string') {
-        return { referredByInfluencerId: null, referralAttributedAt: null, referralExpiresAt: null };
+        return {
+          referredByInfluencerId: null,
+          referralAttributedAt: null,
+          referralExpiresAt: null,
+        };
       }
 
       const normalizedCode = referralCode.trim().toUpperCase();
 
-      if (!influencerRecord || influencerRecord.referralCode !== normalizedCode) {
-        return { referredByInfluencerId: null, referralAttributedAt: null, referralExpiresAt: null };
+      if (
+        !influencerRecord ||
+        influencerRecord.referralCode !== normalizedCode
+      ) {
+        return {
+          referredByInfluencerId: null,
+          referralAttributedAt: null,
+          referralExpiresAt: null,
+        };
       }
 
-      if (influencerRecord.status !== InfluencerStatus.ACTIVE || influencerRecord.isDeleted) {
-        return { referredByInfluencerId: null, referralAttributedAt: null, referralExpiresAt: null };
+      if (
+        influencerRecord.status !== InfluencerStatus.ACTIVE ||
+        influencerRecord.isDeleted
+      ) {
+        return {
+          referredByInfluencerId: null,
+          referralAttributedAt: null,
+          referralExpiresAt: null,
+        };
       }
 
       // RULE E: Self-referral prohibition
       if (
         registeringEmail &&
-        influencerRecord.influencerEmail.toLowerCase() === registeringEmail.toLowerCase()
+        influencerRecord.influencerEmail.toLowerCase() ===
+          registeringEmail.toLowerCase()
       ) {
-        return { referredByInfluencerId: null, referralAttributedAt: null, referralExpiresAt: null };
+        return {
+          referredByInfluencerId: null,
+          referralAttributedAt: null,
+          referralExpiresAt: null,
+        };
       }
 
       const now = new Date();
@@ -106,7 +129,8 @@ describe('Phase 2: Referral Link Ingestion & Signup Hook Contracts', () => {
       expect(res.referralExpiresAt).toBeInstanceOf(Date);
 
       // Verify exact 365-day duration
-      const diffMs = res.referralExpiresAt!.getTime() - res.referralAttributedAt!.getTime();
+      const diffMs =
+        res.referralExpiresAt!.getTime() - res.referralAttributedAt!.getTime();
       const diffDays = diffMs / (1000 * 60 * 60 * 24);
       expect(diffDays).toBe(365);
     });

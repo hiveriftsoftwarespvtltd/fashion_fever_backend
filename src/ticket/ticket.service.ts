@@ -1,8 +1,21 @@
-import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { Ticket, TicketDocument, TicketStatus } from '../admin/schema/ticket.schema';
-import { CreateTicketDto, UpdateTicketStatusDto, AddTicketReplyDto } from './dto/ticket.dto';
+import {
+  Ticket,
+  TicketDocument,
+  TicketStatus,
+} from '../admin/schema/ticket.schema';
+import {
+  CreateTicketDto,
+  UpdateTicketStatusDto,
+  AddTicketReplyDto,
+} from './dto/ticket.dto';
 import { DocumentService } from '../document/document.service';
 import { UserRole } from '../user/schema/user.schema';
 import { ApiResponse } from 'src/common/responses/api-response';
@@ -12,16 +25,22 @@ export class TicketService {
   constructor(
     @InjectModel(Ticket.name) private ticketModel: Model<TicketDocument>,
     private documentService: DocumentService,
-  ) { }
+  ) {}
 
   async createTicket(userId: string, dto: CreateTicketDto, files: any[]) {
     let mediaFiles: any = [];
 
     if (files && files.length > 0) {
       if (files.length > 4) {
-        throw new BadRequestException('You can upload a maximum of 4 media files.');
+        throw new BadRequestException(
+          'You can upload a maximum of 4 media files.',
+        );
       }
-      const uploadResponse = await this.documentService.uploadMultiplFiles(files, 'tickets', userId);
+      const uploadResponse = await this.documentService.uploadMultiplFiles(
+        files,
+        'tickets',
+        userId,
+      );
       if (uploadResponse && uploadResponse.data) {
         mediaFiles = uploadResponse.data.map((m: any) => m._id);
       }
@@ -45,7 +64,7 @@ export class TicketService {
       .find({ userId: new Types.ObjectId(userId) })
       .populate('vendorId', 'businessName name email phone storeName')
       .populate('productId', 'name thumbnail images price')
-      .populate('mediaFiles', "url _id publicId")
+      .populate('mediaFiles', 'url _id publicId')
       .sort({ createdAt: -1 });
 
     return ApiResponse.success('Tickets fetched successfully', tickets);
@@ -56,7 +75,7 @@ export class TicketService {
       .find({ vendorId: new Types.ObjectId(vendorId) })
       .populate('userId', 'name email phone roles')
       .populate('productId', 'name thumbnail images price')
-      .populate('mediaFiles', "url _id publicId")
+      .populate('mediaFiles', 'url _id publicId')
       .sort({ createdAt: -1 });
 
     return ApiResponse.success('Vendor tickets fetched successfully', tickets);
@@ -75,9 +94,7 @@ export class TicketService {
     }
 
     if (search && typeof search === 'string' && search.trim()) {
-      filter.$or = [
-        { description: { $regex: search.trim(), $options: 'i' } },
-      ];
+      filter.$or = [{ description: { $regex: search.trim(), $options: 'i' } }];
     }
 
     const pageNum = Math.max(1, Number(page) || 1);
@@ -88,7 +105,10 @@ export class TicketService {
       this.ticketModel
         .find(filter)
         .populate('userId', 'name email roles phone')
-        .populate('vendorId', 'businessName name email phone storeName ownerName')
+        .populate(
+          'vendorId',
+          'businessName name email phone storeName ownerName',
+        )
         .populate('productId', 'name thumbnail images price')
         .populate('mediaFiles', 'url _id publicId')
         .sort({ createdAt: -1 })
@@ -117,9 +137,15 @@ export class TicketService {
       throw new NotFoundException('Ticket not found');
     }
 
-    const isOwner = ticket.userId?._id?.toString() === user._id.toString() || ticket.userId?.toString() === user._id.toString();
-    const isAssignedVendor = ticket.vendorId?._id?.toString() === user.vendorId?.toString() || ticket.vendorId?.toString() === user.vendorId?.toString();
-    const isAdmin = user.roles?.includes(UserRole.ADMIN) || user.roles?.includes(UserRole.SUPER_ADMIN);
+    const isOwner =
+      ticket.userId?._id?.toString() === user._id.toString() ||
+      ticket.userId?.toString() === user._id.toString();
+    const isAssignedVendor =
+      ticket.vendorId?._id?.toString() === user.vendorId?.toString() ||
+      ticket.vendorId?.toString() === user.vendorId?.toString();
+    const isAdmin =
+      user.roles?.includes(UserRole.ADMIN) ||
+      user.roles?.includes(UserRole.SUPER_ADMIN);
 
     if (!isOwner && !isAssignedVendor && !isAdmin) {
       throw new ForbiddenException('You are not allowed to view this ticket');
@@ -135,11 +161,18 @@ export class TicketService {
     }
 
     const isOwner = ticket.userId.toString() === user._id.toString();
-    const isAssignedVendor = user.roles?.includes(UserRole.VENDOR) && (ticket.vendorId?.toString() === user.vendorId?.toString() || ticket.vendorId?.toString() === user._id.toString());
-    const isAdmin = user.roles?.includes(UserRole.ADMIN) || user.roles?.includes(UserRole.SUPER_ADMIN);
+    const isAssignedVendor =
+      user.roles?.includes(UserRole.VENDOR) &&
+      (ticket.vendorId?.toString() === user.vendorId?.toString() ||
+        ticket.vendorId?.toString() === user._id.toString());
+    const isAdmin =
+      user.roles?.includes(UserRole.ADMIN) ||
+      user.roles?.includes(UserRole.SUPER_ADMIN);
 
     if (!isOwner && !isAssignedVendor && !isAdmin) {
-      throw new ForbiddenException('You are not allowed to reply to this ticket');
+      throw new ForbiddenException(
+        'You are not allowed to reply to this ticket',
+      );
     }
 
     let senderRole: 'USER' | 'VENDOR' | 'ADMIN' = 'USER';
@@ -150,12 +183,21 @@ export class TicketService {
     ticket.replies.push({
       senderId: new Types.ObjectId(user._id),
       senderRole,
-      senderName: user.name || (isAdmin ? 'Platform Support' : isAssignedVendor ? 'Vendor Partner' : 'Customer'),
+      senderName:
+        user.name ||
+        (isAdmin
+          ? 'Platform Support'
+          : isAssignedVendor
+            ? 'Vendor Partner'
+            : 'Customer'),
       message: dto.message,
       createdAt: new Date(),
     });
 
-    if (ticket.ticketStatus === TicketStatus.PENDING && (isAssignedVendor || isAdmin)) {
+    if (
+      ticket.ticketStatus === TicketStatus.PENDING &&
+      (isAssignedVendor || isAdmin)
+    ) {
       ticket.ticketStatus = TicketStatus.OPEN;
     }
 
@@ -164,7 +206,11 @@ export class TicketService {
     return ApiResponse.success('Reply added successfully', ticket);
   }
 
-  async updateTicketStatus(ticketId: string, dto: UpdateTicketStatusDto, user: any) {
+  async updateTicketStatus(
+    ticketId: string,
+    dto: UpdateTicketStatusDto,
+    user: any,
+  ) {
     const ticket = await this.ticketModel.findById(ticketId);
 
     if (!ticket) {
@@ -172,8 +218,13 @@ export class TicketService {
     }
 
     const isOwner = ticket.userId.toString() === user._id.toString();
-    const isAssignedVendor = user.roles?.includes(UserRole.VENDOR) && (ticket.vendorId?.toString() === user.vendorId?.toString() || ticket.vendorId?.toString() === user._id.toString());
-    const isAdmin = user.roles?.includes(UserRole.ADMIN) || user.roles?.includes(UserRole.SUPER_ADMIN);
+    const isAssignedVendor =
+      user.roles?.includes(UserRole.VENDOR) &&
+      (ticket.vendorId?.toString() === user.vendorId?.toString() ||
+        ticket.vendorId?.toString() === user._id.toString());
+    const isAdmin =
+      user.roles?.includes(UserRole.ADMIN) ||
+      user.roles?.includes(UserRole.SUPER_ADMIN);
 
     if (!isOwner && !isAssignedVendor && !isAdmin) {
       throw new ForbiddenException('You are not allowed to update this ticket');
@@ -192,7 +243,9 @@ export class TicketService {
       throw new NotFoundException('Ticket not found');
     }
 
-    const isAdmin = user.roles.includes(UserRole.ADMIN) || user.roles.includes(UserRole.SUPER_ADMIN);
+    const isAdmin =
+      user.roles.includes(UserRole.ADMIN) ||
+      user.roles.includes(UserRole.SUPER_ADMIN);
 
     if (!isAdmin) {
       throw new ForbiddenException('Only admins can delete tickets');

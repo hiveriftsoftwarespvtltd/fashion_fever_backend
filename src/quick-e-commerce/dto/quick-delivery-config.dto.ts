@@ -11,13 +11,13 @@ export class UpdateQuickDeliveryConfigDto {
 
   @IsNumber()
   @Min(0)
-  packagingCharge!: number
+  packagingCharge!: number;
 
   @IsNumber()
   @Min(0)
-  tax!: number
+  tax!: number;
 
   @IsNumber()
   @Min(0)
-  deliveryPersonChargeForPerDelivery!: number
+  deliveryPersonChargeForPerDelivery!: number;
 }

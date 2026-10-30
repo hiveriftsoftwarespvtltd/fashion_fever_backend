@@ -11,11 +11,10 @@ import {
 import { CommissionOn } from 'src/admin/schema/commission-rate.schema';
 import { AttributionSource } from 'src/influencer/schema/influencer-commision-rate.schema';
 
-
 export enum CancelledByEntity {
   VENDOR = 'VENDOR',
   USER = 'USER',
-  PLATFORM = 'PLATFORM'
+  PLATFORM = 'PLATFORM',
 }
 
 export type VendorOrderDocument = VendorOrder & Document;
@@ -124,12 +123,16 @@ export class VendorOrder {
 
   @Prop({
     type: Types.ObjectId,
-    ref: 'User'
+    ref: 'User',
   })
-  cancelledBy?: Types.ObjectId
+  cancelledBy?: Types.ObjectId;
 
-  @Prop({ type: String, enum: CancelledByEntity, default: CancelledByEntity.USER })
-  cancelledByEntity?: CancelledByEntity
+  @Prop({
+    type: String,
+    enum: CancelledByEntity,
+    default: CancelledByEntity.USER,
+  })
+  cancelledByEntity?: CancelledByEntity;
 
   @Prop({ default: false })
   isVendorSettled!: boolean;

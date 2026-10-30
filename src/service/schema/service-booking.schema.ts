@@ -1,35 +1,32 @@
-import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
-import { Document, Types } from "mongoose";
-import { PaymentMethod } from "src/order/schema/order.schema";
-import { CommissionOn } from "src/admin/schema/commission-rate.schema";
-
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Document, Types } from 'mongoose';
+import { PaymentMethod } from 'src/order/schema/order.schema';
+import { CommissionOn } from 'src/admin/schema/commission-rate.schema';
 
 export enum BookingStatus {
-  PENDING = "PENDING",
-  CONFIRMED = "CONFIRMED",
-  ONGOING = "ONGOING",
-  CANCELLED = "CANCELLED",
-  COMPLETED = "COMPLETED",
-  RESCHEDULED = "RESCHEDULED"
+  PENDING = 'PENDING',
+  CONFIRMED = 'CONFIRMED',
+  ONGOING = 'ONGOING',
+  CANCELLED = 'CANCELLED',
+  COMPLETED = 'COMPLETED',
+  RESCHEDULED = 'RESCHEDULED',
 }
 
 export enum BookingPaymentStatus {
-  PENDING = "PENDING",
-  PAID = "PAID",
-  REFUNDED = "REFUNDED",
-  PARTIALLY_PAID = "PARTIALLY_PAID"
+  PENDING = 'PENDING',
+  PAID = 'PAID',
+  REFUNDED = 'REFUNDED',
+  PARTIALLY_PAID = 'PARTIALLY_PAID',
 }
 
 @Schema({ _id: false })
 export class BookingItem {
-
   @Prop({
     type: Types.ObjectId,
     ref: 'Service',
     required: true,
   })
   serviceId!: Types.ObjectId;
-
 
   @Prop({ required: true })
   serviceName!: string;
@@ -43,18 +40,15 @@ export class BookingItem {
   @Prop({ required: true })
   offeredPrice!: number;
 
-
-
   @Prop()
   total!: number;
 }
 
-export const BookingItemSchema = SchemaFactory.createForClass(BookingItem)
+export const BookingItemSchema = SchemaFactory.createForClass(BookingItem);
 
-export type ServiceBookingDocument = ServiceBooking & Document
+export type ServiceBookingDocument = ServiceBooking & Document;
 @Schema({ timestamps: true })
 export class ServiceBooking {
-
   @Prop({ type: Types.ObjectId, ref: 'User' })
   userId!: Types.ObjectId;
 
@@ -159,4 +153,5 @@ export class ServiceBooking {
   isSettled!: boolean;
 }
 
-export const ServiceBookingSchema = SchemaFactory.createForClass(ServiceBooking)
+export const ServiceBookingSchema =
+  SchemaFactory.createForClass(ServiceBooking);

@@ -12,12 +12,11 @@ import { Roles } from 'src/auth/roles.decorator';
 import { UserRole } from 'src/user/schema/user.schema';
 
 @UseGuards(JwtAuthGuard, RolesGuard)
-
 @Controller('admin/commission-rates')
 export class AdminCommissionRateController {
   constructor(
     private readonly commissionRateService: AdminCommissionRateService,
-  ) { }
+  ) {}
 
   /** GET the single global commission-rate configuration */
   // @AdminAccess(AdminModule.HOME_CONTENT, AccessType.READ)

@@ -27,4 +27,5 @@ export class HomeBookingCard {
   displayOrder!: number;
 }
 
-export const HomeBookingCardSchema = SchemaFactory.createForClass(HomeBookingCard);
+export const HomeBookingCardSchema =
+  SchemaFactory.createForClass(HomeBookingCard);

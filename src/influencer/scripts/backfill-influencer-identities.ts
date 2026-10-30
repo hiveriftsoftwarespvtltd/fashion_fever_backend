@@ -1,6 +1,6 @@
 /**
  * Safe, Idempotent Backfill Script for Influencer Referral Identities
- * 
+ *
  * Rules enforced:
  * 1. Generates/copies unique uppercase referralCode for every active influencer lacking one.
  * 2. STRICT ZERO-DEFAULT POLICY: Leaves missing commissionRate as null/unset.
@@ -18,13 +18,21 @@ import { randomBytes } from 'crypto';
 // Load environment variables
 dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
 
-const MONGODB_URI = process.env.MONGODB_URI || process.env.MONGO_URI || 'mongodb://localhost:27017/fashionfever';
+const MONGODB_URI =
+  process.env.MONGODB_URI ||
+  process.env.MONGO_URI ||
+  'mongodb://localhost:27017/fashionfever';
 
-async function generateCandidateCode(name: string, influencerColl: any, affiliateColl: any): Promise<string> {
-  const cleanName = (name || 'CREATOR')
-    .replace(/[^a-zA-Z0-9]/g, '')
-    .toUpperCase()
-    .slice(0, 6) || 'FF';
+async function generateCandidateCode(
+  name: string,
+  influencerColl: any,
+  affiliateColl: any,
+): Promise<string> {
+  const cleanName =
+    (name || 'CREATOR')
+      .replace(/[^a-zA-Z0-9]/g, '')
+      .toUpperCase()
+      .slice(0, 6) || 'FF';
 
   let isUnique = false;
   let candidate = '';
@@ -74,7 +82,7 @@ export async function runBackfill() {
   const unconfiguredCreators: string[] = [];
 
   for (const inf of influencers) {
-    let updatedFields: Record<string, any> = {};
+    const updatedFields: Record<string, any> = {};
 
     // 1. Referral Code Check
     if (!inf.referralCode) {
@@ -88,7 +96,11 @@ export async function runBackfill() {
       if (existingProg && existingProg.referralCode) {
         assignedCode = existingProg.referralCode.trim().toUpperCase();
       } else {
-        assignedCode = await generateCandidateCode(inf.name, influencerColl, affiliateColl);
+        assignedCode = await generateCandidateCode(
+          inf.name,
+          influencerColl,
+          affiliateColl,
+        );
       }
 
       updatedFields.referralCode = assignedCode;
@@ -111,7 +123,7 @@ export async function runBackfill() {
       } else if (existingProg.referralCode !== assignedCode) {
         await affiliateColl.updateOne(
           { _id: existingProg._id },
-          { $set: { referralCode: assignedCode, updatedAt: new Date() } }
+          { $set: { referralCode: assignedCode, updatedAt: new Date() } },
         );
       }
     } else {
@@ -139,7 +151,7 @@ export async function runBackfill() {
     if (Object.keys(updatedFields).length > 0) {
       await influencerColl.updateOne(
         { _id: inf._id },
-        { $set: { ...updatedFields, updatedAt: new Date() } }
+        { $set: { ...updatedFields, updatedAt: new Date() } },
       );
     }
   }
@@ -155,9 +167,15 @@ export async function runBackfill() {
   console.log('==================================================');
 
   if (unconfiguredCreators.length > 0) {
-    console.log('\n[NOTICE] The following creators have unconfigured commissionRate (null).');
-    console.log('In accordance with finalized business rules, NO commission records will be created');
-    console.log('for these creators until an Admin explicitly assigns a custom rate via Admin Panel:');
+    console.log(
+      '\n[NOTICE] The following creators have unconfigured commissionRate (null).',
+    );
+    console.log(
+      'In accordance with finalized business rules, NO commission records will be created',
+    );
+    console.log(
+      'for these creators until an Admin explicitly assigns a custom rate via Admin Panel:',
+    );
     unconfiguredCreators.forEach((c, idx) => console.log(`  ${idx + 1}. ${c}`));
   }
 

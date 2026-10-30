@@ -1,15 +1,14 @@
-import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
-import { Document, Types } from "mongoose";
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Document, Types } from 'mongoose';
 
 export enum GENDER {
-  MALE = "MALE",
-  FEMALE = "FEMALE",
+  MALE = 'MALE',
+  FEMALE = 'FEMALE',
 }
 
-export type ServiceStaffDocument = ServiceStaff & Document
+export type ServiceStaffDocument = ServiceStaff & Document;
 @Schema({ timestamps: true })
 export class ServiceStaff {
-
   @Prop({
     type: Types.ObjectId,
     ref: 'ServiceProvider',
@@ -37,8 +36,8 @@ export class ServiceStaff {
 
   @Prop({
     type: [Types.ObjectId],
-    ref: "Service",
-    default: []
+    ref: 'Service',
+    default: [],
   })
   services!: Types.ObjectId[];
 
@@ -52,5 +51,4 @@ export class ServiceStaff {
   isActive!: boolean;
 }
 
-export const ServiceStaffSchema = SchemaFactory.createForClass(ServiceStaff)
-
+export const ServiceStaffSchema = SchemaFactory.createForClass(ServiceStaff);

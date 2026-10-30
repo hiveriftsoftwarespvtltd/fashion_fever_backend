@@ -57,17 +57,38 @@ import { Service, ServiceSchema } from './schema/service.schema';
 import { DocumentModule } from 'src/document/document.module';
 import { User, UserSchema } from 'src/user/schema/user.schema';
 import { Coupon, CouponSchema } from 'src/coupon/schema/coupon.schema';
-import { CouponUsage, CouponUsageSchema } from 'src/coupon/schema/coupon-usage.schema';
-import { CashbackSlab, CashbackSlabSchema } from 'src/wallet/schema/cashback/cashbacks.slabs.schema';
+import {
+  CouponUsage,
+  CouponUsageSchema,
+} from 'src/coupon/schema/coupon-usage.schema';
+import {
+  CashbackSlab,
+  CashbackSlabSchema,
+} from 'src/wallet/schema/cashback/cashbacks.slabs.schema';
 import { WalletModule } from 'src/wallet/wallet.module';
-import { LeadBooking, LeadBookingSchema } from './schema/service-lead-booking.schema';
-import { StaffAllocation, StaffAllocationSchema } from './schema/staff-allocation.schema';
-import { CommissionRate, CommissionRateSchema } from 'src/admin/schema/commission-rate.schema';
+import {
+  LeadBooking,
+  LeadBookingSchema,
+} from './schema/service-lead-booking.schema';
+import {
+  StaffAllocation,
+  StaffAllocationSchema,
+} from './schema/staff-allocation.schema';
+import {
+  CommissionRate,
+  CommissionRateSchema,
+} from 'src/admin/schema/commission-rate.schema';
 import { InfluencerModule } from 'src/influencer/influencer.module';
 import { Admin, AdminSchema } from 'src/admin/schema/admin.schema';
 import { NotificationModule } from 'src/notification/notification.module';
-import { PaymentTransaction, PaymenttransactionSchema } from 'src/payout/schema/payment-transaction.schema';
-import { MarketplaceEarning, MarketplaceEarningSchema } from 'src/payout/schema/market-place-earning.schema';
+import {
+  PaymentTransaction,
+  PaymenttransactionSchema,
+} from 'src/payout/schema/payment-transaction.schema';
+import {
+  MarketplaceEarning,
+  MarketplaceEarningSchema,
+} from 'src/payout/schema/market-place-earning.schema';
 import { CouponModule } from 'src/coupon/coupon.module';
 
 @Module({
@@ -105,8 +126,33 @@ import { CouponModule } from 'src/coupon/coupon.module';
     NotificationModule,
     CouponModule,
   ],
-  controllers: [ServiceController, ServiceSearchController, ServiceBookingController, ServiceLeadController, ServiceReviewController, ServiceProviderReviewController, ServiceQuotationController],
-  providers: [ServiceService, ServiceSearchService, ServiceBookingService, ServiceLeadService, ServiceReviewService, ServiceProviderReviewService, ServiceQuotationService],
-  exports: [ServiceService, ServiceSearchService, ServiceBookingService, ServiceLeadService, MongooseModule, ServiceReviewService, ServiceProviderReviewService, ServiceQuotationService],
+  controllers: [
+    ServiceController,
+    ServiceSearchController,
+    ServiceBookingController,
+    ServiceLeadController,
+    ServiceReviewController,
+    ServiceProviderReviewController,
+    ServiceQuotationController,
+  ],
+  providers: [
+    ServiceService,
+    ServiceSearchService,
+    ServiceBookingService,
+    ServiceLeadService,
+    ServiceReviewService,
+    ServiceProviderReviewService,
+    ServiceQuotationService,
+  ],
+  exports: [
+    ServiceService,
+    ServiceSearchService,
+    ServiceBookingService,
+    ServiceLeadService,
+    MongooseModule,
+    ServiceReviewService,
+    ServiceProviderReviewService,
+    ServiceQuotationService,
+  ],
 })
-export class ServiceModule { }
+export class ServiceModule {}

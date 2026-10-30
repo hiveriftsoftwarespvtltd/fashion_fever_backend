@@ -14,14 +14,13 @@ import { JwtAuthGuard } from 'src/auth/jwt-auth.guad';
 import { CouponService } from 'src/coupon/coupon.service';
 import { ApplyCouponDTO } from 'src/coupon/dto/coupon.dto';
 
-
 @UseGuards(JwtAuthGuard)
 @Controller('cart')
 export class CartController {
   constructor(
     private cartService: CartService,
     private couponService: CouponService,
-  ) { }
+  ) {}
 
   @Get('fetch-user-cart')
   async fetchUserCart(@Req() req: any) {
@@ -50,7 +49,7 @@ export class CartController {
 
   @Get('cart-details/:addressId')
   fetchCartDetails(@Req() req: any, @Param('addressId') addressId: string) {
-    return this.cartService.estimateCartSummary(req.user._id, addressId)
+    return this.cartService.estimateCartSummary(req.user._id, addressId);
   }
 
   @Post('add-to-cart/:id')
@@ -60,7 +59,6 @@ export class CartController {
     @Body('quantity') quantity: number,
     @Body('productId') productId: string,
   ) {
-   
     return this.cartService.addToCart(req.user._id, productId, id, quantity);
   }
 

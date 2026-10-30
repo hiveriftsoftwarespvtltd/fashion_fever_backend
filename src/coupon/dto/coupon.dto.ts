@@ -11,13 +11,8 @@ import {
   IsString,
 } from 'class-validator';
 
-import {
-  CouponScope,
-  CouponType,
-} from '../schema/coupon.schema';
+import { CouponScope, CouponType } from '../schema/coupon.schema';
 import { PartialType } from '@nestjs/mapped-types';
-
-
 
 export class CreateCouponDto {
   @IsString()
@@ -27,7 +22,6 @@ export class CreateCouponDto {
   type!: CouponType;
 
   @ToNumber()
-
   @IsNumber()
   value!: number;
 
@@ -45,25 +39,21 @@ export class CreateCouponDto {
 
   @IsOptional()
   @ToNumber()
-
   @IsNumber()
   minimumOrderAmount?: number;
 
   @IsOptional()
   @ToNumber()
-
   @IsNumber()
   maximumDiscount?: number;
 
   @IsOptional()
   @ToNumber()
-
   @IsNumber()
   usageLimitPerUser?: number;
 
   @IsOptional()
   @ToNumber()
-
   @IsNumber()
   totalUsageLimit?: number;
 
@@ -80,13 +70,11 @@ export class CreateCouponDto {
   description?: string;
 }
 
-export class UpdateCouponDTO extends PartialType(
-  CreateCouponDto
-){}
+export class UpdateCouponDTO extends PartialType(CreateCouponDto) {}
 
-export class ApplyCouponDTO{
+export class ApplyCouponDTO {
   @IsString()
-  couponCode!:string
+  couponCode!: string;
 }
 
 // ── Service-Provider Coupon DTOs ─────────────────────────────────────────────
@@ -147,7 +135,9 @@ export class CreateServiceCouponDto {
   description?: string;
 }
 
-export class UpdateServiceCouponDto extends PartialType(CreateServiceCouponDto) {}
+export class UpdateServiceCouponDto extends PartialType(
+  CreateServiceCouponDto,
+) {}
 
 /** DTO for customer-facing coupon validation during booking (Step 4) */
 export class ValidateServiceCouponDTO {

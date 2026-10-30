@@ -1,8 +1,7 @@
-import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
-import { Document, Types } from "mongoose";
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Document, Types } from 'mongoose';
 
-
-export type InfluencerInvitationDocument = InfluencerInvitation & Document
+export type InfluencerInvitationDocument = InfluencerInvitation & Document;
 @Schema({ timestamps: true })
 export class InfluencerInvitation {
   @Prop({ required: true, unique: true })
@@ -32,4 +31,5 @@ export class InfluencerInvitation {
   invitedBy?: Types.ObjectId;
 }
 
-export const InfluencerInvitationSchema = SchemaFactory.createForClass(InfluencerInvitation)
+export const InfluencerInvitationSchema =
+  SchemaFactory.createForClass(InfluencerInvitation);

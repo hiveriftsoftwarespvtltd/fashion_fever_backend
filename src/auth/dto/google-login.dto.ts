@@ -1,17 +1,23 @@
-import { IsNotEmpty, IsOptional, IsString, IsEnum, IsArray } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  IsEnum,
+  IsArray,
+} from 'class-validator';
 import { UserRole } from 'src/user/schema/user.schema';
 
 export class GoogleLoginDTO {
-    @IsNotEmpty()
-    @IsString()
-    idToken: string;
+  @IsNotEmpty()
+  @IsString()
+  idToken: string;
 
-    @IsOptional()
-    @IsArray()
-    @IsEnum(UserRole, { each: true })
-    roles?: UserRole[];
+  @IsOptional()
+  @IsArray()
+  @IsEnum(UserRole, { each: true })
+  roles?: UserRole[];
 
-    @IsOptional()
-    @IsString()
-    referralCode?: string;
+  @IsOptional()
+  @IsString()
+  referralCode?: string;
 }

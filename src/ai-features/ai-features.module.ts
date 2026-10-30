@@ -6,9 +6,11 @@ import { AIChatHistory, AIChatHistorySchema } from './schema/ai-chat-history';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([{ name: AIChatHistory.name, schema: AIChatHistorySchema }])
+    MongooseModule.forFeature([
+      { name: AIChatHistory.name, schema: AIChatHistorySchema },
+    ]),
   ],
   controllers: [AiFeaturesController],
-  providers: [AiFeaturesService]
+  providers: [AiFeaturesService],
 })
 export class AiFeaturesModule {}

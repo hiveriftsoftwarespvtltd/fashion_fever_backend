@@ -1,35 +1,39 @@
-import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
-import { Document, Types } from "mongoose";
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Document, Types } from 'mongoose';
 
-
-export type AffliateClickTrackingDocument = AffliateClickTracking & Document
+export type AffliateClickTrackingDocument = AffliateClickTracking & Document;
 @Schema({ timestamps: true })
 export class AffliateClickTracking {
-    @Prop({ type: Types.ObjectId, ref: "AffliateProgram" })
-    programId!: Types.ObjectId;
+  @Prop({ type: Types.ObjectId, ref: 'AffliateProgram' })
+  programId!: Types.ObjectId;
 
-    @Prop({ type: Types.ObjectId, ref: "Influencer" })
-    influencerId!: Types.ObjectId;
+  @Prop({ type: Types.ObjectId, ref: 'Influencer' })
+  influencerId!: Types.ObjectId;
 
-    @Prop({ required: true, default: "" })
-    ipAddress!: string;
+  @Prop({ required: true, default: '' })
+  ipAddress!: string;
 
-    @Prop({ required: true, default: "" })
-    userAgent!: string
+  @Prop({ required: true, default: '' })
+  userAgent!: string;
 
-    @Prop()
-    sessionId?: string;
+  @Prop()
+  sessionId?: string;
 
-    @Prop()
-    device?: string;
+  @Prop()
+  device?: string;
 
-    @Prop()
-    browser?: string;
+  @Prop()
+  browser?: string;
 
-
-    @Prop({ type: Date, required: true })
-    clickedAt!: Date
+  @Prop({ type: Date, required: true })
+  clickedAt!: Date;
 }
 
-export const AffliateClickTrackingSchema = SchemaFactory.createForClass(AffliateClickTracking);
-AffliateClickTrackingSchema.index({ influencerId: 1, ipAddress: 1, clickedAt: -1 });
+export const AffliateClickTrackingSchema = SchemaFactory.createForClass(
+  AffliateClickTracking,
+);
+AffliateClickTrackingSchema.index({
+  influencerId: 1,
+  ipAddress: 1,
+  clickedAt: -1,
+});

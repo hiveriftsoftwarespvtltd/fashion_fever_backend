@@ -2,8 +2,8 @@
 // // order.schema.ts
 // // ===============================
 
-import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
-import { Types, Document } from "mongoose";
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Types, Document } from 'mongoose';
 
 // import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 
@@ -379,7 +379,6 @@ import { Types, Document } from "mongoose";
 
 // export const OrderSchema = SchemaFactory.createForClass(Order);
 
-
 export enum OrderStatus {
   PENDING = 'pending',
   CONFIRMED = 'confirmed',
@@ -450,11 +449,11 @@ export class ShippingAddress {
   country!: string;
 }
 
-export const ShippingAddressSchema = SchemaFactory.createForClass(ShippingAddress)
+export const ShippingAddressSchema =
+  SchemaFactory.createForClass(ShippingAddress);
 
 @Schema({ _id: false })
 export class AppliedCoupon {
-
   @Prop()
   code?: string;
 
@@ -492,11 +491,10 @@ export class AppliedCoupon {
   influencerCommissionAmount?: number;
 }
 
-export const AppliedCouponSchema = SchemaFactory.createForClass(AppliedCoupon)
+export const AppliedCouponSchema = SchemaFactory.createForClass(AppliedCoupon);
 
 @Schema({ _id: true })
 export class OrderItem {
-
   @Prop({
     type: Types.ObjectId,
     ref: 'Product',
@@ -584,12 +582,11 @@ export class OrderItem {
   returnReason?: string;
 }
 
-export const OrderItemSchema = SchemaFactory.createForClass(OrderItem)
-export type OrderDocument = Order & Document
+export const OrderItemSchema = SchemaFactory.createForClass(OrderItem);
+export type OrderDocument = Order & Document;
 
 @Schema({ timestamps: true })
 export class Order {
-
   @Prop({
     type: Types.ObjectId,
     ref: 'User',
@@ -662,7 +659,6 @@ export class Order {
   @Prop({ default: 0 })
   codCharge!: number;
 
-
   @Prop({ default: 0 })
   tax!: number;
 
@@ -705,4 +701,4 @@ export class Order {
   cancellationReason?: string;
 }
 
-export const OrderSchema = SchemaFactory.createForClass(Order)
+export const OrderSchema = SchemaFactory.createForClass(Order);

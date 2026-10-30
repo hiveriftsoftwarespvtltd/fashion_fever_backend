@@ -1,6 +1,16 @@
 import { AdminAccess } from 'src/auth/admin-access.decorator';
 import { AdminModule, AccessType } from 'src/admin/schema/admin.schema';
-import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards, Req } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  UseGuards,
+  Req,
+} from '@nestjs/common';
 import { PayoutService } from './payout.service';
 import {
   SettleInfluencerPayoutDto,
@@ -30,10 +40,9 @@ import { UserRole } from 'src/user/schema/user.schema';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guad';
 
 @UseGuards(JwtAuthGuard, RolesGuard)
-
 @Controller('payout')
 export class PayoutController {
-  constructor(private payoutService: PayoutService) { }
+  constructor(private payoutService: PayoutService) {}
 
   @AdminAccess(AdminModule.FINANCE, AccessType.WRITE)
   @Post('vendor-payout/settle')
@@ -65,8 +74,6 @@ export class PayoutController {
     return this.payoutService.getInfluencerPayouts(query);
   }
 
-
-
   @AdminAccess(AdminModule.FINANCE, AccessType.READ)
   @Get('payment-transactions')
   getAllPaymentTransactions(@Query() query: PaymentTransactionQueryDto) {
@@ -75,7 +82,10 @@ export class PayoutController {
 
   @AdminAccess(AdminModule.FINANCE, AccessType.WRITE)
   @Patch('payment-transactions/:id')
-  updatePaymentTransaction(@Param('id') id: string, @Body() dto: UpdatePaymentTransactionDto) {
+  updatePaymentTransaction(
+    @Param('id') id: string,
+    @Body() dto: UpdatePaymentTransactionDto,
+  ) {
     return this.payoutService.updatePaymentTransaction(id, dto);
   }
 
@@ -105,8 +115,16 @@ export class PayoutController {
 
   @AdminAccess(AdminModule.FINANCE, AccessType.WRITE)
   @Patch('cash-settlements/:id')
-  updateCashSettlement(@Param('id') id: string, @Body() dto: UpdateCashSettlementDto, @Req() req: any) {
-    return this.payoutService.updateCashSettlement(id, dto, req.user._id.toString());
+  updateCashSettlement(
+    @Param('id') id: string,
+    @Body() dto: UpdateCashSettlementDto,
+    @Req() req: any,
+  ) {
+    return this.payoutService.updateCashSettlement(
+      id,
+      dto,
+      req.user._id.toString(),
+    );
   }
 
   @Post('cash-settlements/deposit')

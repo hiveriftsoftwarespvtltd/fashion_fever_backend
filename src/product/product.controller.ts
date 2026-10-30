@@ -34,7 +34,7 @@ import { CreateProductDto, UpdateProductDto } from './dto/product.dto';
 @Roles(UserRole.VENDOR)
 @Controller('product')
 export class ProductController {
-  constructor(private productService: ProductService) { }
+  constructor(private productService: ProductService) {}
 
   // @Post('create-category')
   // @UseInterceptors(FileInterceptor('file'))
@@ -87,7 +87,7 @@ export class ProductController {
       variants: [],
       tags: body.tags || [],
       brand: body.brand,
-      isShippingApply: body.isShippingApply
+      isShippingApply: body.isShippingApply,
     };
 
     const variantsMap = {};
@@ -183,7 +183,7 @@ export class ProductController {
       variants: [],
       tags: body.tags || [],
       brand: body.brand,
-      isShippingApply: body.isShippingApply
+      isShippingApply: body.isShippingApply,
     };
 
     // =========================
@@ -231,7 +231,6 @@ export class ProductController {
     });
 
     dto.variants = Object.values(variantsMap);
-
 
     return this.productService.updateProduct(
       dto,

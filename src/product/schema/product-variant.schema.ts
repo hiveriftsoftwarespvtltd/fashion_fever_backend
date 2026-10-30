@@ -1,11 +1,11 @@
-import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
-import { Types, Document } from "mongoose";
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Types, Document } from 'mongoose';
 
-
-export type ProductVariantDocument = ProductVariant & Document
+export type ProductVariantDocument = ProductVariant & Document;
 
 @Schema({
-  timestamps: true, toObject: {
+  timestamps: true,
+  toObject: {
     flattenMaps: true,
   },
   toJSON: {
@@ -13,25 +13,24 @@ export type ProductVariantDocument = ProductVariant & Document
   },
 })
 export class ProductVariant {
-
   @Prop({
     type: Types.ObjectId,
-    ref: "Product",
-    required: true
+    ref: 'Product',
+    required: true,
   })
   productId!: Types.ObjectId;
 
   @Prop({
     type: [Types.ObjectId],
-    ref: "Media",
-    default: []
+    ref: 'Media',
+    default: [],
   })
   images!: Types.ObjectId[];
 
   @Prop({
     type: Types.ObjectId,
-    ref: "Media",
-    required: true
+    ref: 'Media',
+    required: true,
   })
   thumbnail!: Types.ObjectId;
 
@@ -49,29 +48,28 @@ export class ProductVariant {
 
   @Prop({
     required: true,
-    default: 0
+    default: 0,
   })
   stock!: number;
 
   @Prop({
     type: Map,
     of: String,
-    default: {}
+    default: {},
   })
   attributes!: Record<string, string>;
 
   @Prop({ required: true, min: 0 })
-  weight!: number
+  weight!: number;
 
   @Prop({ required: true, min: 0 })
-  length!: number
+  length!: number;
 
   @Prop({ required: true, min: 0 })
-  width!: number
+  width!: number;
 
   @Prop({ required: true, min: 0 })
-  height!: number
-
+  height!: number;
 
   @Prop({ default: true })
   isActive!: boolean;
@@ -80,4 +78,5 @@ export class ProductVariant {
   isDeleted!: boolean;
 }
 
-export const ProductVariantSchema = SchemaFactory.createForClass(ProductVariant);
+export const ProductVariantSchema =
+  SchemaFactory.createForClass(ProductVariant);

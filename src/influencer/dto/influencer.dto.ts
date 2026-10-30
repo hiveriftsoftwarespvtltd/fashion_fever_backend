@@ -15,8 +15,6 @@ import { InfluencerStatus } from '../schema/influencer.schema';
 import { PlatformType } from '../schema/influencer-taskbar.schema';
 import { Type } from 'class-transformer';
 
-
-
 export class CreateInfluencerDto {
   // @IsString()
   // userId!: string;
@@ -24,13 +22,13 @@ export class CreateInfluencerDto {
   // email!: string;
 
   @IsString()
-  token!: string
+  token!: string;
 
   @IsString()
   password!: string;
 
   @IsString()
-  phone!: string
+  phone!: string;
 
   // @IsString()
   // name!: string;
@@ -64,7 +62,6 @@ export class CreateInfluencerDto {
 
   @IsOptional()
   @ToNumber()
-
   @IsNumber()
   followers?: number;
 }
@@ -105,7 +102,6 @@ export class UpdateInfluencerDto {
 
   @IsOptional()
   @ToNumber()
-
   @IsNumber()
   followers?: number;
 
@@ -115,28 +111,22 @@ export class UpdateInfluencerDto {
 
   @IsOptional()
   @ToBoolean()
-
   @IsBoolean()
   isActive?: boolean;
 }
 
 export class createSlabDTO {
   @ToNumber()
-
   @IsNumber()
   @Min(0)
   minSales!: number;
 
   @ToNumber()
-
-
   @IsNumber()
   @Min(0)
   maxSales!: number;
 
   @ToNumber()
-
-
   @IsNumber()
   @Min(0)
   @Max(100)
@@ -146,21 +136,18 @@ export class createSlabDTO {
 export class UpdateSlabDTO {
   @IsOptional()
   @ToNumber()
-
   @IsNumber()
   @Min(0)
   minSales?: number;
 
   @IsOptional()
   @ToNumber()
-
   @IsNumber()
   @Min(0)
   maxSales?: number;
 
   @IsOptional()
   @ToNumber()
-
   @IsNumber()
   @Min(0)
   @Max(99)
@@ -168,37 +155,33 @@ export class UpdateSlabDTO {
 
   @IsOptional()
   @ToBoolean()
-
   @IsBoolean()
   isActive?: boolean;
 }
 
 export class CreateInfluencerTaskbarDTO {
+  @IsString()
+  mediaLink!: string;
 
   @IsString()
-  mediaLink!: string
-
-  @IsString()
-  platform!: PlatformType
+  platform!: PlatformType;
 
   @Type(() => Date)
   @IsDate()
-  postingDate!: Date
+  postingDate!: Date;
 }
 
 export class UpdateInfluencerTaskbarDTO {
+  @IsOptional()
+  @IsString()
+  mediaLink?: string;
 
   @IsOptional()
   @IsString()
-  mediaLink?: string
-
-  @IsOptional()
-  @IsString()
-  platform?: PlatformType
-
+  platform?: PlatformType;
 
   @IsOptional()
   @Type(() => Date)
   @IsDate()
-  postingDate?: Date
+  postingDate?: Date;
 }

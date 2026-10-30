@@ -2,7 +2,6 @@
 // import { IsArray, IsBoolean, IsEnum, IsMongoId, IsOptional, IsString, ValidateNested } from "class-validator";
 // import { CategoryOptions } from "../schema/category.schema";
 
-
 // class categoryAttributeDTO{
 //     @IsString()
 //     name!:string
@@ -15,7 +14,7 @@
 //     values!:string[]
 // }
 // export class UpdateCategoryDTO{
-    
+
 //     @IsEnum(CategoryOptions)
 //     name!:CategoryOptions;
 

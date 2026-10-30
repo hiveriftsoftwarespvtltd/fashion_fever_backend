@@ -1,48 +1,53 @@
 import { ToNumber } from '../../utils/type-tranformer';
-import { Type } from "class-transformer";
-import { IsEnum, IsMongoId, IsNumber, IsOptional, IsString, IsUrl } from "class-validator";
-import { CourseAttachmentType } from "../schema/course-attachments.schema";
-
-
+import { Type } from 'class-transformer';
+import {
+  IsEnum,
+  IsMongoId,
+  IsNumber,
+  IsOptional,
+  IsString,
+  IsUrl,
+} from 'class-validator';
+import { CourseAttachmentType } from '../schema/course-attachments.schema';
 
 export class CreateCourseAttachmentDTO {
-    @IsMongoId()
-    courseId: string;
+  @IsMongoId()
+  courseId: string;
 
-    @IsOptional()
-    @IsMongoId()
-    sectionId?: string;
+  @IsOptional()
+  @IsMongoId()
+  sectionId?: string;
 
-    @IsOptional()
-    @IsMongoId()
-    lessonId?: string;
+  @IsOptional()
+  @IsMongoId()
+  lessonId?: string;
 
-    @IsEnum(CourseAttachmentType)
-    @IsOptional()
-    type?: CourseAttachmentType;
+  @IsEnum(CourseAttachmentType)
+  @IsOptional()
+  type?: CourseAttachmentType;
 
-    @IsUrl()
-    url: string;
+  @IsUrl()
+  url: string;
 
-    @IsOptional()
-    @ToNumber()
-    @IsNumber()
-    @ToNumber()
-    duration?: number;
+  @IsOptional()
+  @ToNumber()
+  @IsNumber()
+  @ToNumber()
+  duration?: number;
 }
 
 export class UpdateCourseAttachmentDTO {
-    @IsEnum(CourseAttachmentType)
-    @IsOptional()
-    type?: CourseAttachmentType;
+  @IsEnum(CourseAttachmentType)
+  @IsOptional()
+  type?: CourseAttachmentType;
 
-    @IsOptional()
-    @IsUrl()
-    url?: string;
+  @IsOptional()
+  @IsUrl()
+  url?: string;
 
-    @IsOptional()
-    @ToNumber()
-    @IsNumber()
-    @ToNumber()
-    duration?: number;
+  @IsOptional()
+  @ToNumber()
+  @IsNumber()
+  @ToNumber()
+  duration?: number;
 }

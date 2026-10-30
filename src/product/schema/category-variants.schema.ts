@@ -1,15 +1,15 @@
-import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
-import { Types } from "mongoose";
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Types } from 'mongoose';
 
 export type CategoryAttributeDocument = CategoryAttribute & Document;
 
 @Schema({ timestamps: true })
 export class CategoryAttribute {
-  @Prop({ type: Types.ObjectId, ref: "Category", required: true })
+  @Prop({ type: Types.ObjectId, ref: 'Category', required: true })
   categoryId!: Types.ObjectId;
 
   @Prop({ required: true })
-  name!: string; 
+  name!: string;
   // e.g. "Color", "Size", "Storage"
 
   @Prop({ required: true })
@@ -19,11 +19,11 @@ export class CategoryAttribute {
   isRequired!: boolean;
 
   @Prop({ default: false })
-  isVariant!: boolean; 
+  isVariant!: boolean;
   // true = used in product variants (like size/color)
 
   @Prop({ default: false })
-  isFilterable!: boolean; 
+  isFilterable!: boolean;
   // used for frontend filters
 
   @Prop({ default: true })

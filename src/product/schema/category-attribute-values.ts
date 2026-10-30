@@ -1,16 +1,15 @@
-import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
-import { Types } from "mongoose";
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Types } from 'mongoose';
 
-export type CategoryAttributeValueDocument =
-  CategoryAttributeValue & Document;
+export type CategoryAttributeValueDocument = CategoryAttributeValue & Document;
 
 @Schema({ timestamps: true })
 export class CategoryAttributeValue {
-  @Prop({ type: Types.ObjectId, ref: "CategoryAttribute", required: true })
+  @Prop({ type: Types.ObjectId, ref: 'CategoryAttribute', required: true })
   attributeId!: Types.ObjectId;
 
   @Prop({ required: true })
-  value!: string; 
+  value!: string;
   // e.g. "Red", "Blue", "XL", "128GB"
 
   @Prop({ default: 0 })
@@ -20,7 +19,8 @@ export class CategoryAttributeValue {
   isActive!: boolean;
 }
 
-export const CategoryAttributeValueSchema =
-  SchemaFactory.createForClass(CategoryAttributeValue);
+export const CategoryAttributeValueSchema = SchemaFactory.createForClass(
+  CategoryAttributeValue,
+);
 
 CategoryAttributeValueSchema.index({ attributeId: 1 });

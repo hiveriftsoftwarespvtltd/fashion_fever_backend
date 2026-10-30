@@ -5,13 +5,12 @@ import { OptionalAuthGuard } from 'src/auth/optional-auth.guards';
 
 @Controller('quick-e-commerce')
 export class QuickECommerceController {
-    constructor(private readonly quickECommerceService: QuickECommerceService) { }
+  constructor(private readonly quickECommerceService: QuickECommerceService) {}
 
-    @UseGuards(OptionalAuthGuard)
-    @Get('products')
-    async getProducts(@Query() query: QuickECommerceQueryDto, @Req() req: any) {
-        const user = req.user;
-        return this.quickECommerceService.getProducts(query, user);
-    }
+  @UseGuards(OptionalAuthGuard)
+  @Get('products')
+  async getProducts(@Query() query: QuickECommerceQueryDto, @Req() req: any) {
+    const user = req.user;
+    return this.quickECommerceService.getProducts(query, user);
+  }
 }
-

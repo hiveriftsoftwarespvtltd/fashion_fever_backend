@@ -13,29 +13,34 @@ import { ShiprocketModule } from 'src/shiprocket/shiprocket.module';
 import { Address, AddressSchema } from 'src/address/schema/address.schema';
 import { PublicUserController } from './user.public.controller';
 import { InfluencerModule } from 'src/influencer/influencer.module';
-import { VendorOrder, VendorOrderSchema } from 'src/order/schema/vendor-order.schema';
+import {
+  VendorOrder,
+  VendorOrderSchema,
+} from 'src/order/schema/vendor-order.schema';
 import { Cart, cartSchema as CartSchema } from 'src/cart/schema/cart.schema';
 
-
 @Module({
-  imports:[
-    MongooseModule.forFeature([{name:User.name,schema:UserSchema}]),
-    MongooseModule.forFeature([{name:Media.name,schema:MediaSchema}]),
-    MongooseModule.forFeature([{name:Product.name,schema:ProductSchema}]),
-    MongooseModule.forFeature([{name:Wishlist.name,schema:WishlistSchema}]),
-    MongooseModule.forFeature([{name:Coupon.name,schema:CouponSchema}]),
-    MongooseModule.forFeature([{name:Address.name,schema:AddressSchema}]),
-    MongooseModule.forFeature([{name:VendorOrder.name,schema:VendorOrderSchema}]),
-    MongooseModule.forFeature([{name:Cart.name,schema:CartSchema}]),
-    
+  imports: [
+    MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
+    MongooseModule.forFeature([{ name: Media.name, schema: MediaSchema }]),
+    MongooseModule.forFeature([{ name: Product.name, schema: ProductSchema }]),
+    MongooseModule.forFeature([
+      { name: Wishlist.name, schema: WishlistSchema },
+    ]),
+    MongooseModule.forFeature([{ name: Coupon.name, schema: CouponSchema }]),
+    MongooseModule.forFeature([{ name: Address.name, schema: AddressSchema }]),
+    MongooseModule.forFeature([
+      { name: VendorOrder.name, schema: VendorOrderSchema },
+    ]),
+    MongooseModule.forFeature([{ name: Cart.name, schema: CartSchema }]),
+
     DocumentModule,
     AddressModule,
     ShiprocketModule,
-    InfluencerModule
-    
+    InfluencerModule,
   ],
   providers: [UserService],
-  controllers: [UserController,PublicUserController],
-  exports:[UserService,MongooseModule]
+  controllers: [UserController, PublicUserController],
+  exports: [UserService, MongooseModule],
 })
 export class UserModule {}

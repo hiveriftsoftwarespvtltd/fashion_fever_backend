@@ -1,16 +1,14 @@
-import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
-import { Document, Types } from "mongoose";
-
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Document, Types } from 'mongoose';
 
 export enum CategoryType {
   RENTAL = 'RENTAL',
-  SERVICE = 'SERVICE'
+  SERVICE = 'SERVICE',
 }
 
-export type ServiceCategoryDocument = ServiceCategory & Document
+export type ServiceCategoryDocument = ServiceCategory & Document;
 @Schema({ timestamps: true })
 export class ServiceCategory {
-
   @Prop({ required: true, unique: true })
   name!: string;
 
@@ -33,7 +31,8 @@ export class ServiceCategory {
   isActive!: boolean;
 
   @Prop({ default: false })
-  isDeleted!: boolean
+  isDeleted!: boolean;
 }
 
-export const ServiceCategorySchema = SchemaFactory.createForClass(ServiceCategory)
+export const ServiceCategorySchema =
+  SchemaFactory.createForClass(ServiceCategory);

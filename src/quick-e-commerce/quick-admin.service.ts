@@ -1,17 +1,21 @@
-import { Injectable } from "@nestjs/common";
-import { InjectModel } from "@nestjs/mongoose";
-import { Model } from "mongoose";
-import { Vendor, VendorDocument } from "src/vendor/schema/vendor.schema";
-import { VendorQuickOrder, VendorOrderDocument } from "./schema/quick-vendor-order.schema";
+import { Injectable } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { Vendor, VendorDocument } from 'src/vendor/schema/vendor.schema';
+import {
+  VendorQuickOrder,
+  VendorOrderDocument,
+} from './schema/quick-vendor-order.schema';
 
-import { AdminQuickCommerceDashboardFilterDto } from "./dto/quick-admin.dto";
+import { AdminQuickCommerceDashboardFilterDto } from './dto/quick-admin.dto';
 
 @Injectable()
 export class QuickAdminService {
   constructor(
     @InjectModel(Vendor.name) private vendorModel: Model<VendorDocument>,
-    @InjectModel(VendorQuickOrder.name) private vendorOrderModel: Model<VendorOrderDocument>,
-  ) { }
+    @InjectModel(VendorQuickOrder.name)
+    private vendorOrderModel: Model<VendorOrderDocument>,
+  ) {}
 
   async getQuickCommerceVendors(page: number = 1, limit: number = 10) {
     const skip = (page - 1) * limit;
@@ -62,10 +66,16 @@ export class QuickAdminService {
       }
     }
 
-    const orders = await this.vendorOrderModel.find(query).sort({ createdAt: -1 }).exec();
+    const orders = await this.vendorOrderModel
+      .find(query)
+      .sort({ createdAt: -1 })
+      .exec();
 
     const totalOrders = orders.length;
-    const totalRevenue = orders.reduce((sum, order) => sum + (order.total || 0), 0);
+    const totalRevenue = orders.reduce(
+      (sum, order) => sum + (order.total || 0),
+      0,
+    );
 
     return {
       message: 'Admin quick commerce dashboard data retrieved successfully',

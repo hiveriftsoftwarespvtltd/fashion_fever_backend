@@ -7,10 +7,19 @@ import {
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { Coupon, CouponDocument, CouponScope, CouponType, OwnerType } from './schema/coupon.schema';
+import {
+  Coupon,
+  CouponDocument,
+  CouponScope,
+  CouponType,
+  OwnerType,
+} from './schema/coupon.schema';
 import { CouponUsage, CouponUsageDocument } from './schema/coupon-usage.schema';
 import { Service, ServiceDocument } from 'src/service/schema/service.schema';
-import { ServiceProvider, ServiceProviderDocument } from 'src/service/schema/service-provider.schema';
+import {
+  ServiceProvider,
+  ServiceProviderDocument,
+} from 'src/service/schema/service-provider.schema';
 import { ApiResponse } from 'src/common/responses/api-response';
 import {
   CreateServiceCouponDto,
@@ -22,9 +31,11 @@ import {
 export class ServiceProviderCouponService {
   constructor(
     @InjectModel(Coupon.name) private couponModel: Model<CouponDocument>,
-    @InjectModel(CouponUsage.name) private couponUsageModel: Model<CouponUsageDocument>,
+    @InjectModel(CouponUsage.name)
+    private couponUsageModel: Model<CouponUsageDocument>,
     @InjectModel(Service.name) private serviceModel: Model<ServiceDocument>,
-    @InjectModel(ServiceProvider.name) private providerModel: Model<ServiceProviderDocument>,
+    @InjectModel(ServiceProvider.name)
+    private providerModel: Model<ServiceProviderDocument>,
   ) {}
 
   // ── Ownership guard helper ────────────────────────────────────────────────
@@ -52,9 +63,14 @@ export class ServiceProviderCouponService {
     couponId: string,
     serviceProviderId: string,
   ): Promise<CouponDocument> {
-    const coupon = await this.couponModel.findById(new Types.ObjectId(couponId));
+    const coupon = await this.couponModel.findById(
+      new Types.ObjectId(couponId),
+    );
     if (!coupon) throw new NotFoundException('Coupon not found');
-    if (!coupon.serviceProviderId || coupon.serviceProviderId.toString() !== serviceProviderId) {
+    if (
+      !coupon.serviceProviderId ||
+      coupon.serviceProviderId.toString() !== serviceProviderId
+    ) {
       throw new ForbiddenException('You do not own this coupon');
     }
     return coupon;
@@ -62,7 +78,8 @@ export class ServiceProviderCouponService {
 
   // ── Create ────────────────────────────────────────────────────────────────
   async createCoupon(serviceProviderId: string, dto: CreateServiceCouponDto) {
-    if (!serviceProviderId) throw new ForbiddenException('Provider identity not found');
+    if (!serviceProviderId)
+      throw new ForbiddenException('Provider identity not found');
 
     // Verify the linked service belongs to this provider
     const service = await this.serviceModel.findOne({
@@ -71,7 +88,9 @@ export class ServiceProviderCouponService {
       isDeleted: { $ne: true },
     });
     if (!service) {
-      throw new ForbiddenException('Service not found or does not belong to your salon');
+      throw new ForbiddenException(
+        'Service not found or does not belong to your salon',
+      );
     }
 
     // Unique code check
@@ -119,13 +138,15 @@ export class ServiceProviderCouponService {
 
   // ── List SP's coupons ─────────────────────────────────────────────────────
   async myCoupons(serviceProviderId: string) {
-    if (!serviceProviderId) throw new ForbiddenException('Provider identity not found');
+    if (!serviceProviderId)
+      throw new ForbiddenException('Provider identity not found');
 
     const coupons = await this.couponModel
       .find({ serviceProviderId: new Types.ObjectId(serviceProviderId) })
       .populate({
         path: 'linkedServiceId',
-        select: 'title offeredPrice sellingPrice costPrice durationMinutes images',
+        select:
+          'title offeredPrice sellingPrice costPrice durationMinutes images',
         populate: { path: 'images', select: 'url originalName' },
       })
       .sort({ createdAt: -1 })
@@ -136,7 +157,8 @@ export class ServiceProviderCouponService {
 
   // ── List SP's services (for dropdown) ────────────────────────────────────
   async myServices(serviceProviderId: string) {
-    if (!serviceProviderId) throw new ForbiddenException('Provider identity not found');
+    if (!serviceProviderId)
+      throw new ForbiddenException('Provider identity not found');
 
     const services = await this.serviceModel
       .find({
@@ -145,7 +167,9 @@ export class ServiceProviderCouponService {
         isActive: true,
       })
       .populate('images', 'url originalName')
-      .select('title offeredPrice sellingPrice costPrice durationMinutes images')
+      .select(
+        'title offeredPrice sellingPrice costPrice durationMinutes images',
+      )
       .sort({ title: 1 })
       .lean();
 
@@ -153,25 +177,40 @@ export class ServiceProviderCouponService {
   }
 
   // ── Update ────────────────────────────────────────────────────────────────
-  async updateCoupon(serviceProviderId: string, id: string, dto: UpdateServiceCouponDto) {
+  async updateCoupon(
+    serviceProviderId: string,
+    id: string,
+    dto: UpdateServiceCouponDto,
+  ) {
     const coupon = await this.assertCouponOwnership(id, serviceProviderId);
 
     // If linkedServiceId is being changed, verify the new service also belongs to this provider
-    if (dto.linkedServiceId && dto.linkedServiceId !== coupon.linkedServiceId?.toString()) {
+    if (
+      dto.linkedServiceId &&
+      dto.linkedServiceId !== coupon.linkedServiceId?.toString()
+    ) {
       const service = await this.serviceModel.findOne({
         _id: new Types.ObjectId(dto.linkedServiceId),
         providerId: new Types.ObjectId(serviceProviderId),
       });
       if (!service) {
-        throw new ForbiddenException('New service does not belong to your salon');
+        throw new ForbiddenException(
+          'New service does not belong to your salon',
+        );
       }
     }
 
     const filtered = Object.fromEntries(
-      Object.entries(dto).filter(([_, v]) => v !== undefined && v !== null && v !== ''),
+      Object.entries(dto).filter(
+        ([_, v]) => v !== undefined && v !== null && v !== '',
+      ),
     );
-    if (filtered.code) filtered.code = (filtered.code as string).trim().toUpperCase();
-    if (filtered.linkedServiceId) filtered.linkedServiceId = new Types.ObjectId(filtered.linkedServiceId as string);
+    if (filtered.code)
+      filtered.code = (filtered.code as string).trim().toUpperCase();
+    if (filtered.linkedServiceId)
+      filtered.linkedServiceId = new Types.ObjectId(
+        filtered.linkedServiceId as string,
+      );
     if (filtered.expiresAt) {
       const exp = new Date(filtered.expiresAt as string);
       if (
@@ -195,7 +234,10 @@ export class ServiceProviderCouponService {
     const coupon = await this.assertCouponOwnership(id, serviceProviderId);
     coupon.isActive = !coupon.isActive;
     await coupon.save();
-    return ApiResponse.success(`Coupon ${coupon.isActive ? 'activated' : 'deactivated'}`, { isActive: coupon.isActive });
+    return ApiResponse.success(
+      `Coupon ${coupon.isActive ? 'activated' : 'deactivated'}`,
+      { isActive: coupon.isActive },
+    );
   }
 
   // ── Delete ────────────────────────────────────────────────────────────────
@@ -218,16 +260,29 @@ export class ServiceProviderCouponService {
       scope: CouponScope.SERVICE,
     });
 
-    if (!coupon) throw new NotFoundException('Coupon not found or is not a service coupon');
+    if (!coupon)
+      throw new NotFoundException(
+        'Coupon not found or is not a service coupon',
+      );
 
     // 1. Provider ownership check (server-side lookup)
-    if (!coupon.serviceProviderId || coupon.serviceProviderId.toString() !== dto.providerId) {
-      throw new BadRequestException('This coupon is not valid for the selected salon');
+    if (
+      !coupon.serviceProviderId ||
+      coupon.serviceProviderId.toString() !== dto.providerId
+    ) {
+      throw new BadRequestException(
+        'This coupon is not valid for the selected salon',
+      );
     }
 
     // 2. Service match
-    if (!coupon.linkedServiceId || coupon.linkedServiceId.toString() !== dto.serviceId) {
-      throw new BadRequestException('This coupon does not apply to the selected service');
+    if (
+      !coupon.linkedServiceId ||
+      coupon.linkedServiceId.toString() !== dto.serviceId
+    ) {
+      throw new BadRequestException(
+        'This coupon does not apply to the selected service',
+      );
     }
 
     // 3. Date checks
@@ -240,7 +295,10 @@ export class ServiceProviderCouponService {
     }
 
     // 4. Total usage limit
-    if (coupon.totalUsageLimit > 0 && coupon.totalUsed >= coupon.totalUsageLimit) {
+    if (
+      coupon.totalUsageLimit > 0 &&
+      coupon.totalUsed >= coupon.totalUsageLimit
+    ) {
       throw new BadRequestException('Coupon usage limit has been reached');
     }
 
@@ -256,13 +314,21 @@ export class ServiceProviderCouponService {
     }
 
     // 6. Calculate discount against linked service price
-    const service = await this.serviceModel.findById(new Types.ObjectId(dto.serviceId));
+    const service = await this.serviceModel.findById(
+      new Types.ObjectId(dto.serviceId),
+    );
     if (!service) throw new NotFoundException('Service not found');
 
-    const price = service.offeredPrice || service.sellingPrice || (service as any).costPrice || 0;
+    const price =
+      service.offeredPrice ||
+      service.sellingPrice ||
+      (service as any).costPrice ||
+      0;
 
     if (coupon.minimumOrderAmount > 0 && price < coupon.minimumOrderAmount) {
-      throw new BadRequestException(`Minimum service price of ₹${coupon.minimumOrderAmount} required`);
+      throw new BadRequestException(
+        `Minimum service price of ₹${coupon.minimumOrderAmount} required`,
+      );
     }
 
     let discountAmount = 0;
@@ -313,7 +379,12 @@ export class ServiceProviderCouponService {
         .lean(),
       this.couponModel.countDocuments({ scope: CouponScope.SERVICE }),
     ]);
-    return ApiResponse.success('All service coupons', { coupons, total, page, limit });
+    return ApiResponse.success('All service coupons', {
+      coupons,
+      total,
+      page,
+      limit,
+    });
   }
 
   async adminForceDeactivate(couponId: string) {

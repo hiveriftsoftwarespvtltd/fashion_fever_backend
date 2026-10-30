@@ -89,14 +89,14 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     let message = 'Internal server error';
     const sanitizedBody = { ...request.body };
 
-delete sanitizedBody.password;
-delete sanitizedBody.oldPassword;
-delete sanitizedBody.newPassword;
-delete sanitizedBody.confirmPassword;
-delete sanitizedBody.token;
-delete sanitizedBody.accessToken;
-delete sanitizedBody.refreshToken;
-delete sanitizedBody.otp;
+    delete sanitizedBody.password;
+    delete sanitizedBody.oldPassword;
+    delete sanitizedBody.newPassword;
+    delete sanitizedBody.confirmPassword;
+    delete sanitizedBody.token;
+    delete sanitizedBody.accessToken;
+    delete sanitizedBody.refreshToken;
+    delete sanitizedBody.otp;
 
     const errorLog: any = {
       timestamp: new Date().toISOString(),
@@ -155,8 +155,7 @@ delete sanitizedBody.otp;
       console.error(exception);
     }
 
-    const clientMessage =
-  status >= 500 ? 'Internal server error' : message;
+    const clientMessage = status >= 500 ? 'Internal server error' : message;
 
     response.status(status).json(ApiResponse.error(clientMessage, status));
   }

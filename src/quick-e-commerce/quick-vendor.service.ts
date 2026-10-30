@@ -1,25 +1,43 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
-import { InjectModel } from "@nestjs/mongoose";
-import { Model, Types } from "mongoose";
-import { Vendor, VendorDocument } from "src/vendor/schema/vendor.schema";
-import { VendorQuickOrder, VendorOrderDocument } from "./schema/quick-vendor-order.schema";
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model, Types } from 'mongoose';
+import { Vendor, VendorDocument } from 'src/vendor/schema/vendor.schema';
+import {
+  VendorQuickOrder,
+  VendorOrderDocument,
+} from './schema/quick-vendor-order.schema';
 
-import { UpdateQuickCommerceDto, QuickVendorDashboardFilterDto } from "./dto/quick-vendor.dto";
-import { ApiResponse } from "src/common/responses/api-response";
+import {
+  UpdateQuickCommerceDto,
+  QuickVendorDashboardFilterDto,
+} from './dto/quick-vendor.dto';
+import { ApiResponse } from 'src/common/responses/api-response';
 
 @Injectable()
 export class QuickVendorService {
   constructor(
     @InjectModel(Vendor.name) private vendorModel: Model<VendorDocument>,
-    @InjectModel(VendorQuickOrder.name) private vendorOrderModel: Model<VendorOrderDocument>,
-  ) { }
+    @InjectModel(VendorQuickOrder.name)
+    private vendorOrderModel: Model<VendorOrderDocument>,
+  ) {}
 
-  async updateQuickCommerceDetails(userId: string, updateDto: UpdateQuickCommerceDto) {
+  async updateQuickCommerceDetails(
+    userId: string,
+    updateDto: UpdateQuickCommerceDto,
+  ) {
     const vendor = await this.vendorModel.findOne({
       $or: [
-        { ownerId: Types.ObjectId.isValid(userId) ? new Types.ObjectId(userId) : null },
-        { _id: Types.ObjectId.isValid(userId) ? new Types.ObjectId(userId) : null }
-      ]
+        {
+          ownerId: Types.ObjectId.isValid(userId)
+            ? new Types.ObjectId(userId)
+            : null,
+        },
+        {
+          _id: Types.ObjectId.isValid(userId)
+            ? new Types.ObjectId(userId)
+            : null,
+        },
+      ],
     });
     if (!vendor) {
       throw new NotFoundException('Vendor not found');
@@ -27,16 +45,29 @@ export class QuickVendorService {
 
     // Build $set fields for nested quickCommerce object
     const setFields: Record<string, any> = {};
-    if (updateDto.enabled !== undefined) setFields['quickCommerce.enabled'] = Boolean(updateDto.enabled);
-    if (updateDto.acceptingOrders !== undefined) setFields['quickCommerce.acceptingOrders'] = Boolean(updateDto.acceptingOrders);
-    if (updateDto.serviceRadius !== undefined) setFields['quickCommerce.serviceRadius'] = Number(updateDto.serviceRadius);
-    if (updateDto.maxConcurrentOrders !== undefined) setFields['quickCommerce.maxConcurrentOrders'] = Number(updateDto.maxConcurrentOrders);
-    if (updateDto.defaultPreparationTime !== undefined) setFields['quickCommerce.defaultPreparationTime'] = Number(updateDto.defaultPreparationTime);
+    if (updateDto.enabled !== undefined)
+      setFields['quickCommerce.enabled'] = Boolean(updateDto.enabled);
+    if (updateDto.acceptingOrders !== undefined)
+      setFields['quickCommerce.acceptingOrders'] = Boolean(
+        updateDto.acceptingOrders,
+      );
+    if (updateDto.serviceRadius !== undefined)
+      setFields['quickCommerce.serviceRadius'] = Number(
+        updateDto.serviceRadius,
+      );
+    if (updateDto.maxConcurrentOrders !== undefined)
+      setFields['quickCommerce.maxConcurrentOrders'] = Number(
+        updateDto.maxConcurrentOrders,
+      );
+    if (updateDto.defaultPreparationTime !== undefined)
+      setFields['quickCommerce.defaultPreparationTime'] = Number(
+        updateDto.defaultPreparationTime,
+      );
 
     const updated = await this.vendorModel.findOneAndUpdate(
       { _id: vendor._id },
       { $set: setFields },
-      { new: true }
+      { new: true },
     );
 
     return ApiResponse.success(
@@ -45,12 +76,23 @@ export class QuickVendorService {
     );
   }
 
-  async getDashboardData(userId: string, filters: QuickVendorDashboardFilterDto) {
+  async getDashboardData(
+    userId: string,
+    filters: QuickVendorDashboardFilterDto,
+  ) {
     const vendor = await this.vendorModel.findOne({
       $or: [
-        { ownerId: Types.ObjectId.isValid(userId) ? new Types.ObjectId(userId) : null },
-        { _id: Types.ObjectId.isValid(userId) ? new Types.ObjectId(userId) : null }
-      ]
+        {
+          ownerId: Types.ObjectId.isValid(userId)
+            ? new Types.ObjectId(userId)
+            : null,
+        },
+        {
+          _id: Types.ObjectId.isValid(userId)
+            ? new Types.ObjectId(userId)
+            : null,
+        },
+      ],
     });
     if (!vendor) {
       throw new NotFoundException('Vendor not found');
@@ -72,14 +114,15 @@ export class QuickVendorService {
       }
     }
 
-    const orders = await this.vendorOrderModel.find(query)
+    const orders = await this.vendorOrderModel
+      .find(query)
       .populate({
         path: 'items.variantId',
         select: 'thumbnail images sku',
         populate: [
           { path: 'thumbnail', select: 'url publicId' },
-          { path: 'images', select: 'url publicId' }
-        ]
+          { path: 'images', select: 'url publicId' },
+        ],
       })
       .populate({
         path: 'items.productId',
@@ -89,24 +132,28 @@ export class QuickVendorService {
           select: 'thumbnail images',
           populate: [
             { path: 'thumbnail', select: 'url publicId' },
-            { path: 'images', select: 'url publicId' }
-          ]
-        }
+            { path: 'images', select: 'url publicId' },
+          ],
+        },
       })
       .populate('deliveryPersonId')
       .populate({
         path: 'quickOrderId',
-        select: 'customerId addressId shippingAddress paymentMethod paymentStatus grandTotal createdAt',
+        select:
+          'customerId addressId shippingAddress paymentMethod paymentStatus grandTotal createdAt',
         populate: [
           { path: 'customerId', select: 'name email phone' },
-          { path: 'addressId' }
-        ]
+          { path: 'addressId' },
+        ],
       })
       .sort({ createdAt: -1 })
       .exec();
 
     const totalOrders = orders.length;
-    const totalRevenue = orders.reduce((sum, order) => sum + (order.total || 0), 0);
+    const totalRevenue = orders.reduce(
+      (sum, order) => sum + (order.total || 0),
+      0,
+    );
 
     return ApiResponse.success('Dashboard data retrieved successfully', {
       config: {
@@ -114,7 +161,8 @@ export class QuickVendorService {
         acceptingOrders: vendor.quickCommerce?.acceptingOrders ?? false,
         serviceRadius: vendor.quickCommerce?.serviceRadius ?? 5,
         maxConcurrentOrders: vendor.quickCommerce?.maxConcurrentOrders ?? 20,
-        defaultPreparationTime: vendor.quickCommerce?.defaultPreparationTime ?? 10,
+        defaultPreparationTime:
+          vendor.quickCommerce?.defaultPreparationTime ?? 10,
       },
       stats: {
         totalOrders,

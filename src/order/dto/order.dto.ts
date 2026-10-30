@@ -13,8 +13,6 @@ import {
 import { Type } from 'class-transformer';
 import { OrderStatus, PaymentMethod } from '../schema/order.schema';
 
-
-
 export class CreateOrderItemDto {
   @IsMongoId()
   productId!: string;
@@ -23,16 +21,12 @@ export class CreateOrderItemDto {
   variantId!: string;
 
   @ToNumber()
-
-
   @IsNumber()
   @Min(1)
   quantity!: number;
 }
 
 export class CreateOrderDto {
-
-    
   @IsMongoId()
   addressId!: string;
 
@@ -56,16 +50,16 @@ export class CreateOrderDto {
   // vendorId!:string
 }
 
-export class UpdateUserOrderDTO{
+export class UpdateUserOrderDTO {
   @IsOptional()
   @IsEnum(OrderStatus)
-  orderStatus!:OrderStatus
+  orderStatus!: OrderStatus;
 
   @IsOptional()
   @IsString()
-  cancellationReason?:string
+  cancellationReason?: string;
 
   @IsOptional()
   @IsString()
-  returnReason?:string
+  returnReason?: string;
 }

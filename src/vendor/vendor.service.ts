@@ -14,7 +14,12 @@ import { Vendor, VendorDocument } from './schema/vendor.schema';
 import { Model, Types } from 'mongoose';
 import { createVendorDTO } from './dto/create-vendor.dto';
 import { DashboardFilterDTO } from './dto/vendor-analytics.dto';
-import { User, UserDocument, UserRole, RoleStatus } from 'src/user/schema/user.schema';
+import {
+  User,
+  UserDocument,
+  UserRole,
+  RoleStatus,
+} from 'src/user/schema/user.schema';
 import { ApiResponse } from 'src/common/responses/api-response';
 import { notifyAdmins } from 'src/utils/helper';
 import { adminPendingRequestNotificationTemplate } from 'src/utils/email.template';
@@ -55,7 +60,11 @@ import {
 } from 'src/influencer/schema/influencer.schema';
 import { InfluencerService } from 'src/influencer/influencer.service';
 import { UserWalletService } from 'src/wallet/service/user/user.wallet.service';
-import { CashbackSlab, CashbackSlabDocument, CashbackType } from 'src/wallet/schema/cashback/cashbacks.slabs.schema';
+import {
+  CashbackSlab,
+  CashbackSlabDocument,
+  CashbackType,
+} from 'src/wallet/schema/cashback/cashbacks.slabs.schema';
 import { WalletTransactionReason } from 'src/wallet/schema/user/user.wallet.transactions';
 
 import {
@@ -66,11 +75,32 @@ import {
 } from 'src/admin/schema/commission-rate.schema';
 import { AffiliateTrackingService } from 'src/influencer/affiliate-tracking.service';
 import { NotificationService } from 'src/notification/notification.service';
-import { NotificationModuleType, NotificationType, NotificationPriority } from 'src/notification/schema/notification.schema';
-import { MarketplaceEarning, MarketplaceEarningDocument, EarningRole, EarningReferenceType, EarningStatus } from 'src/payout/schema/market-place-earning.schema';
-import { PaymentTransaction, PaymentTransactionDocument, TransactionStatus as PayoutTransactionStatus, ReferenceType as PayoutReferenceType, PaymentMode as PayoutPaymentMode, PaymentMethod as PayoutPaymentMethod } from 'src/payout/schema/payment-transaction.schema';
+import {
+  NotificationModuleType,
+  NotificationType,
+  NotificationPriority,
+} from 'src/notification/schema/notification.schema';
+import {
+  MarketplaceEarning,
+  MarketplaceEarningDocument,
+  EarningRole,
+  EarningReferenceType,
+  EarningStatus,
+} from 'src/payout/schema/market-place-earning.schema';
+import {
+  PaymentTransaction,
+  PaymentTransactionDocument,
+  TransactionStatus as PayoutTransactionStatus,
+  ReferenceType as PayoutReferenceType,
+  PaymentMode as PayoutPaymentMode,
+  PaymentMethod as PayoutPaymentMethod,
+} from 'src/payout/schema/payment-transaction.schema';
 import { CancelledByEntity } from 'src/order/schema/vendor-order.schema';
-import { DeliveryPerson, DeliveryPersonDocument, DeliveryPersonStatus } from 'src/quick-e-commerce/schema/delivery-person.schema';
+import {
+  DeliveryPerson,
+  DeliveryPersonDocument,
+  DeliveryPersonStatus,
+} from 'src/quick-e-commerce/schema/delivery-person.schema';
 
 @Injectable()
 export class VendorService {
@@ -99,11 +129,14 @@ export class VendorService {
     private userWalletService: UserWalletService,
     private affiliateTrackingService: AffiliateTrackingService,
     private notificationService: NotificationService,
-    @InjectModel(MarketplaceEarning.name) private marketplaceEarningModel: Model<MarketplaceEarningDocument>,
-    @InjectModel(PaymentTransaction.name) private paymentTransactionModel: Model<PaymentTransactionDocument>,
-    @InjectModel(DeliveryPerson.name) private deliveryPersonModel: Model<DeliveryPersonDocument>,
+    @InjectModel(MarketplaceEarning.name)
+    private marketplaceEarningModel: Model<MarketplaceEarningDocument>,
+    @InjectModel(PaymentTransaction.name)
+    private paymentTransactionModel: Model<PaymentTransactionDocument>,
+    @InjectModel(DeliveryPerson.name)
+    private deliveryPersonModel: Model<DeliveryPersonDocument>,
     private readonly influencerService: InfluencerService,
-  ) { }
+  ) {}
 
   async registerVendor(
     dto: createVendorDTO,
@@ -112,10 +145,17 @@ export class VendorService {
   ) {
     const isOwnerExist = await this.vendorModel.findOne({ ownerId: userId });
     if (isOwnerExist) {
-      await this.userModel.updateOne(
-        { _id: userId },
-        { $set: { vendorId: isOwnerExist._id, isVendorOnboardingCompleted: true } }
-      ).catch(() => {});
+      await this.userModel
+        .updateOne(
+          { _id: userId },
+          {
+            $set: {
+              vendorId: isOwnerExist._id,
+              isVendorOnboardingCompleted: true,
+            },
+          },
+        )
+        .catch(() => {});
       throw new BadRequestException('This Owner Already Exist with a Vendor');
     }
 
@@ -137,7 +177,10 @@ export class VendorService {
       throw new NotFoundException('User not found');
     }
 
-    if (user.roleStatus && user.roleStatus.get(UserRole.VENDOR) === RoleStatus.APPROVED) {
+    if (
+      user.roleStatus &&
+      user.roleStatus.get(UserRole.VENDOR) === RoleStatus.APPROVED
+    ) {
       throw new ConflictException('Your vendor account is already approved');
     }
 
@@ -146,7 +189,9 @@ export class VendorService {
       businessName: dto.businessName,
       slug: dto.slug.toLowerCase().trim(),
       description: dto.description?.trim() || '',
-      address: dto.address?.trim() || [dto.city, dto.state, dto.vendorPincode].filter(Boolean).join(', '),
+      address:
+        dto.address?.trim() ||
+        [dto.city, dto.state, dto.vendorPincode].filter(Boolean).join(', '),
       phone: dto.phone?.trim() || user.phone || '',
       email: dto.email?.trim().toLowerCase() || user.email || '',
       vendorPincode: dto.vendorPincode,
@@ -196,7 +241,7 @@ export class VendorService {
         BusinessName: vendor.businessName,
         City: vendor.city,
         State: vendor.state,
-      })
+      }),
     );
 
     return ApiResponse.success('Vendor Request created successfully', vendor);
@@ -226,10 +271,14 @@ export class VendorService {
         .populate(populateOptions)
         .lean();
       if (vendor) {
-        await this.userModel.updateOne(
-          { _id: userId },
-          { $set: { vendorId: vendor._id, isVendorOnboardingCompleted: true } }
-        ).catch(() => {});
+        await this.userModel
+          .updateOne(
+            { _id: userId },
+            {
+              $set: { vendorId: vendor._id, isVendorOnboardingCompleted: true },
+            },
+          )
+          .catch(() => {});
       }
     }
     if (!vendor) {
@@ -250,13 +299,17 @@ export class VendorService {
       updates.phone = owner.phone;
     }
     if (!vendor.address && (vendor.city || vendor.state)) {
-      const generatedAddress = [vendor.city, vendor.state, vendor.vendorPincode].filter(Boolean).join(', ');
+      const generatedAddress = [vendor.city, vendor.state, vendor.vendorPincode]
+        .filter(Boolean)
+        .join(', ');
       vendor.address = generatedAddress;
       updates.address = generatedAddress;
     }
 
     if (Object.keys(updates).length > 0) {
-      await this.vendorModel.updateOne({ _id: vendor._id }, { $set: updates }).catch(() => {});
+      await this.vendorModel
+        .updateOne({ _id: vendor._id }, { $set: updates })
+        .catch(() => {});
     }
 
     return vendor;
@@ -379,7 +432,12 @@ export class VendorService {
     return ApiResponse.success('Vendor updated successfully', vendor);
   }
 
-  async vendorProducts(userId: string, vendorId: string, page?: number, limit?: number) {
+  async vendorProducts(
+    userId: string,
+    vendorId: string,
+    page?: number,
+    limit?: number,
+  ) {
     if (!vendorId) {
       throw new ConflictException(
         'Complete Your Onboarding to access this feature',
@@ -387,7 +445,9 @@ export class VendorService {
     }
     const vendor = await this.vendorModel.findById(vendorId);
     if (!vendor || vendor.status !== 'APPROVED') {
-      throw new ForbiddenException('Vendor account is not approved by admin yet');
+      throw new ForbiddenException(
+        'Vendor account is not approved by admin yet',
+      );
     }
 
     const pageNumber = Number(page) || 1;
@@ -413,7 +473,6 @@ export class VendorService {
       .populate('image')
       .lean();
   }
-
 
   async vendorOrders(vendorId: string, page?: number, limit?: number) {
     const pageNumber = Number(page) || 1;
@@ -459,9 +518,12 @@ export class VendorService {
     return ApiResponse.success('Order Details Fetched Successfully', order);
   }
 
-
-
-  async updateOrder(dto: UpdateOrderDTO, orderId: string, vendorId: string, userId?: string) {
+  async updateOrder(
+    dto: UpdateOrderDTO,
+    orderId: string,
+    vendorId: string,
+    userId?: string,
+  ) {
     const session = await this.connection.startSession();
 
     try {
@@ -548,15 +610,24 @@ export class VendorService {
           vendorOrder.cancelledByEntity = CancelledByEntity.VENDOR;
         }
 
-        const mainOrder = await this.orderModel.findById(vendorOrder.orderId).session(session);
+        const mainOrder = await this.orderModel
+          .findById(vendorOrder.orderId)
+          .session(session);
         if (mainOrder) {
           let refundAmount = 0;
           if (mainOrder.walletAmountUsed && mainOrder.walletAmountUsed > 0) {
             const alreadyRefunded = mainOrder.walletRefundedAmount || 0;
-            const remainingToRefund = mainOrder.walletAmountUsed - alreadyRefunded;
+            const remainingToRefund =
+              mainOrder.walletAmountUsed - alreadyRefunded;
             if (remainingToRefund > 0) {
-              const vendorShareRatio = mainOrder.grandTotal > 0 ? (vendorOrder.grandTotal / mainOrder.grandTotal) : 0;
-              let calculatedRefund = Math.round(mainOrder.walletAmountUsed * vendorShareRatio * 100) / 100;
+              const vendorShareRatio =
+                mainOrder.grandTotal > 0
+                  ? vendorOrder.grandTotal / mainOrder.grandTotal
+                  : 0;
+              let calculatedRefund =
+                Math.round(
+                  mainOrder.walletAmountUsed * vendorShareRatio * 100,
+                ) / 100;
               if (calculatedRefund > remainingToRefund) {
                 calculatedRefund = remainingToRefund;
               }
@@ -568,29 +639,38 @@ export class VendorService {
                   refundAmount,
                   WalletTransactionReason.REFUND,
                   `Partial refund for cancelled Vendor Order in ${mainOrder.orderNumber}`,
-                  session
+                  session,
                 );
 
                 mainOrder.walletRefundedAmount = alreadyRefunded + refundAmount;
-                if (mainOrder.walletRefundedAmount >= mainOrder.walletAmountUsed) {
+                if (
+                  mainOrder.walletRefundedAmount >= mainOrder.walletAmountUsed
+                ) {
                   mainOrder.paymentStatus = PaymentStatus.REFUNDED;
                 }
                 await mainOrder.save({ session });
 
-                await this.paymentTransactionModel.create([{
-                  customerId: mainOrder.userId,
-                  referenceType: PayoutReferenceType.ORDER,
-                  referenceId: mainOrder._id,
-                  paymentMode: PayoutPaymentMode.ONLINE,
-                  paymentMethod: PayoutPaymentMethod.WALLET,
-                  amount: refundAmount,
-                  status: PayoutTransactionStatus.REFUNDED
-                }], { session });
+                await this.paymentTransactionModel.create(
+                  [
+                    {
+                      customerId: mainOrder.userId,
+                      referenceType: PayoutReferenceType.ORDER,
+                      referenceId: mainOrder._id,
+                      paymentMode: PayoutPaymentMode.ONLINE,
+                      paymentMethod: PayoutPaymentMethod.WALLET,
+                      amount: refundAmount,
+                      status: PayoutTransactionStatus.REFUNDED,
+                    },
+                  ],
+                  { session },
+                );
               }
             }
           }
 
-          const itemsCancelled = vendorOrder.items.map((i: any) => i.productName).join(', ');
+          const itemsCancelled = vendorOrder.items
+            .map((i: any) => i.productName)
+            .join(', ');
           const notificationDesc = `Order ${mainOrder.orderNumber} partially cancelled. Items cancelled: ${itemsCancelled}. Amount refunded: ${refundAmount > 0 ? refundAmount : 'None'}.`;
 
           await this.notificationService.sendNotification({
@@ -603,8 +683,8 @@ export class VendorService {
             data: {
               orderId: mainOrder._id,
               cancellationReason: dto.cancellationReason,
-              cancelledByEntity: CancelledByEntity.VENDOR
-            }
+              cancelledByEntity: CancelledByEntity.VENDOR,
+            },
           });
         }
 
@@ -664,34 +744,41 @@ export class VendorService {
       ) {
         // Create or fetch influencer commission record (idempotent with { orderId, vendorOrderId, influencerId })
         if (vendorOrder.influencerId && vendorOrder.orderId) {
-          const commRecord = await this.influencerService.createCommissionRecord({
-            orderId: vendorOrder.orderId,
-            vendorOrderId: vendorOrder._id,
-            influencerId: vendorOrder.influencerId,
-            customerId: vendorOrder.userId,
-            vendorId: vendorOrder.vendorId,
-            subTotal: vendorOrder.subTotal,
-            discountAmount: vendorOrder.discount || 0,
-            totalCostPrice: vendorOrder.costPrice,
-            grossProfit: vendorOrder.grossProfit,
-            netProfit: vendorOrder.netProfit,
-            shippingCost: vendorOrder.shippingCharge,
-            taxAmount: vendorOrder.tax,
-            platformCommissionAmount: vendorOrder.platformCommissionAmount,
-            attributionSource: vendorOrder.attributionSource || AttributionSource.REFERRAL,
-            isDelivered: true,
-            deliveredAt: new Date(),
-            session,
-          });
+          const commRecord =
+            await this.influencerService.createCommissionRecord({
+              orderId: vendorOrder.orderId,
+              vendorOrderId: vendorOrder._id,
+              influencerId: vendorOrder.influencerId,
+              customerId: vendorOrder.userId,
+              vendorId: vendorOrder.vendorId,
+              subTotal: vendorOrder.subTotal,
+              discountAmount: vendorOrder.discount || 0,
+              totalCostPrice: vendorOrder.costPrice,
+              grossProfit: vendorOrder.grossProfit,
+              netProfit: vendorOrder.netProfit,
+              shippingCost: vendorOrder.shippingCharge,
+              taxAmount: vendorOrder.tax,
+              platformCommissionAmount: vendorOrder.platformCommissionAmount,
+              attributionSource:
+                vendorOrder.attributionSource || AttributionSource.REFERRAL,
+              isDelivered: true,
+              deliveredAt: new Date(),
+              session,
+            });
 
           if (commRecord) {
-            vendorOrder.influencerCommissionAmount = commRecord.commissionAmount;
+            vendorOrder.influencerCommissionAmount =
+              commRecord.commissionAmount;
             vendorOrder.influencerCommissionRate = commRecord.commissionRate;
             if (!commRecord.isDelivered || !commRecord.approvalEligibleAt) {
-              const delDate = vendorOrder.deliveredAt ? new Date(vendorOrder.deliveredAt) : new Date();
+              const delDate = vendorOrder.deliveredAt
+                ? new Date(vendorOrder.deliveredAt)
+                : new Date();
               commRecord.isDelivered = true;
               commRecord.deliveredAt = delDate;
-              commRecord.approvalEligibleAt = new Date(delDate.getTime() + 7 * 24 * 60 * 60 * 1000);
+              commRecord.approvalEligibleAt = new Date(
+                delDate.getTime() + 7 * 24 * 60 * 60 * 1000,
+              );
               await commRecord.save({ session });
             }
           }
@@ -702,14 +789,18 @@ export class VendorService {
           const DEFAULT_COMMISSION_RATE = 25;
           const DEFAULT_COMMISSION_ON = CommissionOn.PROFITVALUE;
 
-          const commissionDoc = await this.commissionRateModel.findOne().session(session);
+          const commissionDoc = await this.commissionRateModel
+            .findOne()
+            .session(session);
 
           const vendorSlab = commissionDoc?.commissions?.find(
             (s) => s.entityType === CommissionEntityType.VENDOR,
           );
 
-          const commissionRate = vendorSlab?.commissionPercentage ?? DEFAULT_COMMISSION_RATE;
-          const commissionOn = vendorSlab?.commissionOn ?? DEFAULT_COMMISSION_ON;
+          const commissionRate =
+            vendorSlab?.commissionPercentage ?? DEFAULT_COMMISSION_RATE;
+          const commissionOn =
+            vendorSlab?.commissionOn ?? DEFAULT_COMMISSION_ON;
 
           // ── Compute payout based on commissionOn ──────────────────────
           let commissionBase: number;
@@ -718,15 +809,25 @@ export class VendorService {
             commissionBase = vendorOrder.grossProfit ?? 0;
           } else {
             // SALE_VALUE → commission on the final order amount (grandTotal - shipping - cod)
-            commissionBase = vendorOrder.grandTotal - (vendorOrder.shippingCharge ?? 0) - (vendorOrder.codCharge ?? 0);
+            commissionBase =
+              vendorOrder.grandTotal -
+              (vendorOrder.shippingCharge ?? 0) -
+              (vendorOrder.codCharge ?? 0);
           }
 
-          const platformCommissionAmount = parseFloat(((commissionBase * commissionRate) / 100).toFixed(2));
+          const platformCommissionAmount = parseFloat(
+            ((commissionBase * commissionRate) / 100).toFixed(2),
+          );
 
           // payout = sale amount (excl. shipping/cod) minus platform commission
           // Rule F2: Vendor payout is funded separately; influencer commission does NOT reduce vendor payout
-          const saleBase = vendorOrder.grandTotal - (vendorOrder.shippingCharge ?? 0) - (vendorOrder.codCharge ?? 0);
-          const resolvedPayout = parseFloat((saleBase - platformCommissionAmount).toFixed(2));
+          const saleBase =
+            vendorOrder.grandTotal -
+            (vendorOrder.shippingCharge ?? 0) -
+            (vendorOrder.codCharge ?? 0);
+          const resolvedPayout = parseFloat(
+            (saleBase - platformCommissionAmount).toFixed(2),
+          );
 
           vendorOrder.platformCommissionRate = commissionRate;
           vendorOrder.platformCommissionOn = commissionOn;
@@ -735,20 +836,28 @@ export class VendorService {
           vendorOrder.isVendorSettled = true;
           vendorOrder.vendorSettledAt = new Date();
 
-          const deductionAmount = (vendorOrder.shippingCharge ?? 0) + (vendorOrder.codCharge ?? 0) + vendorOrder.platformCommissionAmount;
+          const deductionAmount =
+            (vendorOrder.shippingCharge ?? 0) +
+            (vendorOrder.codCharge ?? 0) +
+            vendorOrder.platformCommissionAmount;
 
-          await this.marketplaceEarningModel.create([{
-            userId: new Types.ObjectId(userId),
-            role: EarningRole.VENDOR,
-            referenceType: EarningReferenceType.ORDER,
-            referenceId: vendorOrder._id,
-            grossAmount: vendorOrder.grandTotal || vendorOrder.payoutAmount,
-            netAmount: vendorOrder.payoutAmount,
-            platformCommission: vendorOrder.platformCommissionAmount || 0,
-            tax: vendorOrder.tax || 0,
-            deduction: deductionAmount,
-            status: EarningStatus.PENDING
-          }], { session });
+          await this.marketplaceEarningModel.create(
+            [
+              {
+                userId: new Types.ObjectId(userId),
+                role: EarningRole.VENDOR,
+                referenceType: EarningReferenceType.ORDER,
+                referenceId: vendorOrder._id,
+                grossAmount: vendorOrder.grandTotal || vendorOrder.payoutAmount,
+                netAmount: vendorOrder.payoutAmount,
+                platformCommission: vendorOrder.platformCommissionAmount || 0,
+                tax: vendorOrder.tax || 0,
+                deduction: deductionAmount,
+                status: EarningStatus.PENDING,
+              },
+            ],
+            { session },
+          );
         }
       }
 
@@ -781,7 +890,9 @@ export class VendorService {
           if (!influencerCommission.isDelivered) {
             influencerCommission.isDelivered = true;
             influencerCommission.deliveredAt = new Date();
-            influencerCommission.approvalEligibleAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+            influencerCommission.approvalEligibleAt = new Date(
+              Date.now() + 7 * 24 * 60 * 60 * 1000,
+            );
             // Status strictly remains CommissionStatus.PENDING in Phase 5
             await influencerCommission.save({
               session,
@@ -850,7 +961,9 @@ export class VendorService {
       // ------------------------------------------
 
       const allShipped = allVendorOrders.every(
-        (item) => item.orderStatus === OrderStatus.SHIPPED || item.orderStatus === OrderStatus.DELIVERED,
+        (item) =>
+          item.orderStatus === OrderStatus.SHIPPED ||
+          item.orderStatus === OrderStatus.DELIVERED,
       );
 
       const someShipped = allVendorOrders.some(
@@ -887,19 +1000,21 @@ export class VendorService {
         let totalInfluencerCommissionAmount = 0;
         let totalTax = 0;
         let platformCommissionRate = 0;
-        let influencerCommissionRate = 0;
+        const influencerCommissionRate = 0;
 
         for (const vo of allVendorOrders) {
           totalPlatformCommissionAmount += vo.platformCommissionAmount || 0;
           totalInfluencerCommissionAmount += vo.influencerCommissionAmount || 0;
           totalTax += vo.tax || 0;
-          if (vo.platformCommissionRate) platformCommissionRate = vo.platformCommissionRate;
-          // In this system influencer commission rate is typically derived from the influencer schema/slab, 
+          if (vo.platformCommissionRate)
+            platformCommissionRate = vo.platformCommissionRate;
+          // In this system influencer commission rate is typically derived from the influencer schema/slab,
           // but we capture the aggregate amount here.
         }
 
         mainOrderUpdate.platformComissionAmount = totalPlatformCommissionAmount;
-        mainOrderUpdate.influencerComissionAmount = totalInfluencerCommissionAmount;
+        mainOrderUpdate.influencerComissionAmount =
+          totalInfluencerCommissionAmount;
         mainOrderUpdate.tax = totalTax;
 
         if (platformCommissionRate > 0) {
@@ -945,7 +1060,8 @@ export class VendorService {
               updatedMainOrder.grandTotal <= slab.maxValue
             ) {
               if (slab.cashbackType === CashbackType.PERCENTAGE) {
-                awardedCashback = (updatedMainOrder.grandTotal * slab.cashbackValue) / 100;
+                awardedCashback =
+                  (updatedMainOrder.grandTotal * slab.cashbackValue) / 100;
               } else {
                 awardedCashback = slab.cashbackValue;
               }
@@ -973,8 +1089,16 @@ export class VendorService {
           }
         }
 
-        if (allDelivered && updatedMainOrder && updatedMainOrder.paymentStatus === PaymentStatus.PAID) {
-          await this.affiliateTrackingService.updateCommissionStatus(updatedMainOrder._id, 'PRODUCT', 'PAID');
+        if (
+          allDelivered &&
+          updatedMainOrder &&
+          updatedMainOrder.paymentStatus === PaymentStatus.PAID
+        ) {
+          await this.affiliateTrackingService.updateCommissionStatus(
+            updatedMainOrder._id,
+            'PRODUCT',
+            'PAID',
+          );
         }
       }
 
@@ -994,7 +1118,7 @@ export class VendorService {
           body: `Your order ${vendorOrder.orderNumber} status has been updated to ${vendorOrder.orderStatus}.`,
           moduleType: NotificationModuleType.ORDER,
           type: NotificationType.SYSTEM,
-          priority: NotificationPriority.HIGH
+          priority: NotificationPriority.HIGH,
         });
       }
 
@@ -1007,7 +1131,7 @@ export class VendorService {
           body: `Order ${vendorOrder.orderNumber} status successfully updated to ${vendorOrder.orderStatus}.`,
           moduleType: NotificationModuleType.ORDER,
           type: NotificationType.SYSTEM,
-          priority: NotificationPriority.HIGH
+          priority: NotificationPriority.HIGH,
         });
       }
 
@@ -1021,9 +1145,12 @@ export class VendorService {
     }
   }
 
-
   // ─── Assign Rider to Standard Order ─────────────────────────────────
-  async assignRiderToStandardOrder(orderId: string, vendorId: string, deliveryPersonId: string) {
+  async assignRiderToStandardOrder(
+    orderId: string,
+    vendorId: string,
+    deliveryPersonId: string,
+  ) {
     // Find the vendor order
     const vendorOrder = await this.vendorOrderModel.findOne({
       _id: new Types.ObjectId(orderId),
@@ -1037,10 +1164,13 @@ export class VendorService {
       isDeleted: false,
       isActive: true,
     });
-    if (!deliveryPerson) throw new BadRequestException('Delivery rider not found or inactive');
+    if (!deliveryPerson)
+      throw new BadRequestException('Delivery rider not found or inactive');
 
     // Assign rider
-    (vendorOrder as any).deliveryPersonId = new Types.ObjectId(deliveryPersonId);
+    (vendorOrder as any).deliveryPersonId = new Types.ObjectId(
+      deliveryPersonId,
+    );
     (vendorOrder as any).deliveryStatus = 'ASSIGNED';
     vendorOrder.orderStatus = OrderStatus.SHIPPED;
     vendorOrder.shippedAt = new Date();
@@ -1064,7 +1194,10 @@ export class VendorService {
 
     const populatedOrder = await this.vendorOrderModel
       .findById(vendorOrder._id)
-      .populate('deliveryPersonId', 'name phone vehicleType vehicleNumber status')
+      .populate(
+        'deliveryPersonId',
+        'name phone vehicleType vehicleNumber status',
+      )
       .lean();
 
     return ApiResponse.success('Rider assigned successfully', populatedOrder);
@@ -1142,7 +1275,9 @@ export class VendorService {
     }
     const vendor = await this.vendorModel.findById(vendorId);
     if (!vendor || vendor.status !== 'APPROVED') {
-      throw new ForbiddenException('Vendor account is not approved by admin yet');
+      throw new ForbiddenException(
+        'Vendor account is not approved by admin yet',
+      );
     }
     const vendorObjectId = new Types.ObjectId(vendorId);
 
@@ -1521,13 +1656,13 @@ export class VendorService {
       {
         $group: {
           _id: {
-            $dateToString: { format: '%Y-%m-%d', date: '$createdAt' }
+            $dateToString: { format: '%Y-%m-%d', date: '$createdAt' },
           },
           totalOrders: { $sum: 1 },
-          totalRevenue: { $sum: '$grandTotal' }
-        }
+          totalRevenue: { $sum: '$grandTotal' },
+        },
       },
-      { $sort: { _id: 1 } }
+      { $sort: { _id: 1 } },
     ]);
 
     return ApiResponse.success('Sales performance fetched', data);
@@ -1553,17 +1688,20 @@ export class VendorService {
           _id: '$items.productId',
           productName: { $first: '$items.productName' },
           totalQuantitySold: { $sum: '$items.quantity' },
-          totalRevenue: { $sum: '$items.totalPrice' }
-        }
+          totalRevenue: { $sum: '$items.totalPrice' },
+        },
       },
-      { $sort: { totalRevenue: -1 } }
+      { $sort: { totalRevenue: -1 } },
     ]);
 
     return ApiResponse.success('Top selling products fetched', data);
   }
 
   // 3. Percentage of Products in Sales (Pie Chart)
-  async getProductSalesPercentage(vendorId: string, filter: DashboardFilterDTO) {
+  async getProductSalesPercentage(
+    vendorId: string,
+    filter: DashboardFilterDTO,
+  ) {
     const { startDate, endDate } = this.getDateRange(filter);
 
     const matchStage: any = {
@@ -1581,16 +1719,21 @@ export class VendorService {
         $group: {
           _id: '$items.productId',
           productName: { $first: '$items.productName' },
-          totalQuantity: { $sum: '$items.quantity' }
-        }
-      }
+          totalQuantity: { $sum: '$items.quantity' },
+        },
+      },
     ]);
 
-    const totalQuantity = productsAggr.reduce((acc, curr) => acc + curr.totalQuantity, 0);
+    const totalQuantity = productsAggr.reduce(
+      (acc, curr) => acc + curr.totalQuantity,
+      0,
+    );
 
-    const data = productsAggr.map(item => ({
+    const data = productsAggr.map((item) => ({
       ...item,
-      percentage: totalQuantity ? parseFloat(((item.totalQuantity / totalQuantity) * 100).toFixed(2)) : 0
+      percentage: totalQuantity
+        ? parseFloat(((item.totalQuantity / totalQuantity) * 100).toFixed(2))
+        : 0,
     }));
 
     return ApiResponse.success('Product sales percentage fetched', data);
@@ -1612,19 +1755,19 @@ export class VendorService {
           _id: {
             city: '$shippingAddress.city',
             state: '$shippingAddress.state',
-            pincode: '$shippingAddress.pincode'
+            pincode: '$shippingAddress.pincode',
           },
           orderCount: { $sum: 1 },
-          uniqueCustomers: { $addToSet: '$userId' }
-        }
+          uniqueCustomers: { $addToSet: '$userId' },
+        },
       },
       {
         $project: {
           _id: 1,
           orderCount: 1,
-          customerCount: { $size: '$uniqueCustomers' }
-        }
-      }
+          customerCount: { $size: '$uniqueCustomers' },
+        },
+      },
     ]);
 
     return ApiResponse.success('Customer demographics fetched', data);
@@ -1639,7 +1782,8 @@ export class VendorService {
       createdAt: { $gte: startDate, $lte: endDate },
     };
 
-    const orders = await this.vendorOrderModel.find(matchStage)
+    const orders = await this.vendorOrderModel
+      .find(matchStage)
       .populate('userId', 'name email phone')
       .lean();
 
@@ -1649,22 +1793,36 @@ export class VendorService {
 
     const csvRows: any = [];
     // Header
-    csvRows.push(['Order Number', 'Date', 'Customer Name', 'Customer Email', 'City', 'State', 'Order Status', 'Payment Status', 'Grand Total'].join(','));
+    csvRows.push(
+      [
+        'Order Number',
+        'Date',
+        'Customer Name',
+        'Customer Email',
+        'City',
+        'State',
+        'Order Status',
+        'Payment Status',
+        'Grand Total',
+      ].join(','),
+    );
 
     // Rows
     for (const order of orders) {
       const user = order.userId as any;
-      csvRows.push([
-        order.orderNumber,
-        new Date(order?.createdAt as any).toISOString(),
-        user?.name || 'N/A',
-        user?.email || 'N/A',
-        order.shippingAddress?.city || 'N/A',
-        order.shippingAddress?.state || 'N/A',
-        order.orderStatus,
-        order.paymentStatus,
-        order.grandTotal
-      ].join(','));
+      csvRows.push(
+        [
+          order.orderNumber,
+          new Date(order?.createdAt as any).toISOString(),
+          user?.name || 'N/A',
+          user?.email || 'N/A',
+          order.shippingAddress?.city || 'N/A',
+          order.shippingAddress?.state || 'N/A',
+          order.orderStatus,
+          order.paymentStatus,
+          order.grandTotal,
+        ].join(','),
+      );
     }
 
     return csvRows.join('\n');

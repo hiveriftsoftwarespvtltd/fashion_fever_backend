@@ -27,7 +27,7 @@ import { InfluencerStatus } from './schema/influencer.schema';
 
 @Controller('influencers')
 export class InfluencerController {
-  constructor(private readonly influencerService: InfluencerService) { }
+  constructor(private readonly influencerService: InfluencerService) {}
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @AdminAccess(AdminModule.INFLUENCERS, AccessType.READ)
@@ -68,7 +68,10 @@ export class InfluencerController {
   @Roles(UserRole.INFLUENCER)
   @Get('analytics')
   analytics(@Req() req: any, @Query('days') days: number) {
-    return this.influencerService.influencerAnalytics(req.user.influencerId, days);
+    return this.influencerService.influencerAnalytics(
+      req.user.influencerId,
+      days,
+    );
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -81,15 +84,27 @@ export class InfluencerController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @AdminAccess(AdminModule.INFLUENCERS, AccessType.READ)
   @Get('influencer-requests')
-  async getInfluencerRequests(@Query('page') page: number, @Query('limit') limit: number) {
-    return await this.influencerService.getAllPendingInfluencersRequests(page, limit);
+  async getInfluencerRequests(
+    @Query('page') page: number,
+    @Query('limit') limit: number,
+  ) {
+    return await this.influencerService.getAllPendingInfluencersRequests(
+      page,
+      limit,
+    );
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @AdminAccess(AdminModule.INFLUENCERS, AccessType.WRITE)
   @Put('update-influencer-status/:influencerId')
-  async updateInfluencerStatus(@Param('influencerId') influencerId: string, @Body('status') status: InfluencerStatus) {
-    return await this.influencerService.changeInfluencerStatus(influencerId, status);
+  async updateInfluencerStatus(
+    @Param('influencerId') influencerId: string,
+    @Body('status') status: InfluencerStatus,
+  ) {
+    return await this.influencerService.changeInfluencerStatus(
+      influencerId,
+      status,
+    );
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -100,7 +115,10 @@ export class InfluencerController {
     @Param('id') id: string,
     @Body() dto: UpdateCommissionRateDto,
   ) {
-    return await this.influencerService.updateCommissionRate(id, dto.commissionRate);
+    return await this.influencerService.updateCommissionRate(
+      id,
+      dto.commissionRate,
+    );
   }
 
   @Get('check-referral/:code')
@@ -111,15 +129,26 @@ export class InfluencerController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.SUPER_ADMIN, UserRole.INFLUENCER)
   @Post('send-influencer-invitation-link')
-  async sendInfluencerInvitationLink(@Body('email') email: string, @Body('name') name: string, @Req() req: any) {
-    return await this.influencerService.sendInfluencerInvitationLink(email, name, req.user._id);
+  async sendInfluencerInvitationLink(
+    @Body('email') email: string,
+    @Body('name') name: string,
+    @Req() req: any,
+  ) {
+    return await this.influencerService.sendInfluencerInvitationLink(
+      email,
+      name,
+      req.user._id,
+    );
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.INFLUENCER)
   @Post('submit-story')
   async submitStoryLink(@Req() req: any, @Body('storyUrl') storyUrl: string) {
-    return await this.influencerService.submitStoryLink(req.user.influencerId, storyUrl);
+    return await this.influencerService.submitStoryLink(
+      req.user.influencerId,
+      storyUrl,
+    );
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -127,7 +156,10 @@ export class InfluencerController {
   @Put('upload-profile-picture')
   @UseInterceptors(FileInterceptor('file'))
   async uploadProfilePicture(@Req() req: any, @UploadedFile() file: any) {
-    return await this.influencerService.uploadProfilePicture(req.user.influencerId, file);
+    return await this.influencerService.uploadProfilePicture(
+      req.user.influencerId,
+      file,
+    );
   }
 
   @Get('get-influencer-stories')
@@ -139,13 +171,19 @@ export class InfluencerController {
   @Roles(UserRole.SUPER_ADMIN, UserRole.INFLUENCER)
   @Delete('delete-story/:storyId')
   async deleteStory(@Req() req: any, @Param('storyId') storyId: string) {
-    return await this.influencerService.deleteStory(storyId, req.user.roles, req.user.influencerId);
+    return await this.influencerService.deleteStory(
+      storyId,
+      req.user.roles,
+      req.user.influencerId,
+    );
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.INFLUENCER)
   @Delete('delete-profile-picture')
   async deleteProfilePicture(@Req() req: any) {
-    return await this.influencerService.deleteProfilePicture(req.user.influencerId);
+    return await this.influencerService.deleteProfilePicture(
+      req.user.influencerId,
+    );
   }
 }

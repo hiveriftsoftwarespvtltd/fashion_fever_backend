@@ -1,5 +1,9 @@
 import { Types } from 'mongoose';
-import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  NotFoundException,
+} from '@nestjs/common';
 import { CommissionStatus } from './schema/influencer-commision-rate.schema';
 import { InfluencerPayoutStatus } from './schema/influencer-payout.schema';
 import { OrderStatus, PaymentStatus } from '../order/schema/order.schema';
@@ -101,7 +105,8 @@ describe('Phase 7: Creator Payout & Wallet System', () => {
         _id: data._id || new Types.ObjectId(),
         userId: data.userId || new Types.ObjectId(),
         name: data.name || 'Test Creator',
-        commissionRate: data.commissionRate !== undefined ? data.commissionRate : 10,
+        commissionRate:
+          data.commissionRate !== undefined ? data.commissionRate : 10,
         pendingCommission: data.pendingCommission || 0,
         approvedCommission: data.approvedCommission || 0,
         paidCommission: data.paidCommission || 0,
@@ -114,14 +119,14 @@ describe('Phase 7: Creator Payout & Wallet System', () => {
     // Real-time ledger balance calculation
     getInfluencerWalletBalance(influencerId: Types.ObjectId) {
       const creatorComms = this.commissions.filter(
-        (c) => c.influencerId.toString() === influencerId.toString()
+        (c) => c.influencerId.toString() === influencerId.toString(),
       );
 
       const pendingBalance = parseFloat(
         creatorComms
           .filter((c) => c.status === CommissionStatus.PENDING && !c.isReversed)
           .reduce((sum, c) => sum + c.commissionAmount, 0)
-          .toFixed(2)
+          .toFixed(2),
       );
 
       const approvedBalance = parseFloat(
@@ -131,10 +136,10 @@ describe('Phase 7: Creator Payout & Wallet System', () => {
               c.status === CommissionStatus.APPROVED &&
               !c.isSettled &&
               !c.isReversed &&
-              !c.payoutId
+              !c.payoutId,
           )
           .reduce((sum, c) => sum + c.commissionAmount, 0)
-          .toFixed(2)
+          .toFixed(2),
       );
 
       const lockedInPayoutBalance = parseFloat(
@@ -144,21 +149,21 @@ describe('Phase 7: Creator Payout & Wallet System', () => {
               c.status === CommissionStatus.APPROVED &&
               !c.isSettled &&
               !c.isReversed &&
-              c.payoutId !== null
+              c.payoutId !== null,
           )
           .reduce((sum, c) => sum + c.commissionAmount, 0)
-          .toFixed(2)
+          .toFixed(2),
       );
 
       const paidBalance = parseFloat(
         creatorComms
           .filter((c) => c.status === CommissionStatus.PAID && c.isSettled)
           .reduce((sum, c) => sum + c.commissionAmount, 0)
-          .toFixed(2)
+          .toFixed(2),
       );
 
       const lifetimeEarnings = parseFloat(
-        (approvedBalance + lockedInPayoutBalance + paidBalance).toFixed(2)
+        (approvedBalance + lockedInPayoutBalance + paidBalance).toFixed(2),
       );
 
       return {
@@ -183,11 +188,11 @@ describe('Phase 7: Creator Payout & Wallet System', () => {
       const activePending = this.payouts.find(
         (p) =>
           p.influencerId.toString() === influencerId.toString() &&
-          p.status === InfluencerPayoutStatus.PENDING
+          p.status === InfluencerPayoutStatus.PENDING,
       );
       if (activePending) {
         throw new ConflictException(
-          'You already have a pending payout request in review. Please wait for admin settlement.'
+          'You already have a pending payout request in review. Please wait for admin settlement.',
         );
       }
 
@@ -198,23 +203,31 @@ describe('Phase 7: Creator Payout & Wallet System', () => {
           c.status === CommissionStatus.APPROVED &&
           !c.isSettled &&
           !c.isReversed &&
-          !c.payoutId
+          !c.payoutId,
       );
 
       // Exact sum from snapshot commissionAmount (no slab recalculation)
       const claimableAmount = parseFloat(
-        eligibleCommissions.reduce((sum, c) => sum + c.commissionAmount, 0).toFixed(2)
+        eligibleCommissions
+          .reduce((sum, c) => sum + c.commissionAmount, 0)
+          .toFixed(2),
       );
 
       // Rule 1: Minimum payout threshold exactly ₹500
       if (claimableAmount < 500) {
         throw new BadRequestException(
-          `Minimum payout threshold is ₹500. Your approved balance is ₹${claimableAmount.toFixed(2)}.`
+          `Minimum payout threshold is ₹500. Your approved balance is ₹${claimableAmount.toFixed(2)}.`,
         );
       }
 
-      const totalSales = eligibleCommissions.reduce((sum, c) => sum + c.finalOrderAmount, 0);
-      const totalProfit = eligibleCommissions.reduce((sum, c) => sum + c.netProfit, 0);
+      const totalSales = eligibleCommissions.reduce(
+        (sum, c) => sum + c.finalOrderAmount,
+        0,
+      );
+      const totalProfit = eligibleCommissions.reduce(
+        (sum, c) => sum + c.netProfit,
+        0,
+      );
 
       const payoutId = new Types.ObjectId();
       const payout: MockPayout = {
@@ -248,16 +261,26 @@ describe('Phase 7: Creator Payout & Wallet System', () => {
     }
 
     // Admin settlements: Settle payout with mandatory transaction ID
-    settlePayout(payoutId: Types.ObjectId, transactionId: string, remarks?: string) {
+    settlePayout(
+      payoutId: Types.ObjectId,
+      transactionId: string,
+      remarks?: string,
+    ) {
       // Rule 5: Non-empty transactionId is mandatory
-      if (!transactionId || typeof transactionId !== 'string' || transactionId.trim() === '') {
+      if (
+        !transactionId ||
+        typeof transactionId !== 'string' ||
+        transactionId.trim() === ''
+      ) {
         throw new BadRequestException(
-          'Transaction ID / bank reference is required to settle payout'
+          'Transaction ID / bank reference is required to settle payout',
         );
       }
       const cleanTxnId = transactionId.trim();
 
-      const payout = this.payouts.find((p) => p._id.toString() === payoutId.toString());
+      const payout = this.payouts.find(
+        (p) => p._id.toString() === payoutId.toString(),
+      );
       if (!payout) {
         throw new NotFoundException('Payout not found');
       }
@@ -265,19 +288,21 @@ describe('Phase 7: Creator Payout & Wallet System', () => {
       // Rule 6: Settlement idempotency (can only be settled from PENDING)
       if (payout.status !== InfluencerPayoutStatus.PENDING) {
         throw new ConflictException(
-          `Payout cannot be settled because it is in ${payout.status} state`
+          `Payout cannot be settled because it is in ${payout.status} state`,
         );
       }
 
       const linkedComms = this.commissions.filter(
         (c) =>
-          payout.commissionIds.some((id) => id.toString() === c._id.toString()) &&
+          payout.commissionIds.some(
+            (id) => id.toString() === c._id.toString(),
+          ) &&
           !c.isReversed &&
-          c.status !== CommissionStatus.CANCELLED
+          c.status !== CommissionStatus.CANCELLED,
       );
 
       const payoutAmount = parseFloat(
-        linkedComms.reduce((sum, c) => sum + c.commissionAmount, 0).toFixed(2)
+        linkedComms.reduce((sum, c) => sum + c.commissionAmount, 0).toFixed(2),
       );
 
       payout.status = InfluencerPayoutStatus.PAID;
@@ -314,14 +339,16 @@ describe('Phase 7: Creator Payout & Wallet System', () => {
       }
       const cleanReason = reason.trim();
 
-      const payout = this.payouts.find((p) => p._id.toString() === payoutId.toString());
+      const payout = this.payouts.find(
+        (p) => p._id.toString() === payoutId.toString(),
+      );
       if (!payout) {
         throw new NotFoundException('Payout not found');
       }
 
       if (payout.status !== InfluencerPayoutStatus.PENDING) {
         throw new ConflictException(
-          `Payout cannot be rejected because it is in ${payout.status} state`
+          `Payout cannot be rejected because it is in ${payout.status} state`,
         );
       }
 
@@ -331,7 +358,9 @@ describe('Phase 7: Creator Payout & Wallet System', () => {
       // Rule 7: Linked commissions unlocked with payoutId = null, remain APPROVED
       for (const comm of this.commissions) {
         if (
-          payout.commissionIds.some((id) => id.toString() === comm._id.toString()) &&
+          payout.commissionIds.some(
+            (id) => id.toString() === comm._id.toString(),
+          ) &&
           !comm.isSettled
         ) {
           comm.payoutId = null;
@@ -348,14 +377,16 @@ describe('Phase 7: Creator Payout & Wallet System', () => {
       }
       const cleanReason = reason.trim();
 
-      const payout = this.payouts.find((p) => p._id.toString() === payoutId.toString());
+      const payout = this.payouts.find(
+        (p) => p._id.toString() === payoutId.toString(),
+      );
       if (!payout) {
         throw new NotFoundException('Payout not found');
       }
 
       if (payout.status !== InfluencerPayoutStatus.PENDING) {
         throw new ConflictException(
-          `Payout cannot be marked failed because it is in ${payout.status} state`
+          `Payout cannot be marked failed because it is in ${payout.status} state`,
         );
       }
 
@@ -365,7 +396,9 @@ describe('Phase 7: Creator Payout & Wallet System', () => {
       // Rule 8: Release locked commissions back to APPROVED/payable state
       for (const comm of this.commissions) {
         if (
-          payout.commissionIds.some((id) => id.toString() === comm._id.toString()) &&
+          payout.commissionIds.some(
+            (id) => id.toString() === comm._id.toString(),
+          ) &&
           !comm.isSettled
         ) {
           comm.payoutId = null;
@@ -376,9 +409,12 @@ describe('Phase 7: Creator Payout & Wallet System', () => {
     }
 
     // Rule 9: Late return / reversal before payout settlement
-    reverseCommissionBeforePayout(vendorOrderId: Types.ObjectId, reason: string) {
+    reverseCommissionBeforePayout(
+      vendorOrderId: Types.ObjectId,
+      reason: string,
+    ) {
       const comm = this.commissions.find(
-        (c) => c.vendorOrderId.toString() === vendorOrderId.toString()
+        (c) => c.vendorOrderId.toString() === vendorOrderId.toString(),
       );
       if (!comm || comm.isReversed) return null;
 
@@ -389,23 +425,29 @@ describe('Phase 7: Creator Payout & Wallet System', () => {
       // If attached to a PENDING payout, safely unlink it and adjust payout amount
       if (comm.payoutId) {
         const payout = this.payouts.find(
-          (p) => p._id.toString() === comm.payoutId!.toString()
+          (p) => p._id.toString() === comm.payoutId!.toString(),
         );
         if (payout && payout.status === InfluencerPayoutStatus.PENDING) {
           payout.commissionIds = payout.commissionIds.filter(
-            (id) => id.toString() !== comm._id.toString()
+            (id) => id.toString() !== comm._id.toString(),
           );
           payout.totalCommission = Math.max(
             0,
-            parseFloat((payout.totalCommission - comm.commissionAmount).toFixed(2))
+            parseFloat(
+              (payout.totalCommission - comm.commissionAmount).toFixed(2),
+            ),
           );
-          payout.totalSales = Math.max(0, payout.totalSales - comm.finalOrderAmount);
+          payout.totalSales = Math.max(
+            0,
+            payout.totalSales - comm.finalOrderAmount,
+          );
           payout.totalOrders = payout.commissionIds.length;
 
           // If no commissions remain, cancel payout
           if (payout.commissionIds.length === 0) {
             payout.status = InfluencerPayoutStatus.REJECTED;
-            payout.remarks = 'All linked commissions were cancelled/reversed before payout settlement';
+            payout.remarks =
+              'All linked commissions were cancelled/reversed before payout settlement';
           }
         }
         comm.payoutId = null;
@@ -418,7 +460,11 @@ describe('Phase 7: Creator Payout & Wallet System', () => {
      * Corrective Fix: requestPayoutWithUpi — validates UPI VPA format before building snapshot.
      * Mirrors backend DTO @Matches validation and service bankAccountSnapshot logic.
      */
-    requestPayoutWithUpi(influencerId: Types.ObjectId, upiId: string | undefined, remarks?: string) {
+    requestPayoutWithUpi(
+      influencerId: Types.ObjectId,
+      upiId: string | undefined,
+      remarks?: string,
+    ) {
       // Validate UPI format if provided (mirrors @Matches on DTO)
       const UPI_REGEX = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9]+$/;
       if (upiId !== undefined && upiId !== null && upiId.trim() !== '') {
@@ -441,7 +487,9 @@ describe('Phase 7: Creator Payout & Wallet System', () => {
           p.status === InfluencerPayoutStatus.PENDING,
       );
       if (activePending) {
-        throw new ConflictException('You already have a pending payout request in review.');
+        throw new ConflictException(
+          'You already have a pending payout request in review.',
+        );
       }
 
       // Find eligible commissions
@@ -455,7 +503,9 @@ describe('Phase 7: Creator Payout & Wallet System', () => {
       );
 
       const claimableAmount = parseFloat(
-        eligibleCommissions.reduce((sum, c) => sum + c.commissionAmount, 0).toFixed(2),
+        eligibleCommissions
+          .reduce((sum, c) => sum + c.commissionAmount, 0)
+          .toFixed(2),
       );
 
       if (claimableAmount < 500) {
@@ -476,8 +526,14 @@ describe('Phase 7: Creator Payout & Wallet System', () => {
         influencerId: influencer._id,
         influencerUserId: influencer.userId,
         totalOrders: eligibleCommissions.length,
-        totalSales: eligibleCommissions.reduce((sum, c) => sum + c.finalOrderAmount, 0),
-        totalProfit: eligibleCommissions.reduce((sum, c) => sum + c.netProfit, 0),
+        totalSales: eligibleCommissions.reduce(
+          (sum, c) => sum + c.finalOrderAmount,
+          0,
+        ),
+        totalProfit: eligibleCommissions.reduce(
+          (sum, c) => sum + c.netProfit,
+          0,
+        ),
         commissionRate: eligibleCommissions[0]?.commissionRate || 0,
         totalCommission: claimableAmount,
         payoutMonth: new Date().getMonth() + 1,
@@ -515,7 +571,8 @@ describe('Phase 7: Creator Payout & Wallet System', () => {
 
       comm.isReversed = true;
       comm.status = CommissionStatus.REVERSED;
-      comm.reversalReason = 'Post-settlement return (admin manual action required)';
+      comm.reversalReason =
+        'Post-settlement return (admin manual action required)';
       comm.payoutId = null;
       return comm;
     }
@@ -549,8 +606,12 @@ describe('Phase 7: Creator Payout & Wallet System', () => {
       expect(balance.approvedBalance).toBe(450);
       expect(balance.canRequestPayout).toBe(false);
 
-      expect(() => service.requestPayout(influencerId)).toThrow(BadRequestException);
-      expect(() => service.requestPayout(influencerId)).toThrow(/Minimum payout threshold is ₹500/);
+      expect(() => service.requestPayout(influencerId)).toThrow(
+        BadRequestException,
+      );
+      expect(() => service.requestPayout(influencerId)).toThrow(
+        /Minimum payout threshold is ₹500/,
+      );
     });
 
     it('should accept payout request when approvedBalance is exactly ₹500', () => {
@@ -565,7 +626,10 @@ describe('Phase 7: Creator Payout & Wallet System', () => {
       expect(balance.approvedBalance).toBe(500);
       expect(balance.canRequestPayout).toBe(true);
 
-      const payout = service.requestPayout(influencerId, 'First payout request');
+      const payout = service.requestPayout(
+        influencerId,
+        'First payout request',
+      );
       expect(payout).toBeDefined();
       expect(payout.totalCommission).toBe(500);
       expect(payout.status).toBe(InfluencerPayoutStatus.PENDING);
@@ -648,7 +712,7 @@ describe('Phase 7: Creator Payout & Wallet System', () => {
     it('should calculate payout amount from exact snapshotted commissionAmount (no slab recalculation)', () => {
       service.createCommission({
         influencerId,
-        commissionAmount: 185.50,
+        commissionAmount: 185.5,
         status: CommissionStatus.APPROVED,
         isDelivered: true,
       });
@@ -682,7 +746,9 @@ describe('Phase 7: Creator Payout & Wallet System', () => {
       expect(balance.lockedInPayoutBalance).toBe(550);
 
       // Attempting second payout throws ConflictException
-      expect(() => service.requestPayout(influencerId)).toThrow(ConflictException);
+      expect(() => service.requestPayout(influencerId)).toThrow(
+        ConflictException,
+      );
     });
   });
 
@@ -696,8 +762,12 @@ describe('Phase 7: Creator Payout & Wallet System', () => {
       });
       const payout = service.requestPayout(influencerId);
 
-      expect(() => service.settlePayout(payout._id, '')).toThrow(BadRequestException);
-      expect(() => service.settlePayout(payout._id, '   ')).toThrow(BadRequestException);
+      expect(() => service.settlePayout(payout._id, '')).toThrow(
+        BadRequestException,
+      );
+      expect(() => service.settlePayout(payout._id, '   ')).toThrow(
+        BadRequestException,
+      );
     });
 
     it('should settle payout successfully with valid transactionId and mark commissions PAID', () => {
@@ -709,7 +779,11 @@ describe('Phase 7: Creator Payout & Wallet System', () => {
       });
       const payout = service.requestPayout(influencerId);
 
-      const settled = service.settlePayout(payout._id, 'UTR-SBI-987654321', 'NEFT batch 1');
+      const settled = service.settlePayout(
+        payout._id,
+        'UTR-SBI-987654321',
+        'NEFT batch 1',
+      );
       expect(settled.status).toBe(InfluencerPayoutStatus.PAID);
       expect(settled.transactionId).toBe('UTR-SBI-987654321');
       expect(settled.isSettled).toBe(true);
@@ -738,7 +812,7 @@ describe('Phase 7: Creator Payout & Wallet System', () => {
 
       // Attempting to settle again
       expect(() => service.settlePayout(payout._id, 'UTR-DUPLICATE')).toThrow(
-        ConflictException
+        ConflictException,
       );
     });
   });
@@ -754,7 +828,10 @@ describe('Phase 7: Creator Payout & Wallet System', () => {
       const payout = service.requestPayout(influencerId);
       expect(comm.payoutId).toBeDefined();
 
-      const rejected = service.rejectPayout(payout._id, 'Incorrect bank IFSC code');
+      const rejected = service.rejectPayout(
+        payout._id,
+        'Incorrect bank IFSC code',
+      );
       expect(rejected.status).toBe(InfluencerPayoutStatus.REJECTED);
       expect(rejected.remarks).toBe('Incorrect bank IFSC code');
 
@@ -779,8 +856,12 @@ describe('Phase 7: Creator Payout & Wallet System', () => {
       });
       const payout = service.requestPayout(influencerId);
 
-      expect(() => service.rejectPayout(payout._id, '')).toThrow(BadRequestException);
-      expect(() => service.rejectPayout(payout._id, '   ')).toThrow(BadRequestException);
+      expect(() => service.rejectPayout(payout._id, '')).toThrow(
+        BadRequestException,
+      );
+      expect(() => service.rejectPayout(payout._id, '   ')).toThrow(
+        BadRequestException,
+      );
     });
 
     it('should unlock commissions back to APPROVED payable state on payout failure', () => {
@@ -792,7 +873,10 @@ describe('Phase 7: Creator Payout & Wallet System', () => {
       });
       const payout = service.requestPayout(influencerId);
 
-      const failed = service.failPayout(payout._id, 'IMPS transfer bounced by beneficiary bank');
+      const failed = service.failPayout(
+        payout._id,
+        'IMPS transfer bounced by beneficiary bank',
+      );
       expect(failed.status).toBe(InfluencerPayoutStatus.FAILED);
       expect(comm.payoutId).toBeNull();
       expect(comm.status).toBe(CommissionStatus.APPROVED);
@@ -828,7 +912,10 @@ describe('Phase 7: Creator Payout & Wallet System', () => {
       expect(payout.commissionIds.length).toBe(2);
 
       // Customer returns vOrder2 after commission was approved and requested in payout
-      service.reverseCommissionBeforePayout(vOrder2, 'Customer returned after delivery');
+      service.reverseCommissionBeforePayout(
+        vOrder2,
+        'Customer returned after delivery',
+      );
 
       expect(comm2.status).toBe(CommissionStatus.REVERSED);
       expect(comm2.isReversed).toBe(true);
@@ -961,22 +1048,41 @@ describe('Phase 7: Creator Payout & Wallet System', () => {
       });
 
       // Invalid UPI formats
-      expect(() => service.requestPayoutWithUpi(influencerId, 'not-a-upi')).toThrow(BadRequestException);
-      expect(() => service.requestPayoutWithUpi(influencerId, 'noatsign')).toThrow(BadRequestException);
-      expect(() => service.requestPayoutWithUpi(influencerId, '@bank')).toThrow(BadRequestException);
-      expect(() => service.requestPayoutWithUpi(influencerId, 'spaces here@bank')).toThrow(BadRequestException);
+      expect(() =>
+        service.requestPayoutWithUpi(influencerId, 'not-a-upi'),
+      ).toThrow(BadRequestException);
+      expect(() =>
+        service.requestPayoutWithUpi(influencerId, 'noatsign'),
+      ).toThrow(BadRequestException);
+      expect(() => service.requestPayoutWithUpi(influencerId, '@bank')).toThrow(
+        BadRequestException,
+      );
+      expect(() =>
+        service.requestPayoutWithUpi(influencerId, 'spaces here@bank'),
+      ).toThrow(BadRequestException);
     });
 
     it('should accept correctly formatted UPI IDs', () => {
       // Test various valid UPI VPA formats
-      const validUpis = ['priya@ybl', 'creator.123@paytm', 'user-name@okaxis', 'test_handle@kotak'];
+      const validUpis = [
+        'priya@ybl',
+        'creator.123@paytm',
+        'user-name@okaxis',
+        'test_handle@kotak',
+      ];
       for (const upi of validUpis) {
         const upiRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9]+$/;
         expect(upiRegex.test(upi)).toBe(true);
       }
 
       // Invalid UPI formats should fail the regex
-      const invalidUpis = ['not-a-upi', 'noatsign', '@bank', 'spaces here@bank', ''];
+      const invalidUpis = [
+        'not-a-upi',
+        'noatsign',
+        '@bank',
+        'spaces here@bank',
+        '',
+      ];
       for (const upi of invalidUpis) {
         const upiRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9]+$/;
         if (upi === '') {
@@ -996,11 +1102,14 @@ describe('Phase 7: Creator Payout & Wallet System', () => {
         isDelivered: true,
       });
 
-      const payout = service.requestPayoutWithUpi(influencerId, 'creator@paytm');
+      const payout = service.requestPayoutWithUpi(
+        influencerId,
+        'creator@paytm',
+      );
 
       // Admin reads the payout — bankAccountSnapshot must be visible
       const payoutForAdmin = service.payouts.find(
-        (p) => p._id.toString() === payout._id.toString()
+        (p) => p._id.toString() === payout._id.toString(),
       );
       expect(payoutForAdmin).toBeDefined();
       expect(payoutForAdmin!.bankAccountSnapshot?.upiId).toBe('creator@paytm');
@@ -1035,7 +1144,7 @@ describe('Phase 7: Creator Payout & Wallet System', () => {
 
       // Payout PAID ↔ Commissions PAID: invariant holds
       const allLinkedCommsPaid = [comm1, comm2].every(
-        (c) => c.status === CommissionStatus.PAID && c.isSettled
+        (c) => c.status === CommissionStatus.PAID && c.isSettled,
       );
       expect(allLinkedCommsPaid).toBe(true);
       expect(payout.status).toBe(InfluencerPayoutStatus.PAID);
@@ -1052,7 +1161,9 @@ describe('Phase 7: Creator Payout & Wallet System', () => {
       service.settlePayout(payout._id, 'UTR-FIRST');
 
       // Second attempt to settle (as if markPayoutPaid was called twice)
-      expect(() => service.settlePayout(payout._id, 'UTR-SECOND')).toThrow(ConflictException);
+      expect(() => service.settlePayout(payout._id, 'UTR-SECOND')).toThrow(
+        ConflictException,
+      );
     });
   });
 
@@ -1098,7 +1209,9 @@ describe('Phase 7: Creator Payout & Wallet System', () => {
       expect(comm.payoutId).toEqual(payout1._id);
 
       // No more eligible commissions → second request should fail (< ₹500)
-      expect(() => service.requestPayout(influencerId)).toThrow(ConflictException);
+      expect(() => service.requestPayout(influencerId)).toThrow(
+        ConflictException,
+      );
     });
   });
 

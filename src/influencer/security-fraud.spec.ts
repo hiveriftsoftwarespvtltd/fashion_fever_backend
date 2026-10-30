@@ -1,12 +1,18 @@
 import { Types } from 'mongoose';
-import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
-import { CommissionStatus, AttributionSource } from './schema/influencer-commision-rate.schema';
+import {
+  BadRequestException,
+  ConflictException,
+  NotFoundException,
+} from '@nestjs/common';
+import {
+  CommissionStatus,
+  AttributionSource,
+} from './schema/influencer-commision-rate.schema';
 import { InfluencerPayoutStatus } from './schema/influencer-payout.schema';
 import { AffiliateTrackingService } from './affiliate-tracking.service';
 import { AdminModule, AccessType } from '../admin/schema/admin.schema';
 
 describe('Phase 9: Security, Anti-Fraud & Idempotency System', () => {
-
   // =========================================================================
   // SECTION 1: Self-Purchase Restrictions (Rule E2)
   // Scenarios 1, 2, 3
@@ -21,19 +27,33 @@ describe('Phase 9: Security, Anti-Fraud & Idempotency System', () => {
     }
 
     function simulateAttributionAndCommissionCreation(ctx: MockOrderContext) {
-      let activeBeneficiaryInfluencer: { _id: string; userId: string; commissionRate: number } | null = null;
+      let activeBeneficiaryInfluencer: {
+        _id: string;
+        userId: string;
+        commissionRate: number;
+      } | null = null;
       let activeAttributionSource: AttributionSource | null = null;
 
       // 1. Coupon self-purchase validation check (Rule E2)
       if (ctx.couponInfluencerUserId) {
-        if (ctx.couponInfluencerUserId.toString() === ctx.buyerUserId.toString()) {
-          throw new BadRequestException('You cannot use your own influencer coupon.');
+        if (
+          ctx.couponInfluencerUserId.toString() === ctx.buyerUserId.toString()
+        ) {
+          throw new BadRequestException(
+            'You cannot use your own influencer coupon.',
+          );
         }
       }
 
       // 2. Active Referral & Coupon Resolution (Rule B2 & Rule E2)
-      if (ctx.referralBeneficiaryUserId && ctx.referralBeneficiaryInfluencerId) {
-        if (ctx.referralBeneficiaryUserId.toString() === ctx.buyerUserId.toString()) {
+      if (
+        ctx.referralBeneficiaryUserId &&
+        ctx.referralBeneficiaryInfluencerId
+      ) {
+        if (
+          ctx.referralBeneficiaryUserId.toString() ===
+          ctx.buyerUserId.toString()
+        ) {
           // Self-purchase via own referral link: suppress attribution, create NO commission record
           activeBeneficiaryInfluencer = null;
           activeAttributionSource = null;
@@ -129,7 +149,9 @@ describe('Phase 9: Security, Anti-Fraud & Idempotency System', () => {
       expect(result.activeAttributionSource).toBe(AttributionSource.REFERRAL);
       expect(result.commissionsCreated.length).toBe(1);
       expect(result.commissionsCreated[0].commissionAmount).toBe(100);
-      expect(result.commissionsCreated[0].status).toBe(CommissionStatus.PENDING);
+      expect(result.commissionsCreated[0].status).toBe(
+        CommissionStatus.PENDING,
+      );
     });
   });
 
@@ -162,7 +184,10 @@ describe('Phase 9: Security, Anti-Fraud & Idempotency System', () => {
 
       mockAffliateProgramModel = {
         findOne: jest.fn().mockImplementation((query) => {
-          if (query.referralCode === programDoc.referralCode && query.isActive) {
+          if (
+            query.referralCode === programDoc.referralCode &&
+            query.isActive
+          ) {
             return Promise.resolve(programDoc);
           }
           return Promise.resolve(null);
@@ -184,29 +209,37 @@ describe('Phase 9: Security, Anti-Fraud & Idempotency System', () => {
       };
 
       mockAffliateRateLimitModel = {
-        findOneAndUpdate: jest.fn().mockImplementation((filter, update, options) => {
-          const key = `${filter.influencerId}_${filter.ipAddress}`;
-          const existing = rateLimitDb.get(key);
-          const now = update.$set.lastEligibleClickAt;
-          const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+        findOneAndUpdate: jest
+          .fn()
+          .mockImplementation((filter, update, options) => {
+            const key = `${filter.influencerId}_${filter.ipAddress}`;
+            const existing = rateLimitDb.get(key);
+            const now = update.$set.lastEligibleClickAt;
+            const twentyFourHoursAgo = new Date(
+              now.getTime() - 24 * 60 * 60 * 1000,
+            );
 
-          if (!existing) {
-            // Upsert new entry
-            const newDoc = { influencerId: filter.influencerId, ipAddress: filter.ipAddress, lastEligibleClickAt: now };
-            rateLimitDb.set(key, newDoc);
-            return Promise.resolve(newDoc);
-          }
+            if (!existing) {
+              // Upsert new entry
+              const newDoc = {
+                influencerId: filter.influencerId,
+                ipAddress: filter.ipAddress,
+                lastEligibleClickAt: now,
+              };
+              rateLimitDb.set(key, newDoc);
+              return Promise.resolve(newDoc);
+            }
 
-          // Check rolling 24 hour condition: existing.lastEligibleClickAt < twentyFourHoursAgo
-          if (existing.lastEligibleClickAt < twentyFourHoursAgo) {
-            existing.lastEligibleClickAt = now;
-            rateLimitDb.set(key, existing);
-            return Promise.resolve(existing);
-          }
+            // Check rolling 24 hour condition: existing.lastEligibleClickAt < twentyFourHoursAgo
+            if (existing.lastEligibleClickAt < twentyFourHoursAgo) {
+              existing.lastEligibleClickAt = now;
+              rateLimitDb.set(key, existing);
+              return Promise.resolve(existing);
+            }
 
-          // Rate limit lease not acquired (within 24h)
-          return Promise.resolve(null);
-        }),
+            // Rate limit lease not acquired (within 24h)
+            return Promise.resolve(null);
+          }),
       };
 
       trackingService = new AffiliateTrackingService(
@@ -229,7 +262,11 @@ describe('Phase 9: Security, Anti-Fraud & Idempotency System', () => {
       ];
 
       for (const botAgent of botAgents) {
-        const res = await trackingService.trackClick('REF123', '103.21.244.2', botAgent);
+        const res = await trackingService.trackClick(
+          'REF123',
+          '103.21.244.2',
+          botAgent,
+        );
         expect(res).toBe(programDoc);
       }
 
@@ -240,7 +277,8 @@ describe('Phase 9: Security, Anti-Fraud & Idempotency System', () => {
     });
 
     it('Scenario 5: First Legitimate Click increments totalClicks and creates audit record', async () => {
-      const userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36';
+      const userAgent =
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36';
       await trackingService.trackClick('REF123', '49.36.120.1', userAgent);
 
       expect(programDoc.totalClicks).toBe(1);
@@ -249,7 +287,8 @@ describe('Phase 9: Security, Anti-Fraud & Idempotency System', () => {
     });
 
     it('Scenario 6: Repeated Same IP/Influencer within 24h does not increment totalClicks', async () => {
-      const userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36';
+      const userAgent =
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36';
       await trackingService.trackClick('REF123', '49.36.120.1', userAgent);
       expect(programDoc.totalClicks).toBe(1);
 
@@ -260,13 +299,16 @@ describe('Phase 9: Security, Anti-Fraud & Idempotency System', () => {
     });
 
     it('Scenario 7: Click After 24h Window from same IP increments totalClicks again', async () => {
-      const userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36';
+      const userAgent =
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36';
       await trackingService.trackClick('REF123', '49.36.120.1', userAgent);
       expect(programDoc.totalClicks).toBe(1);
 
       // Simulate lease timestamp aged 25 hours ago
       const key = `${programDoc.influencerId}_49.36.120.1`;
-      rateLimitDb.set(key, { lastEligibleClickAt: new Date(Date.now() - 25 * 60 * 60 * 1000) });
+      rateLimitDb.set(key, {
+        lastEligibleClickAt: new Date(Date.now() - 25 * 60 * 60 * 1000),
+      });
 
       // Click after 25 hours
       await trackingService.trackClick('REF123', '49.36.120.1', userAgent);
@@ -275,21 +317,30 @@ describe('Phase 9: Security, Anti-Fraud & Idempotency System', () => {
     });
 
     it('Scenario 8: Concurrent Duplicate Clicks increment totalClicks exactly once', async () => {
-      const userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36';
+      const userAgent =
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36';
 
       // Simulate MongoDB atomic upsert race: first one succeeds, second gets duplicate key error code 11000
       let callCount = 0;
-      mockAffliateRateLimitModel.findOneAndUpdate = jest.fn().mockImplementation(() => {
-        callCount++;
-        if (callCount === 1) {
-          return Promise.resolve({ influencerId: programDoc.influencerId, ipAddress: '192.168.1.50', lastEligibleClickAt: new Date() });
-        } else {
-          // MongoDB E11000 duplicate key error on concurrent race
-          const duplicateKeyErr: any = new Error('E11000 duplicate key error collection');
-          duplicateKeyErr.code = 11000;
-          return Promise.reject(duplicateKeyErr);
-        }
-      });
+      mockAffliateRateLimitModel.findOneAndUpdate = jest
+        .fn()
+        .mockImplementation(() => {
+          callCount++;
+          if (callCount === 1) {
+            return Promise.resolve({
+              influencerId: programDoc.influencerId,
+              ipAddress: '192.168.1.50',
+              lastEligibleClickAt: new Date(),
+            });
+          } else {
+            // MongoDB E11000 duplicate key error on concurrent race
+            const duplicateKeyErr: any = new Error(
+              'E11000 duplicate key error collection',
+            );
+            duplicateKeyErr.code = 11000;
+            return Promise.reject(duplicateKeyErr);
+          }
+        });
 
       // Launch 5 parallel simultaneous clicks from the exact same IP
       const promises = [
@@ -339,14 +390,26 @@ describe('Phase 9: Security, Anti-Fraud & Idempotency System', () => {
 
         const host = parsed.hostname.toLowerCase();
         const approvedHosts = [
-          'instagram.com', 'www.instagram.com',
-          'youtube.com', 'www.youtube.com', 'm.youtube.com', 'youtu.be',
-          'facebook.com', 'www.facebook.com', 'm.facebook.com', 'fb.watch',
-          'tiktok.com', 'www.tiktok.com', 'm.tiktok.com', 'vm.tiktok.com',
+          'instagram.com',
+          'www.instagram.com',
+          'youtube.com',
+          'www.youtube.com',
+          'm.youtube.com',
+          'youtu.be',
+          'facebook.com',
+          'www.facebook.com',
+          'm.facebook.com',
+          'fb.watch',
+          'tiktok.com',
+          'www.tiktok.com',
+          'm.tiktok.com',
+          'vm.tiktok.com',
         ];
 
         if (!approvedHosts.includes(host)) {
-          throw new BadRequestException('Unsupported story domain. Allowed platforms: Instagram, YouTube, Facebook, TikTok');
+          throw new BadRequestException(
+            'Unsupported story domain. Allowed platforms: Instagram, YouTube, Facebook, TikTok',
+          );
         }
 
         // Normalize hostname: canonicalize www. prefix for standard social domains
@@ -354,8 +417,15 @@ describe('Phase 9: Security, Anti-Fraud & Idempotency System', () => {
 
         // Selective tracking parameters to remove (Rule: strip ONLY approved marketing/tracking params)
         const trackingParams = new Set([
-          'utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'utm_id',
-          'fbclid', 'igsh', 'si',
+          'utm_source',
+          'utm_medium',
+          'utm_campaign',
+          'utm_term',
+          'utm_content',
+          'utm_id',
+          'fbclid',
+          'igsh',
+          'si',
         ]);
 
         const remainingParams: [string, string][] = [];
@@ -394,7 +464,9 @@ describe('Phase 9: Security, Anti-Fraud & Idempotency System', () => {
         );
 
         if (existingStory) {
-          throw new BadRequestException('This story URL has already been submitted.');
+          throw new BadRequestException(
+            'This story URL has already been submitted.',
+          );
         }
 
         const newStory = {
@@ -403,7 +475,11 @@ describe('Phase 9: Security, Anti-Fraud & Idempotency System', () => {
           storyUrl: canonicalUrl,
         };
         this.storiesDb.push(newStory);
-        return { success: true, message: 'Story submitted successfully', data: newStory };
+        return {
+          success: true,
+          message: 'Story submitted successfully',
+          data: newStory,
+        };
       }
     }
 
@@ -424,28 +500,44 @@ describe('Phase 9: Security, Anti-Fraud & Idempotency System', () => {
       const youtuUrl = 'https://youtu.be/dQw4w9WgXcQ';
       const shortsUrl = 'https://m.youtube.com/shorts/abc123xyz';
 
-      expect(storyService.normalizeStoryUrl(watchUrl)).toBe('https://youtube.com/watch?v=dQw4w9WgXcQ');
-      expect(storyService.normalizeStoryUrl(youtuUrl)).toBe('https://youtu.be/dQw4w9WgXcQ');
-      expect(storyService.normalizeStoryUrl(shortsUrl)).toBe('https://m.youtube.com/shorts/abc123xyz');
+      expect(storyService.normalizeStoryUrl(watchUrl)).toBe(
+        'https://youtube.com/watch?v=dQw4w9WgXcQ',
+      );
+      expect(storyService.normalizeStoryUrl(youtuUrl)).toBe(
+        'https://youtu.be/dQw4w9WgXcQ',
+      );
+      expect(storyService.normalizeStoryUrl(shortsUrl)).toBe(
+        'https://m.youtube.com/shorts/abc123xyz',
+      );
     });
 
     it('Scenario 11: Valid Facebook URL (post, fb.watch) is normalized and accepted', () => {
       const fbPost = 'https://www.facebook.com/creator/posts/123456789/';
       const fbWatch = 'https://fb.watch/v/abc123xyz/';
 
-      expect(storyService.normalizeStoryUrl(fbPost)).toBe('https://facebook.com/creator/posts/123456789');
-      expect(storyService.normalizeStoryUrl(fbWatch)).toBe('https://fb.watch/v/abc123xyz');
+      expect(storyService.normalizeStoryUrl(fbPost)).toBe(
+        'https://facebook.com/creator/posts/123456789',
+      );
+      expect(storyService.normalizeStoryUrl(fbWatch)).toBe(
+        'https://fb.watch/v/abc123xyz',
+      );
     });
 
     it('Scenario 12: Valid TikTok URL (video) is normalized and accepted', () => {
       const tiktokUrl = 'https://www.tiktok.com/@creator/video/9876543210/';
-      expect(storyService.normalizeStoryUrl(tiktokUrl)).toBe('https://tiktok.com/@creator/video/9876543210');
+      expect(storyService.normalizeStoryUrl(tiktokUrl)).toBe(
+        'https://tiktok.com/@creator/video/9876543210',
+      );
     });
 
     it('Scenario 13: HTTP Rejection blocks non-HTTPS protocol with 400 Bad Request', () => {
       const insecureUrl = 'http://instagram.com/reel/C123';
-      expect(() => storyService.normalizeStoryUrl(insecureUrl)).toThrow(BadRequestException);
-      expect(() => storyService.normalizeStoryUrl(insecureUrl)).toThrow('Only secure HTTPS URLs are allowed');
+      expect(() => storyService.normalizeStoryUrl(insecureUrl)).toThrow(
+        BadRequestException,
+      );
+      expect(() => storyService.normalizeStoryUrl(insecureUrl)).toThrow(
+        'Only secure HTTPS URLs are allowed',
+      );
     });
 
     it('Scenario 14: Unapproved Domain Rejection rejects domains outside approved whitelist', () => {
@@ -456,8 +548,12 @@ describe('Phase 9: Security, Anti-Fraud & Idempotency System', () => {
       ];
 
       for (const badUrl of unapprovedUrls) {
-        expect(() => storyService.normalizeStoryUrl(badUrl)).toThrow(BadRequestException);
-        expect(() => storyService.normalizeStoryUrl(badUrl)).toThrow('Unsupported story domain');
+        expect(() => storyService.normalizeStoryUrl(badUrl)).toThrow(
+          BadRequestException,
+        );
+        expect(() => storyService.normalizeStoryUrl(badUrl)).toThrow(
+          'Unsupported story domain',
+        );
       }
     });
 
@@ -471,12 +567,15 @@ describe('Phase 9: Security, Anti-Fraud & Idempotency System', () => {
       ];
 
       for (const m of malicious) {
-        expect(() => storyService.normalizeStoryUrl(m)).toThrow(BadRequestException);
+        expect(() => storyService.normalizeStoryUrl(m)).toThrow(
+          BadRequestException,
+        );
       }
     });
 
     it('Scenario 16: Tracking-Parameter Canonicalization strips marketing params while preserving content params', () => {
-      const urlWithTracking = 'https://www.youtube.com/watch?v=dQw4w9WgXcQ&utm_source=ig&utm_medium=bio&igsh=xyz987&si=abc';
+      const urlWithTracking =
+        'https://www.youtube.com/watch?v=dQw4w9WgXcQ&utm_source=ig&utm_medium=bio&igsh=xyz987&si=abc';
       const normalized = storyService.normalizeStoryUrl(urlWithTracking);
 
       expect(normalized).toBe('https://youtube.com/watch?v=dQw4w9WgXcQ');
@@ -494,7 +593,9 @@ describe('Phase 9: Security, Anti-Fraud & Idempotency System', () => {
         influencerId,
         'https://www.instagram.com/reel/C123/?igsh=abc123',
       );
-      expect(firstSubmission.data.storyUrl).toBe('https://instagram.com/reel/C123');
+      expect(firstSubmission.data.storyUrl).toBe(
+        'https://instagram.com/reel/C123',
+      );
 
       // Submit second story with utm_source tracking (same reel!)
       await expect(
@@ -517,9 +618,19 @@ describe('Phase 9: Security, Anti-Fraud & Idempotency System', () => {
       influencers: Map<string, any> = new Map();
 
       // Mirrors exact logic from PayoutService.settleInfluencerPayout
-      async settleInfluencerPayout(dto: { payoutId: string; transactionId: string; remarks?: string }) {
-        if (!dto.transactionId || typeof dto.transactionId !== 'string' || dto.transactionId.trim() === '') {
-          throw new BadRequestException('Transaction ID / bank reference is required to settle payout');
+      async settleInfluencerPayout(dto: {
+        payoutId: string;
+        transactionId: string;
+        remarks?: string;
+      }) {
+        if (
+          !dto.transactionId ||
+          typeof dto.transactionId !== 'string' ||
+          dto.transactionId.trim() === ''
+        ) {
+          throw new BadRequestException(
+            'Transaction ID / bank reference is required to settle payout',
+          );
         }
         const cleanTransactionId = dto.transactionId.trim();
 
@@ -530,19 +641,35 @@ describe('Phase 9: Security, Anti-Fraud & Idempotency System', () => {
 
         // Idempotency & status transition guards (Task 9.4)
         if (payout.status === InfluencerPayoutStatus.PAID) {
-          if (payout.transactionId && payout.transactionId.trim() === cleanTransactionId) {
-            return { success: true, message: 'Influencer payout already completed (idempotent)', data: payout };
+          if (
+            payout.transactionId &&
+            payout.transactionId.trim() === cleanTransactionId
+          ) {
+            return {
+              success: true,
+              message: 'Influencer payout already completed (idempotent)',
+              data: payout,
+            };
           } else {
-            throw new ConflictException('Payout has already been settled with a different transaction ID.');
+            throw new ConflictException(
+              'Payout has already been settled with a different transaction ID.',
+            );
           }
         }
 
-        if (payout.status === InfluencerPayoutStatus.REJECTED || payout.status === InfluencerPayoutStatus.FAILED) {
-          throw new BadRequestException(`Cannot settle payout in status: ${payout.status}`);
+        if (
+          payout.status === InfluencerPayoutStatus.REJECTED ||
+          payout.status === InfluencerPayoutStatus.FAILED
+        ) {
+          throw new BadRequestException(
+            `Cannot settle payout in status: ${payout.status}`,
+          );
         }
 
         if (payout.status !== InfluencerPayoutStatus.PENDING) {
-          throw new BadRequestException(`Cannot settle payout in status: ${payout.status}`);
+          throw new BadRequestException(
+            `Cannot settle payout in status: ${payout.status}`,
+          );
         }
 
         // Atomic execution
@@ -569,12 +696,20 @@ describe('Phase 9: Security, Anti-Fraud & Idempotency System', () => {
           inf.approvedCommission -= payout.totalCommission;
         }
 
-        return { success: true, message: 'Influencer payout completed', data: payout };
+        return {
+          success: true,
+          message: 'Influencer payout completed',
+          data: payout,
+        };
       }
 
       // Mirrors exact logic from PayoutService.rejectInfluencerPayout
       async rejectInfluencerPayout(dto: { payoutId: string; reason: string }) {
-        if (!dto.reason || typeof dto.reason !== 'string' || dto.reason.trim() === '') {
+        if (
+          !dto.reason ||
+          typeof dto.reason !== 'string' ||
+          dto.reason.trim() === ''
+        ) {
           throw new BadRequestException('Rejection reason is required');
         }
         const cleanReason = dto.reason.trim();
@@ -585,15 +720,23 @@ describe('Phase 9: Security, Anti-Fraud & Idempotency System', () => {
         }
 
         if (payout.status === InfluencerPayoutStatus.REJECTED) {
-          return { success: true, message: 'Influencer payout already rejected (idempotent)', data: payout };
+          return {
+            success: true,
+            message: 'Influencer payout already rejected (idempotent)',
+            data: payout,
+          };
         }
 
         if (payout.status === InfluencerPayoutStatus.PAID) {
-          throw new ConflictException('Cannot reject a payout that has already been settled.');
+          throw new ConflictException(
+            'Cannot reject a payout that has already been settled.',
+          );
         }
 
         if (payout.status !== InfluencerPayoutStatus.PENDING) {
-          throw new BadRequestException(`Cannot reject payout in status: ${payout.status}`);
+          throw new BadRequestException(
+            `Cannot reject payout in status: ${payout.status}`,
+          );
         }
 
         payout.status = InfluencerPayoutStatus.REJECTED;
@@ -606,12 +749,20 @@ describe('Phase 9: Security, Anti-Fraud & Idempotency System', () => {
           }
         });
 
-        return { success: true, message: 'Influencer payout rejected and commissions unlocked', data: payout };
+        return {
+          success: true,
+          message: 'Influencer payout rejected and commissions unlocked',
+          data: payout,
+        };
       }
 
       // Mirrors exact logic from PayoutService.failInfluencerPayout
       async failInfluencerPayout(dto: { payoutId: string; reason: string }) {
-        if (!dto.reason || typeof dto.reason !== 'string' || dto.reason.trim() === '') {
+        if (
+          !dto.reason ||
+          typeof dto.reason !== 'string' ||
+          dto.reason.trim() === ''
+        ) {
           throw new BadRequestException('Failure reason is required');
         }
         const cleanReason = dto.reason.trim();
@@ -622,15 +773,23 @@ describe('Phase 9: Security, Anti-Fraud & Idempotency System', () => {
         }
 
         if (payout.status === InfluencerPayoutStatus.FAILED) {
-          return { success: true, message: 'Influencer payout already marked failed (idempotent)', data: payout };
+          return {
+            success: true,
+            message: 'Influencer payout already marked failed (idempotent)',
+            data: payout,
+          };
         }
 
         if (payout.status === InfluencerPayoutStatus.PAID) {
-          throw new ConflictException('Cannot fail a payout that has already been settled.');
+          throw new ConflictException(
+            'Cannot fail a payout that has already been settled.',
+          );
         }
 
         if (payout.status !== InfluencerPayoutStatus.PENDING) {
-          throw new BadRequestException(`Cannot fail payout in status: ${payout.status}`);
+          throw new BadRequestException(
+            `Cannot fail payout in status: ${payout.status}`,
+          );
         }
 
         payout.status = InfluencerPayoutStatus.FAILED;
@@ -643,7 +802,11 @@ describe('Phase 9: Security, Anti-Fraud & Idempotency System', () => {
           }
         });
 
-        return { success: true, message: 'Influencer payout marked failed and commissions unlocked', data: payout };
+        return {
+          success: true,
+          message: 'Influencer payout marked failed and commissions unlocked',
+          data: payout,
+        };
       }
     }
 
@@ -774,7 +937,9 @@ describe('Phase 9: Security, Anti-Fraud & Idempotency System', () => {
           payoutId,
           transactionId: 'UTR-20261003-999',
         }),
-      ).rejects.toThrow('Payout has already been settled with a different transaction ID.');
+      ).rejects.toThrow(
+        'Payout has already been settled with a different transaction ID.',
+      );
     });
 
     it('Scenario 22: Already PAID/REJECTED/FAILED Protection blocks invalid state transitions', async () => {

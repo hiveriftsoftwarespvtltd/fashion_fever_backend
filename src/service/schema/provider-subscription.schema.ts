@@ -1,15 +1,14 @@
-import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
-import { Types } from "mongoose";
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Types } from 'mongoose';
 
 export enum ServiceSubscriptionStatus {
-  ACTIVE = "ACTIVE",
-  EXPIRED = "EXPIRED",
-  CANCELLED = "CANCELLED"
+  ACTIVE = 'ACTIVE',
+  EXPIRED = 'EXPIRED',
+  CANCELLED = 'CANCELLED',
 }
-export type ProviderSubscriptionDocument = ProviderSubscription & Document
+export type ProviderSubscriptionDocument = ProviderSubscription & Document;
 @Schema({ timestamps: true })
 export class ProviderSubscription {
-
   @Prop({
     type: Types.ObjectId,
     ref: 'ServiceProvider',
@@ -43,4 +42,5 @@ export class ProviderSubscription {
   autoRenew!: boolean;
 }
 
-export const ProviderSubscriptionSchema = SchemaFactory.createForClass(ProviderSubscription)
+export const ProviderSubscriptionSchema =
+  SchemaFactory.createForClass(ProviderSubscription);

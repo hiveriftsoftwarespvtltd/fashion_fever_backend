@@ -7,7 +7,7 @@ export enum DocumentType {
   DOCUMENT = 'document',
 }
 
-export type MediaDocument = Media & Document
+export type MediaDocument = Media & Document;
 
 @Schema({ timestamps: true })
 export class Media {
@@ -27,7 +27,7 @@ export class Media {
   mimeType!: string;
 
   @Prop({ required: true })
-  size!: number; 
+  size!: number;
 
   @Prop({ type: Types.ObjectId, ref: 'User' })
   uploadedBy!: Types.ObjectId;
@@ -38,13 +38,11 @@ export class Media {
   @Prop({ required: true })
   folder!: string;
 
-  @Prop({required:true,enum:['local','cloudinary','s3']})
-  storage!:string;
+  @Prop({ required: true, enum: ['local', 'cloudinary', 's3'] })
+  storage!: string;
 
   @Prop({ default: true })
   isActive!: boolean;
 }
 
-
-
-export const MediaSchema = SchemaFactory.createForClass(Media)
+export const MediaSchema = SchemaFactory.createForClass(Media);

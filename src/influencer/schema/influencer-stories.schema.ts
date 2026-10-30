@@ -1,29 +1,28 @@
-import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
-import { Document, Types } from "mongoose";
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Document, Types } from 'mongoose';
 
-
-export type InfluencerStoryDocument = InfluencerStory & Document
+export type InfluencerStoryDocument = InfluencerStory & Document;
 @Schema({ timestamps: true })
 export class InfluencerStory {
-    @Prop({
-        type: Types.ObjectId,
-        ref: 'Influencer',
-        required: true,
-    })
-    influencerId: Types.ObjectId;
+  @Prop({
+    type: Types.ObjectId,
+    ref: 'Influencer',
+    required: true,
+  })
+  influencerId: Types.ObjectId;
 
-    @Prop({ required: true })
-    storyUrl: string;
+  @Prop({ required: true })
+  storyUrl: string;
 
+  @Prop({ default: true })
+  isActive: boolean;
 
-    @Prop({ default: true })
-    isActive: boolean;
-
-    @Prop({
-        default: () => new Date(Date.now() + 24 * 60 * 60 * 1000),
-    })
-    expiresAt: Date;
+  @Prop({
+    default: () => new Date(Date.now() + 24 * 60 * 60 * 1000),
+  })
+  expiresAt: Date;
 }
 
-export const InfluencerStorySchema = SchemaFactory.createForClass(InfluencerStory);
+export const InfluencerStorySchema =
+  SchemaFactory.createForClass(InfluencerStory);
 InfluencerStorySchema.index({ influencerId: 1, storyUrl: 1 });

@@ -1,11 +1,16 @@
 import { ToNumber } from '../../utils/type-tranformer';
 import { PartialType } from '@nestjs/mapped-types';
 import { Type, Transform, plainToInstance } from 'class-transformer';
-import { IsMongoId, IsNumber, IsOptional, IsString, Max, Min, IsArray, ValidateNested } from 'class-validator';
-
-
-
-
+import {
+  IsMongoId,
+  IsNumber,
+  IsOptional,
+  IsString,
+  Max,
+  Min,
+  IsArray,
+  ValidateNested,
+} from 'class-validator';
 
 export class ServiceReviewItemDto {
   @IsMongoId()
@@ -57,7 +62,6 @@ export class CreateServiceReviewDto {
   })
   services!: ServiceReviewItemDto[];
 }
-
 
 export class UpdateServiceReviewItemDto {
   @IsMongoId()

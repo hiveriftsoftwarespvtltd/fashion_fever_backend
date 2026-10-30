@@ -3,7 +3,7 @@ import { ServiceSearchService } from './service-search.service';
 
 @Controller('service-search')
 export class ServiceSearchController {
-  constructor(private readonly serviceSearchService: ServiceSearchService) { }
+  constructor(private readonly serviceSearchService: ServiceSearchService) {}
 
   @Get()
   searchServices(
@@ -15,14 +15,18 @@ export class ServiceSearchController {
     @Query('maxDistanceKm') maxDistanceKm?: string,
   ) {
     if (!lat || !lng) {
-      throw new BadRequestException('Latitude (lat) and Longitude (lng) are required');
+      throw new BadRequestException(
+        'Latitude (lat) and Longitude (lng) are required',
+      );
     }
 
     const latitude = parseFloat(lat);
     const longitude = parseFloat(lng);
 
     if (isNaN(latitude) || isNaN(longitude)) {
-      throw new BadRequestException('Latitude and Longitude must be valid numbers');
+      throw new BadRequestException(
+        'Latitude and Longitude must be valid numbers',
+      );
     }
 
     const maxDist = maxDistanceKm ? parseFloat(maxDistanceKm) : 50;

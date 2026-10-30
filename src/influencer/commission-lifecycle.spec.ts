@@ -50,7 +50,9 @@ describe('Phase 6: Commission Lifecycle (7-Day Return Hold & Full Reversal)', ()
     vendorOrders: Map<string, MockVendorOrder> = new Map();
     orders: Map<string, MockMainOrder> = new Map();
 
-    createCommission(data: Partial<MockCommissionRecord>): MockCommissionRecord {
+    createCommission(
+      data: Partial<MockCommissionRecord>,
+    ): MockCommissionRecord {
       const record: MockCommissionRecord = {
         _id: new Types.ObjectId(),
         orderId: data.orderId || new Types.ObjectId(),
@@ -77,7 +79,9 @@ describe('Phase 6: Commission Lifecycle (7-Day Return Hold & Full Reversal)', ()
 
     // Delivery hold logic: deliveredAt + exactly 7 days (168 hours)
     markDelivered(vendorOrderId: Types.ObjectId, deliveryDate: Date) {
-      const eligibleDate = new Date(deliveryDate.getTime() + 7 * 24 * 60 * 60 * 1000);
+      const eligibleDate = new Date(
+        deliveryDate.getTime() + 7 * 24 * 60 * 60 * 1000,
+      );
       const target = this.commissions.find(
         (c) =>
           c.vendorOrderId.toString() === vendorOrderId.toString() &&
@@ -93,7 +97,10 @@ describe('Phase 6: Commission Lifecycle (7-Day Return Hold & Full Reversal)', ()
     }
 
     // Rule 1: Pre-delivery cancellation (PENDING -> CANCELLED, idempotent)
-    cancelCommissionByVendorOrderId(vendorOrderId: Types.ObjectId, reason?: string) {
+    cancelCommissionByVendorOrderId(
+      vendorOrderId: Types.ObjectId,
+      reason?: string,
+    ) {
       const records = this.commissions.filter(
         (c) =>
           c.vendorOrderId.toString() === vendorOrderId.toString() &&
@@ -122,7 +129,11 @@ describe('Phase 6: Commission Lifecycle (7-Day Return Hold & Full Reversal)', ()
     }
 
     // Rule 2: Post-delivery return/refund (PENDING -> REVERSED, idempotent)
-    reverseCommissionByVendorOrderId(vendorOrderId: Types.ObjectId, reason: string, now: Date = new Date()) {
+    reverseCommissionByVendorOrderId(
+      vendorOrderId: Types.ObjectId,
+      reason: string,
+      now: Date = new Date(),
+    ) {
       const records = this.commissions.filter(
         (c) =>
           c.vendorOrderId.toString() === vendorOrderId.toString() &&
@@ -173,7 +184,10 @@ describe('Phase 6: Commission Lifecycle (7-Day Return Hold & Full Reversal)', ()
           } else if (vo.orderStatus !== OrderStatus.DELIVERED) {
             isEligible = false;
             disqualificationReason = `Vendor order not delivered`;
-          } else if (vo.paymentStatus === PaymentStatus.REFUNDED || vo.paymentStatus === PaymentStatus.FAILED) {
+          } else if (
+            vo.paymentStatus === PaymentStatus.REFUNDED ||
+            vo.paymentStatus === PaymentStatus.FAILED
+          ) {
             isEligible = false;
             disqualificationReason = `Vendor order payment ${vo.paymentStatus}`;
           }
@@ -183,15 +197,15 @@ describe('Phase 6: Commission Lifecycle (7-Day Return Hold & Full Reversal)', ()
         if (mainOrder) {
           // For multi-vendor orders, PARTIALLY_CANCELLED or PARTIALLY_RETURNED at the main order level
           // must NOT disqualify unaffected vendor orders whose vendorOrder status is DELIVERED.
-          const badStatuses = [
-            OrderStatus.CANCELLED,
-            OrderStatus.RETURNED,
-          ];
+          const badStatuses = [OrderStatus.CANCELLED, OrderStatus.RETURNED];
           if (badStatuses.includes(mainOrder.orderStatus)) {
             isEligible = false;
             disqualificationReason = `Main order is ${mainOrder.orderStatus}`;
           }
-          if (mainOrder.paymentStatus === PaymentStatus.REFUNDED || mainOrder.paymentStatus === PaymentStatus.FAILED) {
+          if (
+            mainOrder.paymentStatus === PaymentStatus.REFUNDED ||
+            mainOrder.paymentStatus === PaymentStatus.FAILED
+          ) {
             isEligible = false;
             disqualificationReason = `Main order payment ${mainOrder.paymentStatus}`;
           }
@@ -235,12 +249,18 @@ describe('Phase 6: Commission Lifecycle (7-Day Return Hold & Full Reversal)', ()
       let totalSales = 0;
 
       for (const r of records) {
-        if (r.status === CommissionStatus.CANCELLED || r.status === CommissionStatus.REVERSED) {
+        if (
+          r.status === CommissionStatus.CANCELLED ||
+          r.status === CommissionStatus.REVERSED
+        ) {
           // Zero financial earning
           continue;
         }
         totalSales += r.finalOrderAmount;
-        if (r.status === CommissionStatus.APPROVED || r.status === CommissionStatus.PAID) {
+        if (
+          r.status === CommissionStatus.APPROVED ||
+          r.status === CommissionStatus.PAID
+        ) {
           totalEarnedCommission += r.commissionAmount;
         } else if (r.status === CommissionStatus.PENDING && !r.isReversed) {
           pendingCommission += r.commissionAmount;
@@ -332,14 +352,21 @@ describe('Phase 6: Commission Lifecycle (7-Day Return Hold & Full Reversal)', ()
         commissionAmount: 250,
       });
 
-      expect(engine.calculateInfluencerEarnings(influencerId).pendingCommission).toBe(400);
+      expect(
+        engine.calculateInfluencerEarnings(influencerId).pendingCommission,
+      ).toBe(400);
 
-      const modifiedCount = engine.cancelCommissionsByOrderId(orderId, 'Main order cancelled');
+      const modifiedCount = engine.cancelCommissionsByOrderId(
+        orderId,
+        'Main order cancelled',
+      );
       expect(modifiedCount).toBe(2);
 
       expect(comm1.status).toBe(CommissionStatus.CANCELLED);
       expect(comm2.status).toBe(CommissionStatus.CANCELLED);
-      expect(engine.calculateInfluencerEarnings(influencerId).pendingCommission).toBe(0);
+      expect(
+        engine.calculateInfluencerEarnings(influencerId).pendingCommission,
+      ).toBe(0);
     });
   });
 
@@ -404,9 +431,9 @@ describe('Phase 6: Commission Lifecycle (7-Day Return Hold & Full Reversal)', ()
 
       expect(comm.deliveredAt).toEqual(deliveryTimestamp);
       expect(comm.approvalEligibleAt).toEqual(expectedEligibleTimestamp);
-      expect(comm.approvalEligibleAt!.getTime() - comm.deliveredAt!.getTime()).toBe(
-        7 * 24 * 60 * 60 * 1000,
-      );
+      expect(
+        comm.approvalEligibleAt!.getTime() - comm.deliveredAt!.getTime(),
+      ).toBe(7 * 24 * 60 * 60 * 1000);
       expect(comm.status).toBe(CommissionStatus.PENDING);
     });
 
@@ -440,17 +467,23 @@ describe('Phase 6: Commission Lifecycle (7-Day Return Hold & Full Reversal)', ()
       });
 
       // Day 1 evaluation
-      let res = engine.processEligibleCommissionApprovals(new Date('2026-10-02T00:00:00.000Z'));
+      let res = engine.processEligibleCommissionApprovals(
+        new Date('2026-10-02T00:00:00.000Z'),
+      );
       expect(res.processed).toBe(0);
       expect(comm.status).toBe(CommissionStatus.PENDING);
 
       // Day 3 evaluation
-      res = engine.processEligibleCommissionApprovals(new Date('2026-10-04T00:00:00.000Z'));
+      res = engine.processEligibleCommissionApprovals(
+        new Date('2026-10-04T00:00:00.000Z'),
+      );
       expect(res.processed).toBe(0);
       expect(comm.status).toBe(CommissionStatus.PENDING);
 
       // Day 6 (144 hours) evaluation: STILL HOLDING
-      res = engine.processEligibleCommissionApprovals(new Date('2026-10-07T00:00:00.000Z'));
+      res = engine.processEligibleCommissionApprovals(
+        new Date('2026-10-07T00:00:00.000Z'),
+      );
       expect(res.processed).toBe(0);
       expect(comm.status).toBe(CommissionStatus.PENDING);
     });
@@ -487,7 +520,9 @@ describe('Phase 6: Commission Lifecycle (7-Day Return Hold & Full Reversal)', ()
       });
 
       // Day 8 (169 hours) evaluation: Hold completed & clean order status
-      const res = engine.processEligibleCommissionApprovals(new Date('2026-10-08T01:00:00.000Z'));
+      const res = engine.processEligibleCommissionApprovals(
+        new Date('2026-10-08T01:00:00.000Z'),
+      );
       expect(res.processed).toBe(1);
       expect(res.approved).toBe(1);
       expect(comm.status).toBe(CommissionStatus.APPROVED);
@@ -529,7 +564,9 @@ describe('Phase 6: Commission Lifecycle (7-Day Return Hold & Full Reversal)', ()
       });
 
       // Cron evaluates on Day 8
-      const res = engine.processEligibleCommissionApprovals(new Date('2026-10-08T01:00:00.000Z'));
+      const res = engine.processEligibleCommissionApprovals(
+        new Date('2026-10-08T01:00:00.000Z'),
+      );
       expect(res.processed).toBe(1);
       expect(res.approved).toBe(0);
       expect(res.disqualified).toBe(1);
@@ -565,7 +602,9 @@ describe('Phase 6: Commission Lifecycle (7-Day Return Hold & Full Reversal)', ()
         influencerCommissionAmount: 120,
       });
 
-      const res = engine.processEligibleCommissionApprovals(new Date('2026-10-08T01:00:00.000Z'));
+      const res = engine.processEligibleCommissionApprovals(
+        new Date('2026-10-08T01:00:00.000Z'),
+      );
       expect(res.approved).toBe(0);
       expect(res.disqualified).toBe(1);
       expect(comm.status).toBe(CommissionStatus.CANCELLED);
@@ -583,7 +622,11 @@ describe('Phase 6: Commission Lifecycle (7-Day Return Hold & Full Reversal)', ()
       });
 
       const firstTime = new Date('2026-10-03T10:00:00.000Z');
-      const count1 = engine.reverseCommissionByVendorOrderId(vendorOrderId, 'First reversal', firstTime);
+      const count1 = engine.reverseCommissionByVendorOrderId(
+        vendorOrderId,
+        'First reversal',
+        firstTime,
+      );
       expect(count1).toBe(1);
       expect(comm.status).toBe(CommissionStatus.REVERSED);
       expect(comm.reversedAt).toEqual(firstTime);
@@ -591,7 +634,11 @@ describe('Phase 6: Commission Lifecycle (7-Day Return Hold & Full Reversal)', ()
 
       // Trigger second reversal call with different reason and time
       const secondTime = new Date('2026-10-03T11:00:00.000Z');
-      const count2 = engine.reverseCommissionByVendorOrderId(vendorOrderId, 'Second redundant call', secondTime);
+      const count2 = engine.reverseCommissionByVendorOrderId(
+        vendorOrderId,
+        'Second redundant call',
+        secondTime,
+      );
       expect(count2).toBe(0); // Safely skipped!
       expect(comm.status).toBe(CommissionStatus.REVERSED);
       expect(comm.reversedAt).toEqual(firstTime); // Preserved first timestamp
@@ -607,11 +654,17 @@ describe('Phase 6: Commission Lifecycle (7-Day Return Hold & Full Reversal)', ()
         status: CommissionStatus.PENDING,
       });
 
-      const count1 = engine.cancelCommissionByVendorOrderId(vendorOrderId, 'Reason 1');
+      const count1 = engine.cancelCommissionByVendorOrderId(
+        vendorOrderId,
+        'Reason 1',
+      );
       expect(count1).toBe(1);
       expect(comm.status).toBe(CommissionStatus.CANCELLED);
 
-      const count2 = engine.cancelCommissionByVendorOrderId(vendorOrderId, 'Reason 2');
+      const count2 = engine.cancelCommissionByVendorOrderId(
+        vendorOrderId,
+        'Reason 2',
+      );
       expect(count2).toBe(0);
       expect(comm.reversalReason).toBe('Reason 1');
     });
@@ -677,7 +730,9 @@ describe('Phase 6: Commission Lifecycle (7-Day Return Hold & Full Reversal)', ()
         paymentStatus: PaymentStatus.PAID,
       });
 
-      const cronResult = engine.processEligibleCommissionApprovals(new Date('2026-10-08T05:00:00.000Z'));
+      const cronResult = engine.processEligibleCommissionApprovals(
+        new Date('2026-10-08T05:00:00.000Z'),
+      );
       // Only comm2 was a candidate (comm1 is already REVERSED)
       expect(cronResult.processed).toBe(1);
       expect(cronResult.approved).toBe(1);
@@ -700,11 +755,13 @@ describe('Phase 6: Commission Lifecycle (7-Day Return Hold & Full Reversal)', ()
       const vendorDiscount = 200;
       const finalOrderAmount = subTotal - vendorDiscount; // 1800
       const platformCommissionRate = 20; // 20%
-      const platformCommissionAmount = (finalOrderAmount * platformCommissionRate) / 100; // 360
+      const platformCommissionAmount =
+        (finalOrderAmount * platformCommissionRate) / 100; // 360
       const expectedVendorPayout = finalOrderAmount - platformCommissionAmount; // 1440
 
       const influencerCommissionRate = 10;
-      const influencerCommissionAmount = (finalOrderAmount * influencerCommissionRate) / 100; // 180
+      const influencerCommissionAmount =
+        (finalOrderAmount * influencerCommissionRate) / 100; // 180
 
       // Scenario A: Order Delivered, Commission PENDING
       let vendorPayout = finalOrderAmount - platformCommissionAmount;

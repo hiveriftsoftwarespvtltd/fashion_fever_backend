@@ -1,23 +1,21 @@
-import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
-import { Types } from "mongoose";
-
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Types } from 'mongoose';
 
 export enum ServiceType {
-  HOME = "HOME",
-  SALON = "SALON",
-  BOTH = "BOTH"
+  HOME = 'HOME',
+  SALON = 'SALON',
+  BOTH = 'BOTH',
 }
 
 export enum ServiceGender {
-  ONLY_MEN = "ONLY_MEN",
-  ONLY_WOMEN = "ONLY_WOMEN",
-  BOTH = "BOTH",
+  ONLY_MEN = 'ONLY_MEN',
+  ONLY_WOMEN = 'ONLY_WOMEN',
+  BOTH = 'BOTH',
 }
 
-export type ServiceDocument = Service & Document
+export type ServiceDocument = Service & Document;
 @Schema({ timestamps: true })
 export class Service {
-
   @Prop({
     type: Types.ObjectId,
     ref: 'ServiceProvider',
@@ -48,7 +46,7 @@ export class Service {
   sellingPrice!: number;
 
   @Prop({ required: true })
-  offeredPrice!: number
+  offeredPrice!: number;
 
   @Prop({
     enum: ServiceType,
@@ -81,4 +79,4 @@ export class Service {
   totalReviews!: number;
 }
 
-export const ServiceSchema = SchemaFactory.createForClass(Service)
+export const ServiceSchema = SchemaFactory.createForClass(Service);

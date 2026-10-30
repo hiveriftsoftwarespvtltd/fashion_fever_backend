@@ -1,22 +1,20 @@
-import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
-import { Document } from "mongoose";
-
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Document } from 'mongoose';
 
 export enum CommissionOn {
   PROFITVALUE = 'PROFIT_VALUE',
-  SALEVALUE = 'SALE_VALUE'
+  SALEVALUE = 'SALE_VALUE',
 }
 
-export type ServiceSubscriptionPlanDocument = ServiceSubscriptionPlan & Document
+export type ServiceSubscriptionPlanDocument = ServiceSubscriptionPlan &
+  Document;
 @Schema({ timestamps: true })
 export class ServiceSubscriptionPlan {
-
   @Prop({ required: true, unique: true })
   name!: string;
 
   @Prop({ required: true })
   label!: string;
-
 
   @Prop({ required: true })
   price!: number;
@@ -24,9 +22,12 @@ export class ServiceSubscriptionPlan {
   @Prop({ required: true })
   durationDays!: number;
 
-  @Prop({ enum: CommissionOn, required: true, default: CommissionOn.PROFITVALUE })
-  commissionOn!: CommissionOn
-
+  @Prop({
+    enum: CommissionOn,
+    required: true,
+    default: CommissionOn.PROFITVALUE,
+  })
+  commissionOn!: CommissionOn;
 
   @Prop({ required: true })
   maxServices!: number;
@@ -59,4 +60,6 @@ export class ServiceSubscriptionPlan {
   isDeleted!: boolean;
 }
 
-export const ServiceSubscriptionPlanSchema = SchemaFactory.createForClass(ServiceSubscriptionPlan)
+export const ServiceSubscriptionPlanSchema = SchemaFactory.createForClass(
+  ServiceSubscriptionPlan,
+);

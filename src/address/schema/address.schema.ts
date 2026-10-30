@@ -1,11 +1,9 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
 
-
-export type AddressDocument = Address & Document
+export type AddressDocument = Address & Document;
 @Schema({ timestamps: true })
 export class Address {
-
   @Prop({ type: Types.ObjectId, ref: 'User', required: true })
   user!: Types.ObjectId;
 
@@ -57,7 +55,6 @@ export class Address {
 
   @Prop({ default: false })
   isDeleted!: boolean;
-
 }
 
 export const AddressSchema = SchemaFactory.createForClass(Address);

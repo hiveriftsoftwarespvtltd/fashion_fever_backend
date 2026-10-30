@@ -29,6 +29,4 @@ export class CreateReviewDto {
   review?: string;
 }
 
-export class UpdateReviewDto extends PartialType(
-  CreateReviewDto,
-) { }
+export class UpdateReviewDto extends PartialType(CreateReviewDto) {}

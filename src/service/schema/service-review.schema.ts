@@ -1,7 +1,7 @@
-import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
-import { Document, Types } from "mongoose";
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Document, Types } from 'mongoose';
 
-export type ServiceReviewDocument = ServiceReview & Document
+export type ServiceReviewDocument = ServiceReview & Document;
 @Schema({ timestamps: true })
 export class ServiceReview {
   @Prop({
@@ -34,8 +34,8 @@ export class ServiceReview {
 
   @Prop({
     type: [Types.ObjectId],
-    ref: "Media",
-    default: []
+    ref: 'Media',
+    default: [],
   })
   images!: Types.ObjectId[];
 
@@ -66,8 +66,7 @@ export class ServiceReview {
   serviceReview?: string;
 }
 
-export const ServiceReviewSchema = SchemaFactory.createForClass(ServiceReview)
-
+export const ServiceReviewSchema = SchemaFactory.createForClass(ServiceReview);
 
 ServiceReviewSchema.index(
   { bookingId: 1, userId: 1, serviceId: 1 },

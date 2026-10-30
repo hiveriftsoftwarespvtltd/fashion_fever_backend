@@ -1,20 +1,32 @@
 import { ToNumber, ToBoolean } from '../../utils/type-tranformer';
-import { Transform, Type } from "class-transformer";
-import { IsBoolean, IsNumber, IsOptional, IsString, IsArray, Min, Max, IsEnum, ValidateNested, IsDateString, ArrayMinSize, IsDate, ArrayMaxSize } from "class-validator";
-import { ServiceType, ServiceGender } from "../schema/service.schema";
-import { WeekDay } from "../schema/service-availability.schema";
-import { ServiceProviderGender } from "../schema/service-provider.schema";
-import { GENDER } from "../schema/service-staff.schema";
-import { ServiceLeadGender } from "../schema/service-lead.schema";
-
+import { Transform, Type } from 'class-transformer';
+import {
+  IsBoolean,
+  IsNumber,
+  IsOptional,
+  IsString,
+  IsArray,
+  Min,
+  Max,
+  IsEnum,
+  ValidateNested,
+  IsDateString,
+  ArrayMinSize,
+  IsDate,
+  ArrayMaxSize,
+} from 'class-validator';
+import { ServiceType, ServiceGender } from '../schema/service.schema';
+import { WeekDay } from '../schema/service-availability.schema';
+import { ServiceProviderGender } from '../schema/service-provider.schema';
+import { GENDER } from '../schema/service-staff.schema';
+import { ServiceLeadGender } from '../schema/service-lead.schema';
 
 export class CreateServiceCategoryDTO {
+  @IsString()
+  name!: string;
 
   @IsString()
-  name!: string
-
-  @IsString()
-  label!: string
+  label!: string;
 
   @IsString()
   description!: string;
@@ -23,98 +35,79 @@ export class CreateServiceCategoryDTO {
   @Transform(({ value }) => value === 'true')
   @ToBoolean()
   @IsBoolean()
-  isActive?: boolean
+  isActive?: boolean;
 }
 
-export class UpdateServiceCategoryDTO extends CreateServiceCategoryDTO { }
+export class UpdateServiceCategoryDTO extends CreateServiceCategoryDTO {}
 
 export class CreateServiceSubscriptionPlanDTO {
   @IsString()
-  name!: string
+  name!: string;
 
   @IsString()
-  label!: string
+  label!: string;
 
   @ToNumber()
-
   @IsNumber()
-  durationDays!: number
+  durationDays!: number;
 
   @ToNumber()
-
   @IsNumber()
-  price!: number
+  price!: number;
 
   @ToNumber()
-
   @IsNumber()
-  maxServices!: number
+  maxServices!: number;
 
   @ToNumber()
-
   @IsNumber()
-  maxStaff!: number
+  maxStaff!: number;
 
   @ToNumber()
-
   @IsNumber()
-  monthlyLeadLimit!: number
+  monthlyLeadLimit!: number;
 
   @ToNumber()
-
   @IsNumber()
-  commissionPercentage!: number
+  commissionPercentage!: number;
 
   @ToBoolean()
-
   @IsBoolean()
-  featuredListing!: boolean
+  featuredListing!: boolean;
 
   @ToBoolean()
-
   @IsBoolean()
-  prioritySupport!: boolean
+  prioritySupport!: boolean;
 
   @ToBoolean()
-
   @IsBoolean()
-  analyticsAccess!: boolean
+  analyticsAccess!: boolean;
 
   @IsOptional()
   @ToBoolean()
   @IsBoolean()
-  isActive?: boolean
-
+  isActive?: boolean;
 
   @ToNumber()
-
-
   @IsNumber()
-  priorityRank!: number
-
+  priorityRank!: number;
 }
 
-export class UpdateServiceSubscriptionPlanDTO extends CreateServiceSubscriptionPlanDTO { }
+export class UpdateServiceSubscriptionPlanDTO extends CreateServiceSubscriptionPlanDTO {}
 
 export class CreateServiceProviderDTO {
   @IsString()
   businessName!: string;
 
-
   @IsString()
   description?: string;
 
-
   @ToNumber()
-
-
   @IsNumber()
   experienceYears?: number;
 
-
   @IsString()
   phone: string;
-
 
   // @IsString()
   // email: string;
@@ -411,7 +404,6 @@ export class UpdateAvailabilityDTO {
   @IsString()
   endTime!: string;
 
-
   @IsString()
   breakStart!: string;
 
@@ -470,9 +462,7 @@ export class BookingItemInputDTO {
   serviceId!: string;
 }
 
-import { PaymentMethod } from "src/order/schema/order.schema";
-
-
+import { PaymentMethod } from 'src/order/schema/order.schema';
 
 export class CreateBookingDTO {
   @IsOptional()
@@ -527,7 +517,6 @@ export class CreateReviewDTO {
   bookingId!: string;
 
   @ToNumber()
-
   @IsNumber()
   @Min(1)
   @Max(5)
@@ -560,10 +549,7 @@ export class CreateLeadDTO {
   @IsNumber()
   quantity?: number;
 
-
   @ToNumber()
-
-
   @IsNumber()
   budget!: number;
 
@@ -593,7 +579,6 @@ export class CreateLeadDTO {
   @IsEnum(ServiceLeadGender)
   gender!: ServiceLeadGender;
 }
-
 
 export class BookLeadDTO {
   @IsString()

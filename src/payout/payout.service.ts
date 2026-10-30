@@ -1,6 +1,15 @@
-import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { NotificationService } from 'src/notification/notification.service';
-import { NotificationModuleType, NotificationType, NotificationPriority } from 'src/notification/schema/notification.schema';
+import {
+  NotificationModuleType,
+  NotificationType,
+  NotificationPriority,
+} from 'src/notification/schema/notification.schema';
 import { User, UserDocument, UserRole } from 'src/user/schema/user.schema';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { Connection, Model, Types } from 'mongoose';
@@ -40,23 +49,85 @@ import {
 } from 'src/vendor/schema/vendor-payout.schema';
 import { Vendor, VendorDocument } from 'src/vendor/schema/vendor.schema';
 
-import { CoursePurchase, CoursePurchaseDocument } from 'src/courses/schema/course-purchase.schema';
-import { ServiceBooking, ServiceBookingDocument } from 'src/service/schema/service-booking.schema';
-import { ServiceProvider, ServiceProviderDocument } from 'src/service/schema/service-provider.schema';
-import { QuickDeliveryConfiguration, QuickDeliveryConfigurationDocument } from 'src/quick-e-commerce/schema/quickDeliveryConfig';
-import { VendorQuickOrder, VendorOrderDocument as VendorQuickOrderDocument } from 'src/quick-e-commerce/schema/quick-vendor-order.schema';
-import { DeliveryPerson, DeliveryPersonDocument, DeliveryPersonReference } from 'src/quick-e-commerce/schema/delivery-person.schema';
-import { PlatformWallet, PlatformWalletDocument } from 'src/wallet/schema/platform/platform.wallet.schema';
-import { PlatformWalletTransaction, PlatformWalletTransactionDocument, PlatformWalletTransactionType, PlatformWalletTransactionReason, PlatformTransactionSourceType } from 'src/wallet/schema/platform/platform.wallet.transactions';
-import { PaymentTransaction, PaymentTransactionDocument, PaymentMode, TransactionStatus, ReferenceType } from './schema/payment-transaction.schema';
-import { MarketplaceEarning, MarketplaceEarningDocument, EarningRole, EarningStatus, EarningReferenceType } from './schema/market-place-earning.schema';
-import { MarketplacePayout, MarketplacePayoutDocument, PayoutStatus, PaymentMethod as MarketplacePaymentMethod } from './schema/market-place-payout.schema';
-import { CashSettlement, CashSettlementDocument, CashSettlementStatus, CollectedBy } from './schema/cash-settlement.schema';
-import { PaymentDirection, Settlement, SettlementDocument, SettlementStatus } from './schema/settlement.schema';
 import {
-  UpdatePaymentTransactionDto, UpdateCashSettlementDto, UpdateSettlementDto,
-  PaymentTransactionQueryDto, MarketplaceEarningQueryDto, MarketplacePayoutQueryDto,
-  CashSettlementQueryDto, SettlementQueryDto, ProcessEarningsPayoutDto, DepositCashDto
+  CoursePurchase,
+  CoursePurchaseDocument,
+} from 'src/courses/schema/course-purchase.schema';
+import {
+  ServiceBooking,
+  ServiceBookingDocument,
+} from 'src/service/schema/service-booking.schema';
+import {
+  ServiceProvider,
+  ServiceProviderDocument,
+} from 'src/service/schema/service-provider.schema';
+import {
+  QuickDeliveryConfiguration,
+  QuickDeliveryConfigurationDocument,
+} from 'src/quick-e-commerce/schema/quickDeliveryConfig';
+import {
+  VendorQuickOrder,
+  VendorOrderDocument as VendorQuickOrderDocument,
+} from 'src/quick-e-commerce/schema/quick-vendor-order.schema';
+import {
+  DeliveryPerson,
+  DeliveryPersonDocument,
+  DeliveryPersonReference,
+} from 'src/quick-e-commerce/schema/delivery-person.schema';
+import {
+  PlatformWallet,
+  PlatformWalletDocument,
+} from 'src/wallet/schema/platform/platform.wallet.schema';
+import {
+  PlatformWalletTransaction,
+  PlatformWalletTransactionDocument,
+  PlatformWalletTransactionType,
+  PlatformWalletTransactionReason,
+  PlatformTransactionSourceType,
+} from 'src/wallet/schema/platform/platform.wallet.transactions';
+import {
+  PaymentTransaction,
+  PaymentTransactionDocument,
+  PaymentMode,
+  TransactionStatus,
+  ReferenceType,
+} from './schema/payment-transaction.schema';
+import {
+  MarketplaceEarning,
+  MarketplaceEarningDocument,
+  EarningRole,
+  EarningStatus,
+  EarningReferenceType,
+} from './schema/market-place-earning.schema';
+import {
+  MarketplacePayout,
+  MarketplacePayoutDocument,
+  PayoutStatus,
+  PaymentMethod as MarketplacePaymentMethod,
+} from './schema/market-place-payout.schema';
+import {
+  CashSettlement,
+  CashSettlementDocument,
+  CashSettlementStatus,
+  CollectedBy,
+} from './schema/cash-settlement.schema';
+import {
+  PaymentDirection,
+  Settlement,
+  SettlementDocument,
+  SettlementStatus,
+} from './schema/settlement.schema';
+import {
+  UpdatePaymentTransactionDto,
+  UpdateCashSettlementDto,
+  UpdateSettlementDto,
+  PaymentTransactionQueryDto,
+  MarketplaceEarningQueryDto,
+  MarketplacePayoutQueryDto,
+  CashSettlementQueryDto,
+  SettlementQueryDto,
+  ProcessEarningsPayoutDto,
+  DepositCashDto,
 } from './dto/payout.dto';
 
 @Injectable()
@@ -77,23 +148,36 @@ export class PayoutService {
     @InjectModel(VendorPayout.name)
     private vendorPayoutModel: Model<VendorPayoutDocument>,
 
-    @InjectModel(CoursePurchase.name) private coursePurchaseModel: Model<CoursePurchaseDocument>,
-    @InjectModel(ServiceBooking.name) private serviceBookingModel: Model<ServiceBookingDocument>,
-    @InjectModel(PlatformWallet.name) private platformWalletModel: Model<PlatformWalletDocument>,
-    @InjectModel(PlatformWalletTransaction.name) private platformWalletTransactionModel: Model<PlatformWalletTransactionDocument>,
-    @InjectModel(PaymentTransaction.name) private paymentTransactionModel: Model<PaymentTransactionDocument>,
-    @InjectModel(MarketplaceEarning.name) private marketplaceEarningModel: Model<MarketplaceEarningDocument>,
-    @InjectModel(MarketplacePayout.name) private marketplacePayoutModel: Model<MarketplacePayoutDocument>,
-    @InjectModel(CashSettlement.name) private cashSettlementModel: Model<CashSettlementDocument>,
-    @InjectModel(Settlement.name) private settlementModel: Model<SettlementDocument>,
+    @InjectModel(CoursePurchase.name)
+    private coursePurchaseModel: Model<CoursePurchaseDocument>,
+    @InjectModel(ServiceBooking.name)
+    private serviceBookingModel: Model<ServiceBookingDocument>,
+    @InjectModel(PlatformWallet.name)
+    private platformWalletModel: Model<PlatformWalletDocument>,
+    @InjectModel(PlatformWalletTransaction.name)
+    private platformWalletTransactionModel: Model<PlatformWalletTransactionDocument>,
+    @InjectModel(PaymentTransaction.name)
+    private paymentTransactionModel: Model<PaymentTransactionDocument>,
+    @InjectModel(MarketplaceEarning.name)
+    private marketplaceEarningModel: Model<MarketplaceEarningDocument>,
+    @InjectModel(MarketplacePayout.name)
+    private marketplacePayoutModel: Model<MarketplacePayoutDocument>,
+    @InjectModel(CashSettlement.name)
+    private cashSettlementModel: Model<CashSettlementDocument>,
+    @InjectModel(Settlement.name)
+    private settlementModel: Model<SettlementDocument>,
     @InjectModel(User.name) private userModel: Model<UserDocument>,
-    @InjectModel(ServiceProvider.name) private serviceProviderModel: Model<ServiceProviderDocument>,
-    @InjectModel(QuickDeliveryConfiguration.name) private quickDeliveryConfigModel: Model<QuickDeliveryConfigurationDocument>,
-    @InjectModel(VendorQuickOrder.name) private vendorQuickOrderModel: Model<VendorQuickOrderDocument>,
-    @InjectModel(DeliveryPerson.name) private deliveryPersonModel: Model<DeliveryPersonDocument>,
+    @InjectModel(ServiceProvider.name)
+    private serviceProviderModel: Model<ServiceProviderDocument>,
+    @InjectModel(QuickDeliveryConfiguration.name)
+    private quickDeliveryConfigModel: Model<QuickDeliveryConfigurationDocument>,
+    @InjectModel(VendorQuickOrder.name)
+    private vendorQuickOrderModel: Model<VendorQuickOrderDocument>,
+    @InjectModel(DeliveryPerson.name)
+    private deliveryPersonModel: Model<DeliveryPersonDocument>,
     @InjectConnection() private readonly connection: Connection,
     private readonly notificationService: NotificationService,
-  ) { }
+  ) {}
 
   private async updatePlatformWallet(
     amount: number,
@@ -101,7 +185,7 @@ export class PayoutService {
     sourceType: PlatformTransactionSourceType,
     reason: PlatformWalletTransactionReason,
     description: string,
-    session: any
+    session: any,
   ) {
     if (amount <= 0) return;
 
@@ -112,7 +196,10 @@ export class PayoutService {
     }
 
     wallet.balance += amount;
-    if (reason === PlatformWalletTransactionReason.ORDER_COMMISSION || reason === PlatformWalletTransactionReason.BOOKING_COMMISSION) {
+    if (
+      reason === PlatformWalletTransactionReason.ORDER_COMMISSION ||
+      reason === PlatformWalletTransactionReason.BOOKING_COMMISSION
+    ) {
       wallet.totalCommissionEarned += amount;
     } else if (reason === PlatformWalletTransactionReason.PLATFORM_FEE) {
       wallet.totalPlatformFeesEarned += amount;
@@ -120,16 +207,21 @@ export class PayoutService {
 
     await wallet.save({ session });
 
-    await this.platformWalletTransactionModel.create([{
-      walletId: wallet._id,
-      amount,
-      type: PlatformWalletTransactionType.CREDIT,
-      reason,
-      sourceId,
-      sourceType,
-      description,
-      balanceAfterTransaction: wallet.balance
-    }], { session });
+    await this.platformWalletTransactionModel.create(
+      [
+        {
+          walletId: wallet._id,
+          amount,
+          type: PlatformWalletTransactionType.CREDIT,
+          reason,
+          sourceId,
+          sourceType,
+          description,
+          balanceAfterTransaction: wallet.balance,
+        },
+      ],
+      { session },
+    );
   }
 
   async settleVendorPayout(dto: {
@@ -269,8 +361,14 @@ export class PayoutService {
     month?: number;
     year?: number;
   }) {
-    if (!dto.transactionId || typeof dto.transactionId !== 'string' || dto.transactionId.trim() === '') {
-      throw new BadRequestException('Transaction ID / bank reference is required to settle payout');
+    if (
+      !dto.transactionId ||
+      typeof dto.transactionId !== 'string' ||
+      dto.transactionId.trim() === ''
+    ) {
+      throw new BadRequestException(
+        'Transaction ID / bank reference is required to settle payout',
+      );
     }
     const cleanTransactionId = dto.transactionId.trim();
 
@@ -281,36 +379,57 @@ export class PayoutService {
 
       // CASE A: Settle an existing InfluencerPayout request (payoutId provided)
       if (dto.payoutId) {
-        const payout = await this.influencerPayoutModel.findById(dto.payoutId).session(session);
+        const payout = await this.influencerPayoutModel
+          .findById(dto.payoutId)
+          .session(session);
         if (!payout) {
           throw new NotFoundException('Payout not found');
         }
 
         if (payout.status === InfluencerPayoutStatus.PAID) {
-          if (payout.transactionId && payout.transactionId.trim() === cleanTransactionId) {
+          if (
+            payout.transactionId &&
+            payout.transactionId.trim() === cleanTransactionId
+          ) {
             await session.abortTransaction();
-            return ApiResponse.success('Influencer payout already completed (idempotent)', payout);
+            return ApiResponse.success(
+              'Influencer payout already completed (idempotent)',
+              payout,
+            );
           } else {
-            throw new ConflictException('Payout has already been settled with a different transaction ID.');
+            throw new ConflictException(
+              'Payout has already been settled with a different transaction ID.',
+            );
           }
         }
 
-        if (payout.status === InfluencerPayoutStatus.REJECTED || payout.status === InfluencerPayoutStatus.FAILED) {
-          throw new BadRequestException(`Cannot settle payout in status: ${payout.status}`);
+        if (
+          payout.status === InfluencerPayoutStatus.REJECTED ||
+          payout.status === InfluencerPayoutStatus.FAILED
+        ) {
+          throw new BadRequestException(
+            `Cannot settle payout in status: ${payout.status}`,
+          );
         }
 
         if (payout.status !== InfluencerPayoutStatus.PENDING) {
-          throw new BadRequestException(`Cannot settle payout in status: ${payout.status}`);
+          throw new BadRequestException(
+            `Cannot settle payout in status: ${payout.status}`,
+          );
         }
 
-        const commissions = await this.influencerCommissionModel.find({
-          _id: { $in: payout.commissionIds },
-          isReversed: { $ne: true },
-          status: { $ne: CommissionStatus.CANCELLED },
-        }).session(session);
+        const commissions = await this.influencerCommissionModel
+          .find({
+            _id: { $in: payout.commissionIds },
+            isReversed: { $ne: true },
+            status: { $ne: CommissionStatus.CANCELLED },
+          })
+          .session(session);
 
         const payoutAmount = parseFloat(
-          commissions.reduce((sum, c) => sum + (c.commissionAmount || 0), 0).toFixed(2),
+          commissions
+            .reduce((sum, c) => sum + (c.commissionAmount || 0), 0)
+            .toFixed(2),
         );
 
         payout.status = InfluencerPayoutStatus.PAID;
@@ -358,7 +477,9 @@ export class PayoutService {
 
       // CASE B: Direct settlement of commissionIds
       if (!dto.influencerId) {
-        throw new BadRequestException('influencerId is required when settling specific commissions');
+        throw new BadRequestException(
+          'influencerId is required when settling specific commissions',
+        );
       }
       if (!dto.commissionIds || !dto.commissionIds.length) {
         throw new BadRequestException('No commissions provided');
@@ -367,22 +488,28 @@ export class PayoutService {
       const month = dto.month || new Date().getMonth() + 1;
       const year = dto.year || new Date().getFullYear();
 
-      const commissions = await this.influencerCommissionModel.find({
-        _id: {
-          $in: dto.commissionIds.map((id) => new Types.ObjectId(id)),
-        },
-        influencerId: new Types.ObjectId(dto.influencerId),
-        status: CommissionStatus.APPROVED,
-        isSettled: false,
-        isReversed: { $ne: true },
-        payoutId: null,
-      }).session(session);
+      const commissions = await this.influencerCommissionModel
+        .find({
+          _id: {
+            $in: dto.commissionIds.map((id) => new Types.ObjectId(id)),
+          },
+          influencerId: new Types.ObjectId(dto.influencerId),
+          status: CommissionStatus.APPROVED,
+          isSettled: false,
+          isReversed: { $ne: true },
+          payoutId: null,
+        })
+        .session(session);
 
       if (!commissions.length) {
-        throw new BadRequestException('No eligible commissions found for settlement');
+        throw new BadRequestException(
+          'No eligible commissions found for settlement',
+        );
       }
 
-      const influencer = await this.influencerModel.findById(dto.influencerId).session(session);
+      const influencer = await this.influencerModel
+        .findById(dto.influencerId)
+        .session(session);
       if (!influencer) {
         throw new NotFoundException('Influencer not found');
       }
@@ -399,7 +526,9 @@ export class PayoutService {
 
       // Exact sum from snapshotted commissionAmount, NEVER recompute with slabs or average!
       const payoutAmount = parseFloat(
-        commissions.reduce((sum, item) => sum + (item.commissionAmount || 0), 0).toFixed(2),
+        commissions
+          .reduce((sum, item) => sum + (item.commissionAmount || 0), 0)
+          .toFixed(2),
       );
 
       const payout = await this.influencerPayoutModel.create(
@@ -470,7 +599,11 @@ export class PayoutService {
   }
 
   async rejectInfluencerPayout(dto: { payoutId: string; reason: string }) {
-    if (!dto.reason || typeof dto.reason !== 'string' || dto.reason.trim() === '') {
+    if (
+      !dto.reason ||
+      typeof dto.reason !== 'string' ||
+      dto.reason.trim() === ''
+    ) {
       throw new BadRequestException('Rejection reason is required');
     }
     const cleanReason = dto.reason.trim();
@@ -479,22 +612,31 @@ export class PayoutService {
     try {
       session.startTransaction();
 
-      const payout = await this.influencerPayoutModel.findById(dto.payoutId).session(session);
+      const payout = await this.influencerPayoutModel
+        .findById(dto.payoutId)
+        .session(session);
       if (!payout) {
         throw new NotFoundException('Payout not found');
       }
 
       if (payout.status === InfluencerPayoutStatus.REJECTED) {
         await session.abortTransaction();
-        return ApiResponse.success('Influencer payout already rejected (idempotent)', payout);
+        return ApiResponse.success(
+          'Influencer payout already rejected (idempotent)',
+          payout,
+        );
       }
 
       if (payout.status === InfluencerPayoutStatus.PAID) {
-        throw new ConflictException('Cannot reject a payout that has already been settled.');
+        throw new ConflictException(
+          'Cannot reject a payout that has already been settled.',
+        );
       }
 
       if (payout.status !== InfluencerPayoutStatus.PENDING) {
-        throw new BadRequestException(`Cannot reject payout in status: ${payout.status}`);
+        throw new BadRequestException(
+          `Cannot reject payout in status: ${payout.status}`,
+        );
       }
 
       payout.status = InfluencerPayoutStatus.REJECTED;
@@ -516,7 +658,10 @@ export class PayoutService {
       );
 
       await session.commitTransaction();
-      return ApiResponse.success('Influencer payout rejected and commissions unlocked', payout);
+      return ApiResponse.success(
+        'Influencer payout rejected and commissions unlocked',
+        payout,
+      );
     } catch (error) {
       await session.abortTransaction();
       throw error;
@@ -526,7 +671,11 @@ export class PayoutService {
   }
 
   async failInfluencerPayout(dto: { payoutId: string; reason: string }) {
-    if (!dto.reason || typeof dto.reason !== 'string' || dto.reason.trim() === '') {
+    if (
+      !dto.reason ||
+      typeof dto.reason !== 'string' ||
+      dto.reason.trim() === ''
+    ) {
       throw new BadRequestException('Failure reason is required');
     }
     const cleanReason = dto.reason.trim();
@@ -535,22 +684,31 @@ export class PayoutService {
     try {
       session.startTransaction();
 
-      const payout = await this.influencerPayoutModel.findById(dto.payoutId).session(session);
+      const payout = await this.influencerPayoutModel
+        .findById(dto.payoutId)
+        .session(session);
       if (!payout) {
         throw new NotFoundException('Payout not found');
       }
 
       if (payout.status === InfluencerPayoutStatus.FAILED) {
         await session.abortTransaction();
-        return ApiResponse.success('Influencer payout already marked failed (idempotent)', payout);
+        return ApiResponse.success(
+          'Influencer payout already marked failed (idempotent)',
+          payout,
+        );
       }
 
       if (payout.status === InfluencerPayoutStatus.PAID) {
-        throw new ConflictException('Cannot fail a payout that has already been settled.');
+        throw new ConflictException(
+          'Cannot fail a payout that has already been settled.',
+        );
       }
 
       if (payout.status !== InfluencerPayoutStatus.PENDING) {
-        throw new BadRequestException(`Cannot fail payout in status: ${payout.status}`);
+        throw new BadRequestException(
+          `Cannot fail payout in status: ${payout.status}`,
+        );
       }
 
       payout.status = InfluencerPayoutStatus.FAILED;
@@ -572,7 +730,10 @@ export class PayoutService {
       );
 
       await session.commitTransaction();
-      return ApiResponse.success('Influencer payout marked failed and commissions unlocked', payout);
+      return ApiResponse.success(
+        'Influencer payout marked failed and commissions unlocked',
+        payout,
+      );
     } catch (error) {
       await session.abortTransaction();
       throw error;
@@ -581,19 +742,22 @@ export class PayoutService {
     }
   }
 
-  async getInfluencerPayouts(query: {
-    page?: number;
-    limit?: number;
-    status?: InfluencerPayoutStatus;
-    influencerId?: string;
-  } = {}) {
+  async getInfluencerPayouts(
+    query: {
+      page?: number;
+      limit?: number;
+      status?: InfluencerPayoutStatus;
+      influencerId?: string;
+    } = {},
+  ) {
     const page = Number(query.page) || 1;
     const limit = Number(query.limit) || 10;
     const skip = (page - 1) * limit;
 
     const filter: any = {};
     if (query.status) filter.status = query.status;
-    if (query.influencerId) filter.influencerId = new Types.ObjectId(query.influencerId);
+    if (query.influencerId)
+      filter.influencerId = new Types.ObjectId(query.influencerId);
 
     const [items, total] = await Promise.all([
       this.influencerPayoutModel
@@ -615,8 +779,6 @@ export class PayoutService {
     });
   }
 
-
-
   async getAllPaymentTransactions(query: PaymentTransactionQueryDto = {}) {
     const page = Number(query.page) || 1;
     const limit = Number(query.limit) || 10;
@@ -627,21 +789,37 @@ export class PayoutService {
     if (query.paymentMode) filter.paymentMode = query.paymentMode;
     if (query.paymentMethod) filter.paymentMethod = query.paymentMethod;
     if (query.referenceType) filter.referenceType = query.referenceType;
-    if (query.customerId) filter.customerId = new Types.ObjectId(query.customerId);
+    if (query.customerId)
+      filter.customerId = new Types.ObjectId(query.customerId);
     if (query.userId) filter.customerId = new Types.ObjectId(query.userId);
     if (query.transactionId) filter.transactionId = query.transactionId;
 
     const [data, total] = await Promise.all([
-      this.paymentTransactionModel.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit),
-      this.paymentTransactionModel.countDocuments(filter)
+      this.paymentTransactionModel
+        .find(filter)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit),
+      this.paymentTransactionModel.countDocuments(filter),
     ]);
 
-    return ApiResponse.success('Payment transactions fetched', { data, total, page, limit, totalPages: Math.ceil(total / limit) });
+    return ApiResponse.success('Payment transactions fetched', {
+      data,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    });
   }
 
   async updatePaymentTransaction(id: string, dto: UpdatePaymentTransactionDto) {
-    const updated = await this.paymentTransactionModel.findByIdAndUpdate(id, dto, { new: true });
-    if (!updated) throw new BadRequestException('Payment transaction not found');
+    const updated = await this.paymentTransactionModel.findByIdAndUpdate(
+      id,
+      dto,
+      { new: true },
+    );
+    if (!updated)
+      throw new BadRequestException('Payment transaction not found');
     return ApiResponse.success('Payment transaction updated', updated);
   }
 
@@ -656,7 +834,10 @@ export class PayoutService {
     if (query.referenceType) filter.referenceType = query.referenceType;
     if (query.userId) filter.userId = new Types.ObjectId(query.userId);
     if (query.payoutId) filter.payoutId = new Types.ObjectId(query.payoutId);
-    if (query.paymentTransactionId) filter.paymentTransactionId = new Types.ObjectId(query.paymentTransactionId);
+    if (query.paymentTransactionId)
+      filter.paymentTransactionId = new Types.ObjectId(
+        query.paymentTransactionId,
+      );
 
     // Apply date filter
     const endDate = query.endDate ? new Date(query.endDate) : new Date();
@@ -666,20 +847,30 @@ export class PayoutService {
 
     filter.createdAt = {
       $gte: startDate,
-      $lte: endDate
+      $lte: endDate,
     };
 
     const [data, total] = await Promise.all([
-      this.marketplaceEarningModel.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit),
-      this.marketplaceEarningModel.countDocuments(filter)
+      this.marketplaceEarningModel
+        .find(filter)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit),
+      this.marketplaceEarningModel.countDocuments(filter),
     ]);
 
-    return ApiResponse.success('Marketplace earnings fetched', { data, total, page, limit, totalPages: Math.ceil(total / limit) });
+    return ApiResponse.success('Marketplace earnings fetched', {
+      data,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    });
   }
 
   async getMyEarnings(query: MarketplaceEarningQueryDto, userId: string) {
     query.userId = userId;
-    console.log("Query in line 750", query);
+    console.log('Query in line 750', query);
     return this.getAllMarketplaceEarnings(query);
   }
 
@@ -694,11 +885,21 @@ export class PayoutService {
     if (query.userId) filter.userId = new Types.ObjectId(query.userId);
 
     const [data, total] = await Promise.all([
-      this.marketplacePayoutModel.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit),
-      this.marketplacePayoutModel.countDocuments(filter)
+      this.marketplacePayoutModel
+        .find(filter)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit),
+      this.marketplacePayoutModel.countDocuments(filter),
     ]);
 
-    return ApiResponse.success('Marketplace payouts fetched', { data, total, page, limit, totalPages: Math.ceil(total / limit) });
+    return ApiResponse.success('Marketplace payouts fetched', {
+      data,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    });
   }
 
   async getAllCashSettlements(query: CashSettlementQueryDto = {}) {
@@ -710,32 +911,64 @@ export class PayoutService {
     if (query.status) filter.status = query.status;
     if (query.collectedBy) filter.collectedBy = query.collectedBy;
     if (query.referenceType) filter.referenceType = query.referenceType;
-    if (query.collectedByReferenceId) filter.collectedByReferenceId = new Types.ObjectId(query.collectedByReferenceId);
-    if (query.userId) filter.collectedByReferenceId = new Types.ObjectId(query.userId);
-    if (query.paymentTransactionId) filter.paymentTransactionId = new Types.ObjectId(query.paymentTransactionId);
+    if (query.collectedByReferenceId)
+      filter.collectedByReferenceId = new Types.ObjectId(
+        query.collectedByReferenceId,
+      );
+    if (query.userId)
+      filter.collectedByReferenceId = new Types.ObjectId(query.userId);
+    if (query.paymentTransactionId)
+      filter.paymentTransactionId = new Types.ObjectId(
+        query.paymentTransactionId,
+      );
 
     const [data, total] = await Promise.all([
-      this.cashSettlementModel.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit),
-      this.cashSettlementModel.countDocuments(filter)
+      this.cashSettlementModel
+        .find(filter)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit),
+      this.cashSettlementModel.countDocuments(filter),
     ]);
 
-    return ApiResponse.success('Cash settlements fetched', { data, total, page, limit, totalPages: Math.ceil(total / limit) });
+    return ApiResponse.success('Cash settlements fetched', {
+      data,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    });
   }
 
-  async updateCashSettlement(id: string, dto: UpdateCashSettlementDto, adminUserId?: string) {
+  async updateCashSettlement(
+    id: string,
+    dto: UpdateCashSettlementDto,
+    adminUserId?: string,
+  ) {
     const settlement = await this.cashSettlementModel.findById(id);
     if (!settlement) throw new BadRequestException('Cash settlement not found');
 
     const previousStatus = settlement.status;
     Object.assign(settlement, dto);
 
-    if (dto.status === CashSettlementStatus.VERIFIED && previousStatus !== CashSettlementStatus.VERIFIED) {
+    if (
+      dto.status === CashSettlementStatus.VERIFIED &&
+      previousStatus !== CashSettlementStatus.VERIFIED
+    ) {
       settlement.verifiedAt = new Date();
       if (adminUserId) settlement.verifiedBy = new Types.ObjectId(adminUserId);
 
-      await this.paymentTransactionModel.findByIdAndUpdate(settlement.paymentTransactionId, { status: TransactionStatus.SUCCESS });
-      await this.generateEarningsForVerifiedSettlement(settlement.paymentTransactionId);
-    } else if (dto.status === CashSettlementStatus.REJECTED && previousStatus !== CashSettlementStatus.REJECTED) {
+      await this.paymentTransactionModel.findByIdAndUpdate(
+        settlement.paymentTransactionId,
+        { status: TransactionStatus.SUCCESS },
+      );
+      await this.generateEarningsForVerifiedSettlement(
+        settlement.paymentTransactionId,
+      );
+    } else if (
+      dto.status === CashSettlementStatus.REJECTED &&
+      previousStatus !== CashSettlementStatus.REJECTED
+    ) {
       settlement.rejectedAt = new Date();
       if (adminUserId) settlement.rejectedBy = new Types.ObjectId(adminUserId);
     }
@@ -752,22 +985,41 @@ export class PayoutService {
     const filter: any = {};
     if (query.status) filter.status = query.status;
     if (query.role) filter.role = query.role;
-    if (query.paymentDirection) filter.paymentDirection = query.paymentDirection;
+    if (query.paymentDirection)
+      filter.paymentDirection = query.paymentDirection;
     if (query.referenceType) filter.referenceType = query.referenceType;
     if (query.userId) filter.userId = new Types.ObjectId(query.userId);
-    if (query.marketplacePayoutId) filter.marketplacePayoutId = new Types.ObjectId(query.marketplacePayoutId);
-    if (query.paymentTransactionId) filter.paymentTransactionId = new Types.ObjectId(query.paymentTransactionId);
+    if (query.marketplacePayoutId)
+      filter.marketplacePayoutId = new Types.ObjectId(
+        query.marketplacePayoutId,
+      );
+    if (query.paymentTransactionId)
+      filter.paymentTransactionId = new Types.ObjectId(
+        query.paymentTransactionId,
+      );
 
     const [data, total] = await Promise.all([
-      this.settlementModel.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit),
-      this.settlementModel.countDocuments(filter)
+      this.settlementModel
+        .find(filter)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit),
+      this.settlementModel.countDocuments(filter),
     ]);
 
-    return ApiResponse.success('Settlements fetched', { data, total, page, limit, totalPages: Math.ceil(total / limit) });
+    return ApiResponse.success('Settlements fetched', {
+      data,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    });
   }
 
   async updateSettlement(id: string, dto: UpdateSettlementDto) {
-    const updated = await this.settlementModel.findByIdAndUpdate(id, dto, { new: true });
+    const updated = await this.settlementModel.findByIdAndUpdate(id, dto, {
+      new: true,
+    });
     if (!updated) throw new BadRequestException('Settlement not found');
     return ApiResponse.success('Settlement updated', updated);
   }
@@ -780,7 +1032,9 @@ export class PayoutService {
     try {
       session.startTransaction();
 
-      const earningObjectIds = dto.earningIds.map(id => new Types.ObjectId(id));
+      const earningObjectIds = dto.earningIds.map(
+        (id) => new Types.ObjectId(id),
+      );
 
       // ── Fetch all earnings ──────────────────────────────────────
       const earnings = await this.marketplaceEarningModel
@@ -792,38 +1046,49 @@ export class PayoutService {
       }
 
       // ── Cross verify: all requested IDs must exist ──────────────
-      const foundIds = new Set(earnings.map(e => e._id.toString()));
-      const missingIds = dto.earningIds.filter(id => !foundIds.has(id));
+      const foundIds = new Set(earnings.map((e) => e._id.toString()));
+      const missingIds = dto.earningIds.filter((id) => !foundIds.has(id));
       if (missingIds.length) {
-        throw new BadRequestException(`Earnings not found for IDs: ${missingIds.join(', ')}`);
+        throw new BadRequestException(
+          `Earnings not found for IDs: ${missingIds.join(', ')}`,
+        );
       }
 
       // ── Validate: no already-paid earnings ──────────────────────
-      const alreadyPaid = earnings.filter(e => e.status === EarningStatus.PAID);
+      const alreadyPaid = earnings.filter(
+        (e) => e.status === EarningStatus.PAID,
+      );
       if (alreadyPaid.length) {
         throw new BadRequestException(
-          `These earnings are already paid: ${alreadyPaid.map(e => e._id).join(', ')}`
+          `These earnings are already paid: ${alreadyPaid.map((e) => e._id).join(', ')}`,
         );
       }
 
       // ── Validate: all must match the provided role ───────────────
-      const roleMismatch = earnings.filter(e => e.role !== dto.role);
+      const roleMismatch = earnings.filter((e) => e.role !== dto.role);
       if (roleMismatch.length) {
         throw new BadRequestException(
-          `Role mismatch on earnings: ${roleMismatch.map(e => e._id).join(', ')}. Expected role: ${dto.role}`
+          `Role mismatch on earnings: ${roleMismatch.map((e) => e._id).join(', ')}. Expected role: ${dto.role}`,
         );
       }
 
       // ── Validate: all userIds must exist in User collection ──────
-      const uniqueUserIds = [...new Set(earnings.map(e => e.userId.toString()))];
-      const users = await this.userModel.find({
-        _id: { $in: uniqueUserIds.map(id => new Types.ObjectId(id)) }
-      }).select('_id name roles').session(session);
+      const uniqueUserIds = [
+        ...new Set(earnings.map((e) => e.userId.toString())),
+      ];
+      const users = await this.userModel
+        .find({
+          _id: { $in: uniqueUserIds.map((id) => new Types.ObjectId(id)) },
+        })
+        .select('_id name roles')
+        .session(session);
 
-      const userMap = new Map(users.map(u => [u._id.toString(), u]));
-      const missingUsers = uniqueUserIds.filter(uid => !userMap.has(uid));
+      const userMap = new Map(users.map((u) => [u._id.toString(), u]));
+      const missingUsers = uniqueUserIds.filter((uid) => !userMap.has(uid));
       if (missingUsers.length) {
-        throw new BadRequestException(`Users not found for IDs: ${missingUsers.join(', ')}`);
+        throw new BadRequestException(
+          `Users not found for IDs: ${missingUsers.join(', ')}`,
+        );
       }
 
       // ── Group earnings by userId ─────────────────────────────────
@@ -838,30 +1103,38 @@ export class PayoutService {
 
       // ── Create a MarketplacePayout record per user ───────────────
       for (const [userId, userEarnings] of earningsByUser.entries()) {
-        const totalNetAmount = userEarnings.reduce((sum, e) => sum + e.netAmount, 0);
-        const payout = await this.marketplacePayoutModel.create([{
-          userId: new Types.ObjectId(userId),
-          role: dto.role,
-          totalAmount: parseFloat(totalNetAmount.toFixed(2)),
-          status: PayoutStatus.PAID,
-          paymentMethod: dto.paymentMethod as MarketplacePaymentMethod ?? undefined,
-          transactionReference: dto.transactionReference,
-          remarks: dto.remarks,
-          paidAt: new Date(),
-        }], { session });
+        const totalNetAmount = userEarnings.reduce(
+          (sum, e) => sum + e.netAmount,
+          0,
+        );
+        const payout = await this.marketplacePayoutModel.create(
+          [
+            {
+              userId: new Types.ObjectId(userId),
+              role: dto.role,
+              totalAmount: parseFloat(totalNetAmount.toFixed(2)),
+              status: PayoutStatus.PAID,
+              paymentMethod: dto.paymentMethod ?? undefined,
+              transactionReference: dto.transactionReference,
+              remarks: dto.remarks,
+              paidAt: new Date(),
+            },
+          ],
+          { session },
+        );
 
         payoutDocs.push({ userId, payoutId: payout[0]._id, totalNetAmount });
 
         // Mark each earning as PAID and link to the payout record
         await this.marketplaceEarningModel.updateMany(
-          { _id: { $in: userEarnings.map(e => e._id) } },
+          { _id: { $in: userEarnings.map((e) => e._id) } },
           {
             $set: {
               status: EarningStatus.PAID,
               payoutId: payout[0]._id,
-            }
+            },
           },
-          { session }
+          { session },
         );
 
         const settlements = userEarnings.map((earning) => ({
@@ -882,7 +1155,7 @@ export class PayoutService {
           status: SettlementStatus.COMPLETED,
 
           paidAt: payout[0].paidAt,
-        }))
+        }));
 
         await this.settlementModel.insertMany(settlements, {
           session,
@@ -910,7 +1183,7 @@ export class PayoutService {
       return ApiResponse.success('Earnings payout processed successfully', {
         totalUsersProcessed: payoutDocs.length,
         totalEarningsPaid: earnings.length,
-        payouts: payoutDocs.map(p => ({
+        payouts: payoutDocs.map((p) => ({
           userId: p.userId,
           payoutId: p.payoutId,
           amount: p.totalNetAmount,
@@ -925,26 +1198,43 @@ export class PayoutService {
   }
 
   async depositeCashAmount(userId: string, dto: DepositCashDto) {
-    const paymentTx = await this.paymentTransactionModel.findById(dto.paymentTransactionId);
-    if (!paymentTx) throw new BadRequestException('Payment transaction not found');
-    if (paymentTx.paymentMode !== PaymentMode.COD) throw new BadRequestException('Not a COD transaction');
+    const paymentTx = await this.paymentTransactionModel.findById(
+      dto.paymentTransactionId,
+    );
+    if (!paymentTx)
+      throw new BadRequestException('Payment transaction not found');
+    if (paymentTx.paymentMode !== PaymentMode.COD)
+      throw new BadRequestException('Not a COD transaction');
 
-    const existing = await this.cashSettlementModel.findOne({ paymentTransactionId: dto.paymentTransactionId });
-    if (existing && existing.status !== CashSettlementStatus.REJECTED && existing.status !== CashSettlementStatus.CANCELLED) {
-      throw new BadRequestException('Cash settlement already exists for this transaction');
+    const existing = await this.cashSettlementModel.findOne({
+      paymentTransactionId: dto.paymentTransactionId,
+    });
+    if (
+      existing &&
+      existing.status !== CashSettlementStatus.REJECTED &&
+      existing.status !== CashSettlementStatus.CANCELLED
+    ) {
+      throw new BadRequestException(
+        'Cash settlement already exists for this transaction',
+      );
     }
 
     const user = await this.userModel.findById(userId);
     if (!user) throw new BadRequestException('User not found');
 
     let collectedBy: CollectedBy;
-    let collectedByReferenceId: Types.ObjectId = user._id as Types.ObjectId;
+    let collectedByReferenceId: Types.ObjectId = user._id;
 
     if (user.roles.includes(UserRole.DELIVERY_PERSON)) {
       collectedBy = CollectedBy.DELIVERY_PERSON;
-    } else if (user.roles.includes(UserRole.SERVICE_PROVIDER) && user.serviceProviderId) {
+    } else if (
+      user.roles.includes(UserRole.SERVICE_PROVIDER) &&
+      user.serviceProviderId
+    ) {
       collectedBy = CollectedBy.SERVICE_PROVIDER;
-      collectedByReferenceId = new Types.ObjectId(user.serviceProviderId as any);
+      collectedByReferenceId = new Types.ObjectId(
+        user.serviceProviderId as any,
+      );
     } else if (user.roles.includes(UserRole.VENDOR) && user.vendorId) {
       collectedBy = CollectedBy.VENDOR;
       collectedByReferenceId = new Types.ObjectId(user.vendorId as any);
@@ -962,22 +1252,32 @@ export class PayoutService {
       depositedAmount: dto.depositedAmount || paymentTx.amount,
       status: CashSettlementStatus.DEPOSITED,
       depositedAt: new Date(),
-      remarks: dto.remarks
+      remarks: dto.remarks,
     });
 
-    return ApiResponse.success('Cash deposit submitted successfully', settlement);
+    return ApiResponse.success(
+      'Cash deposit submitted successfully',
+      settlement,
+    );
   }
 
-  private async generateEarningsForVerifiedSettlement(paymentTransactionId: Types.ObjectId) {
-    const paymentTx = await this.paymentTransactionModel.findById(paymentTransactionId);
+  private async generateEarningsForVerifiedSettlement(
+    paymentTransactionId: Types.ObjectId,
+  ) {
+    const paymentTx =
+      await this.paymentTransactionModel.findById(paymentTransactionId);
     if (!paymentTx) return;
 
     const earningsToCreate: any[] = [];
 
     if (paymentTx.referenceType === ReferenceType.QUICK_ORDER) {
-      const vendorOrder = await this.vendorQuickOrderModel.findById(paymentTx.referenceId);
+      const vendorOrder = await this.vendorQuickOrderModel.findById(
+        paymentTx.referenceId,
+      );
       if (vendorOrder) {
-        const vendorUser = await this.vendorModel.findById(vendorOrder.vendorId);
+        const vendorUser = await this.vendorModel.findById(
+          vendorOrder.vendorId,
+        );
         if (vendorUser && vendorUser.ownerId) {
           earningsToCreate.push({
             userId: new Types.ObjectId(vendorUser.ownerId as any),
@@ -989,12 +1289,18 @@ export class PayoutService {
             platformCommission: vendorOrder.commissionAmount || 0,
             tax: vendorOrder.tax || 0,
             deduction: vendorOrder.commissionAmount || 0,
-            status: EarningStatus.PENDING
+            status: EarningStatus.PENDING,
           });
         }
 
-        if (vendorOrder.influencerId && vendorOrder.influencerCommissionAmount && vendorOrder.influencerCommissionAmount > 0) {
-          const influencer = await this.influencerModel.findById(vendorOrder.influencerId);
+        if (
+          vendorOrder.influencerId &&
+          vendorOrder.influencerCommissionAmount &&
+          vendorOrder.influencerCommissionAmount > 0
+        ) {
+          const influencer = await this.influencerModel.findById(
+            vendorOrder.influencerId,
+          );
           if (influencer && influencer.userId) {
             earningsToCreate.push({
               userId: new Types.ObjectId(influencer.userId as any),
@@ -1006,16 +1312,23 @@ export class PayoutService {
               platformCommission: 0,
               tax: 0,
               deduction: 0,
-              status: EarningStatus.PENDING
+              status: EarningStatus.PENDING,
             });
           }
         }
 
         if (vendorOrder.deliveryPersonId) {
-          const deliveryPerson = await this.deliveryPersonModel.findById(vendorOrder.deliveryPersonId);
-          if (deliveryPerson && deliveryPerson.userId && deliveryPerson.reference === DeliveryPersonReference.PLATFORM) {
+          const deliveryPerson = await this.deliveryPersonModel.findById(
+            vendorOrder.deliveryPersonId,
+          );
+          if (
+            deliveryPerson &&
+            deliveryPerson.userId &&
+            deliveryPerson.reference === DeliveryPersonReference.PLATFORM
+          ) {
             const config = await this.quickDeliveryConfigModel.findOne();
-            const deliveryPersonAmount = config?.deliveryPersonChargeForPerDelivery || 0;
+            const deliveryPersonAmount =
+              config?.deliveryPersonChargeForPerDelivery || 0;
             if (deliveryPersonAmount > 0) {
               earningsToCreate.push({
                 userId: new Types.ObjectId(deliveryPerson.userId as any),
@@ -1027,16 +1340,20 @@ export class PayoutService {
                 platformCommission: 0,
                 tax: 0,
                 deduction: 0,
-                status: EarningStatus.PENDING
+                status: EarningStatus.PENDING,
               });
             }
           }
         }
       }
     } else if (paymentTx.referenceType === ReferenceType.ORDER) {
-      const vendorOrder = await this.vendorOrderModel.findById(paymentTx.referenceId);
+      const vendorOrder = await this.vendorOrderModel.findById(
+        paymentTx.referenceId,
+      );
       if (vendorOrder) {
-        const vendorUser = await this.vendorModel.findById(vendorOrder.vendorId);
+        const vendorUser = await this.vendorModel.findById(
+          vendorOrder.vendorId,
+        );
         if (vendorUser && vendorUser.ownerId) {
           earningsToCreate.push({
             userId: new Types.ObjectId(vendorUser.ownerId as any),
@@ -1048,14 +1365,21 @@ export class PayoutService {
             platformCommission: vendorOrder.platformCommissionAmount || 0,
             tax: vendorOrder.tax || 0,
             deduction: vendorOrder.platformCommissionAmount || 0,
-            status: EarningStatus.PENDING
+            status: EarningStatus.PENDING,
           });
         }
 
         if (vendorOrder.orderId) {
           const mainOrder = await this.orderModel.findById(vendorOrder.orderId);
-          if (mainOrder && mainOrder.appliedCoupon?.influencerId && vendorOrder.influencerCommissionAmount && vendorOrder.influencerCommissionAmount > 0) {
-            const influencer = await this.influencerModel.findById(mainOrder.appliedCoupon.influencerId);
+          if (
+            mainOrder &&
+            mainOrder.appliedCoupon?.influencerId &&
+            vendorOrder.influencerCommissionAmount &&
+            vendorOrder.influencerCommissionAmount > 0
+          ) {
+            const influencer = await this.influencerModel.findById(
+              mainOrder.appliedCoupon.influencerId,
+            );
             if (influencer && influencer.userId) {
               earningsToCreate.push({
                 userId: new Types.ObjectId(influencer.userId as any),
@@ -1067,20 +1391,27 @@ export class PayoutService {
                 platformCommission: 0,
                 tax: 0,
                 deduction: 0,
-                status: EarningStatus.PENDING
+                status: EarningStatus.PENDING,
               });
             }
           }
         }
       }
     } else if (paymentTx.referenceType === ReferenceType.BOOKING) {
-      const booking = await this.serviceBookingModel.findById(paymentTx.referenceId);
+      const booking = await this.serviceBookingModel.findById(
+        paymentTx.referenceId,
+      );
       if (booking) {
-        const provider = await this.serviceProviderModel.findById(booking.providerId);
+        const provider = await this.serviceProviderModel.findById(
+          booking.providerId,
+        );
         if (provider && provider.userId) {
           const totalAmount = booking.totalAmount || 0;
-          const platformCommissionAmount = booking.platformCommissionAmount || 0;
-          const providerPayoutAmount = booking.providerPayoutAmount || (totalAmount - platformCommissionAmount);
+          const platformCommissionAmount =
+            booking.platformCommissionAmount || 0;
+          const providerPayoutAmount =
+            booking.providerPayoutAmount ||
+            totalAmount - platformCommissionAmount;
 
           earningsToCreate.push({
             userId: new Types.ObjectId(provider.userId as any),
@@ -1092,7 +1423,7 @@ export class PayoutService {
             platformCommission: platformCommissionAmount,
             tax: 0,
             deduction: platformCommissionAmount,
-            status: EarningStatus.PENDING
+            status: EarningStatus.PENDING,
           });
         }
       }
@@ -1101,7 +1432,7 @@ export class PayoutService {
     for (const earning of earningsToCreate) {
       const exists = await this.marketplaceEarningModel.findOne({
         referenceId: earning.referenceId,
-        role: earning.role
+        role: earning.role,
       });
       if (!exists) {
         await this.marketplaceEarningModel.create(earning);

@@ -5,8 +5,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { VendorOrder } from 'src/order/schema/vendor-order.schema';
 
 @Module({
- 
   providers: [DashboardService],
-  controllers: [DashboardController]
+  controllers: [DashboardController],
 })
 export class DashboardModule {}

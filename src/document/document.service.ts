@@ -72,11 +72,7 @@ export class DocumentService {
     return media[0];
   }
 
-  async uploadMultiplFiles(
-    files: any[],
-    folder: string,
-    userId?: string,
-  ) {
+  async uploadMultiplFiles(files: any[], folder: string, userId?: string) {
     if (!files || files.length === 0) {
       throw new BadRequestException('Files are required');
     }
@@ -110,7 +106,6 @@ export class DocumentService {
   //   }
 
   async deleteMedia(id: string, session?: ClientSession) {
-    
     const query = this.mediaModel.findById(id);
 
     if (session) {
@@ -148,6 +143,15 @@ export class DocumentService {
     return ApiResponse.success('Media Fetched Successfully', media);
   }
 
+  async getMediaById(id: string) {
+    if (!id) return null;
+    try {
+      return await this.mediaModel.findById(id).lean();
+    } catch {
+      return null;
+    }
+  }
+
   //   async replace(id: string, file: any) {
   //     const media = await this.mediaModel.findById(id).session();
   //     if (!media) {
@@ -165,11 +169,7 @@ export class DocumentService {
   //     return ApiResponse.success('Media Updated Successfully', media);
   //   }
 
-  async replace(
-    id: string,
-    file: any,
-    session?: ClientSession,
-  ) {
+  async replace(id: string, file: any, session?: ClientSession) {
     const query = this.mediaModel.findById(id);
 
     if (session) {

@@ -1,16 +1,8 @@
-import {
-  Prop,
-  Schema,
-  SchemaFactory,
-} from '@nestjs/mongoose';
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 
-import {
-  Document,
-  Types,
-} from 'mongoose';
+import { Document, Types } from 'mongoose';
 
-export type InfluencerPayoutDocument =
-  InfluencerPayout & Document;
+export type InfluencerPayoutDocument = InfluencerPayout & Document;
 
 export enum InfluencerPayoutStatus {
   PENDING = 'pending',
@@ -22,7 +14,6 @@ export enum InfluencerPayoutStatus {
 
 @Schema({ timestamps: true })
 export class InfluencerPayout {
-
   @Prop({
     type: Types.ObjectId,
     ref: 'Influencer',
@@ -103,6 +94,4 @@ export class InfluencerPayout {
 }
 
 export const InfluencerPayoutSchema =
-  SchemaFactory.createForClass(
-    InfluencerPayout,
-  );
+  SchemaFactory.createForClass(InfluencerPayout);

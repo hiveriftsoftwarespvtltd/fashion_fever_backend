@@ -10,7 +10,7 @@ export class AdminProfileService {
   constructor(
     @InjectModel(Admin.name) private adminModel: Model<AdminDocument>,
     @InjectModel(User.name) private userModel: Model<UserDocument>,
-  ) { }
+  ) {}
 
   async getAdminProfile(userId: string) {
     const user = await this.userModel.findById(userId).select('-password');
@@ -18,11 +18,14 @@ export class AdminProfileService {
       throw new NotFoundException('User not found');
     }
 
-    const admin = await this.adminModel.findOne({ userId: new Types.ObjectId(userId) });
+    const admin = await this.adminModel.findOne({
+      userId: new Types.ObjectId(userId),
+    });
 
     return ApiResponse.success('Admin profile fetched successfully', {
       user,
       adminAccess: admin ? admin.moduleAccess : [],
+      allowedTabs: admin ? admin.allowedTabs || [] : [],
       roleTitle: admin ? admin.roleTitle : null,
       isActive: admin ? admin.isActive : user.isActive,
     });

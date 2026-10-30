@@ -1,45 +1,47 @@
-import { IsEmail, IsMongoId, IsNumber, IsOptional, IsString } from "class-validator";
+import {
+  IsEmail,
+  IsMongoId,
+  IsNumber,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 
+export class createVendorDTO {
+  // @IsMongoId()
+  // ownerId!:string;
 
+  @IsString()
+  businessName!: string;
 
-export class createVendorDTO{
+  @IsString()
+  slug!: string;
 
+  @IsOptional()
+  @IsString()
+  description?: string;
 
-    // @IsMongoId()
-    // ownerId!:string;
+  @IsOptional()
+  @IsString()
+  address?: string;
 
-    @IsString()
-    businessName!:string
+  @IsOptional()
+  @IsString()
+  phone?: string;
 
-    @IsString()
-    slug!:string
+  @IsOptional()
+  @IsEmail()
+  email?: string;
 
-    @IsOptional()
-    @IsString()
-    description?:string
+  @IsString()
+  vendorPincode!: string;
 
-    @IsOptional()
-    @IsString()
-    address?:string
+  @IsString()
+  city!: string;
 
-    @IsOptional()
-    @IsString()
-    phone?:string
+  @IsString()
+  state!: string;
 
-    @IsOptional()
-    @IsEmail()
-    email?:string;
-
-    @IsString()
-    vendorPincode!:string
-
-    @IsString()
-    city!:string
-
-    @IsString()
-    state!:string
-
-    // @IsOptional()
-    // @IsNumber()
-    // comissionRate?:string
+  // @IsOptional()
+  // @IsNumber()
+  // comissionRate?:string
 }

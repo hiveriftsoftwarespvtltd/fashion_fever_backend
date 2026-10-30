@@ -4,15 +4,9 @@ import { JwtAuthGuard } from './jwt-auth.guad';
 import { AdminPermissionGuard } from './admin-permission.guards';
 import { AdminPermission } from './admin-module.decorator';
 
-export function AdminAccess(
-  module: AdminModule,
-  access: AccessType,
-) {
+export function AdminAccess(module: AdminModule, access: AccessType) {
   return applyDecorators(
-    UseGuards(
-      JwtAuthGuard,
-      AdminPermissionGuard,
-    ),
+    UseGuards(JwtAuthGuard, AdminPermissionGuard),
     AdminPermission(module, access),
   );
 }

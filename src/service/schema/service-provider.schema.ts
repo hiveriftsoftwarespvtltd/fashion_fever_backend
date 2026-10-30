@@ -1,28 +1,26 @@
-import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
-import { Document, Types } from "mongoose";
-
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Document, Types } from 'mongoose';
 
 export enum ServiceProviderType {
-  SALON = "SALON",
-  INDIVIDUAL = "INDIVIDUAL"
+  SALON = 'SALON',
+  INDIVIDUAL = 'INDIVIDUAL',
 }
 
 export enum ServiceProviderVerificationStatus {
-  PENDING = "PENDING",
-  APPROVED = "APPROVED",
-  REJECTED = "REJECTED"
+  PENDING = 'PENDING',
+  APPROVED = 'APPROVED',
+  REJECTED = 'REJECTED',
 }
 
 export enum ServiceProviderGender {
-  ONLY_MEN = "ONLY_MEN",
-  ONLY_WOMEN = "ONLY_WOMEN",
-  BOTH = "BOTH",
+  ONLY_MEN = 'ONLY_MEN',
+  ONLY_WOMEN = 'ONLY_WOMEN',
+  BOTH = 'BOTH',
 }
-export type ServiceProviderDocument = ServiceProvider & Document
+export type ServiceProviderDocument = ServiceProvider & Document;
 
 @Schema({ timestamps: true })
 export class ServiceProvider {
-
   @Prop({
     type: Types.ObjectId,
     ref: 'User',
@@ -30,8 +28,6 @@ export class ServiceProvider {
     unique: true,
   })
   userId!: Types.ObjectId;
-
-
 
   @Prop({ required: true })
   businessName!: string;
@@ -124,7 +120,7 @@ export class ServiceProvider {
   isDeleted!: boolean;
 }
 
-export const ServiceProviderSchema = SchemaFactory.createForClass(ServiceProvider);
-
+export const ServiceProviderSchema =
+  SchemaFactory.createForClass(ServiceProvider);
 
 ServiceProviderSchema.index({ coordinates: '2dsphere' });

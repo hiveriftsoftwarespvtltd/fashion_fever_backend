@@ -24,7 +24,7 @@ import { ApplyRolesDTO } from './dto/apply-roles.dto';
 @UseGuards(JwtAuthGuard)
 @Controller('user')
 export class UserController {
-  constructor(private userService: UserService) { }
+  constructor(private userService: UserService) {}
 
   // @Get()
   // findAll() {
@@ -35,8 +35,6 @@ export class UserController {
   // createUser(@Body() dto: CreateUserDto) {
   //   return this.userService.create(dto);
   // }
-
-
 
   @Post('avatar')
   @UseInterceptors(FileInterceptor('file'))
@@ -87,7 +85,6 @@ export class UserController {
     @Query('minPrice') minPrice?: number,
     @Query('maxPrice') maxPrice?: number,
   ) {
-
     return this.userService.fetchProducts(
       req.user._id,
       categoryId,

@@ -17,7 +17,10 @@ import { RolesGuard } from 'src/auth/roles.guard';
 import { Roles } from 'src/auth/roles.decorator';
 import { UserRole } from 'src/user/schema/user.schema';
 import { CreateBookingDTO, RescheduleBookingDTO } from './dto/service.dto';
-import { BookingPaymentStatus, BookingStatus } from './schema/service-booking.schema';
+import {
+  BookingPaymentStatus,
+  BookingStatus,
+} from './schema/service-booking.schema';
 import { ServiceProviderCouponService } from 'src/coupon/service-provider-coupon.service';
 import { ValidateServiceCouponDTO } from 'src/coupon/dto/coupon.dto';
 
@@ -26,13 +29,16 @@ export class ServiceBookingController {
   constructor(
     private readonly serviceBookingService: ServiceBookingService,
     private readonly spCouponService: ServiceProviderCouponService,
-  ) { }
+  ) {}
 
   /** Customer validates a service-specific coupon during Step 4 (Review) */
   @Post('validate-service-coupon')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.USER)
-  validateServiceCoupon(@Req() req: any, @Body() dto: ValidateServiceCouponDTO) {
+  validateServiceCoupon(
+    @Req() req: any,
+    @Body() dto: ValidateServiceCouponDTO,
+  ) {
     return this.spCouponService.validateServiceCoupon(dto, req.user._id);
   }
 
@@ -58,7 +64,11 @@ export class ServiceBookingController {
     @Param('id') bookingId: string,
     @Body() dto: RescheduleBookingDTO,
   ) {
-    return this.serviceBookingService.rescheduleBooking(req.user._id, bookingId, dto);
+    return this.serviceBookingService.rescheduleBooking(
+      req.user._id,
+      bookingId,
+      dto,
+    );
   }
 
   @Put(':id/confirm')
@@ -88,9 +98,18 @@ export class ServiceBookingController {
   @Put('update-service-booking/:id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.SERVICE_PROVIDER)
-  updateServiceBooking(@Req() req: any, @Param('id') bookingId: string, @Body('bookingStatus') bookingStatus?: BookingStatus, @Body('paymentStatus') paymentStatus?: BookingPaymentStatus) {
-
-    return this.serviceBookingService.updateServiceBooking(req.user.serviceProviderId, bookingId, bookingStatus, paymentStatus);
+  updateServiceBooking(
+    @Req() req: any,
+    @Param('id') bookingId: string,
+    @Body('bookingStatus') bookingStatus?: BookingStatus,
+    @Body('paymentStatus') paymentStatus?: BookingPaymentStatus,
+  ) {
+    return this.serviceBookingService.updateServiceBooking(
+      req.user.serviceProviderId,
+      bookingId,
+      bookingStatus,
+      paymentStatus,
+    );
   }
 
   @Get('provider/list')
@@ -110,10 +129,9 @@ export class ServiceBookingController {
     );
   }
 
-    @AdminAccess(AdminModule.SERVICE_PROVIDERS, AccessType.READ)
+  @AdminAccess(AdminModule.SERVICE_PROVIDERS, AccessType.READ)
   @Get('admin/list')
   @UseGuards(JwtAuthGuard, RolesGuard)
-
   getAdminBookings(
     @Query('page') page?: string,
     @Query('limit') limit?: string,
@@ -128,7 +146,7 @@ export class ServiceBookingController {
     );
   }
 
-    @AdminAccess(AdminModule.SERVICE_PROVIDERS, AccessType.READ)
+  @AdminAccess(AdminModule.SERVICE_PROVIDERS, AccessType.READ)
   @Get('details/:id')
   @UseGuards(JwtAuthGuard)
   getBookingDetails(@Req() req: any, @Param('id') bookingId: string) {

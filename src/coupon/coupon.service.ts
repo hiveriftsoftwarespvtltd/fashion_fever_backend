@@ -28,7 +28,10 @@ import {
   ProductVariantDocument,
 } from 'src/product/schema/product-variant.schema';
 
-import { Influencer, InfluencerDocument } from 'src/influencer/schema/influencer.schema';
+import {
+  Influencer,
+  InfluencerDocument,
+} from 'src/influencer/schema/influencer.schema';
 import { Optional } from '@nestjs/common';
 
 @Injectable()
@@ -47,7 +50,7 @@ export class CouponService {
     @Optional()
     @InjectModel(Influencer.name)
     private influencerModel?: Model<InfluencerDocument>,
-  ) { }
+  ) {}
 
   async create(dto: CreateCouponDto) {
     const existing = await this.couponModel.findOne({
@@ -83,9 +86,13 @@ export class CouponService {
 
     // Rule E2: Block creator from using their own influencer coupon
     if (coupon.influencerId && userId && this.influencerModel) {
-      const inf = await this.influencerModel.findById(coupon.influencerId).lean();
+      const inf = await this.influencerModel
+        .findById(coupon.influencerId)
+        .lean();
       if (inf?.userId && inf.userId.toString() === userId.toString()) {
-        throw new BadRequestException('You cannot use your own influencer coupon.');
+        throw new BadRequestException(
+          'You cannot use your own influencer coupon.',
+        );
       }
     }
 
@@ -252,7 +259,10 @@ export class CouponService {
         throw new BadRequestException(`${product.name} is unavailable`);
       }
 
-      const variant = await this.productVariantModel.findById(item.variant).populate("images", "url publicId _id").populate("thumbnail", "url publicId _id");
+      const variant = await this.productVariantModel
+        .findById(item.variant)
+        .populate('images', 'url publicId _id')
+        .populate('thumbnail', 'url publicId _id');
 
       if (!variant) {
         throw new NotFoundException('Variant not found');
@@ -324,8 +334,6 @@ export class CouponService {
       isActive: true,
     });
 
-
-
     if (!coupon) {
       throw new BadRequestException('Coupon not found');
     }
@@ -342,9 +350,13 @@ export class CouponService {
 
     // Rule E2: Block creator from using their own influencer coupon
     if (coupon.influencerId && userId && this.influencerModel) {
-      const inf = await this.influencerModel.findById(coupon.influencerId).lean();
+      const inf = await this.influencerModel
+        .findById(coupon.influencerId)
+        .lean();
       if (inf?.userId && inf.userId.toString() === userId.toString()) {
-        throw new BadRequestException('You cannot use your own influencer coupon.');
+        throw new BadRequestException(
+          'You cannot use your own influencer coupon.',
+        );
       }
     }
 
@@ -421,7 +433,12 @@ export class CouponService {
       cartItems,
     });
   }
-  async validateCouponForAmount(userId: string, couponCode: string, amount: number, vendorId?: string) {
+  async validateCouponForAmount(
+    userId: string,
+    couponCode: string,
+    amount: number,
+    vendorId?: string,
+  ) {
     const coupon = await this.couponModel.findOne({
       code: couponCode.trim().toUpperCase(),
       isActive: true,
@@ -433,9 +450,13 @@ export class CouponService {
 
     // Rule E2: Block creator from using their own influencer coupon
     if (coupon.influencerId && userId && this.influencerModel) {
-      const inf = await this.influencerModel.findById(coupon.influencerId).lean();
+      const inf = await this.influencerModel
+        .findById(coupon.influencerId)
+        .lean();
       if (inf?.userId && inf.userId.toString() === userId.toString()) {
-        throw new BadRequestException('You cannot use your own influencer coupon.');
+        throw new BadRequestException(
+          'You cannot use your own influencer coupon.',
+        );
       }
     }
 
@@ -502,16 +523,30 @@ export class CouponService {
     };
   }
 
-  async recordCourseCouponUsage(userId: string, couponId: string, coursePurchaseId: string, session?: any) {
-    await this.couponUsageModel.create([{
-      userId: new Types.ObjectId(userId),
-      couponId: new Types.ObjectId(couponId),
-      coursePurchaseId: new Types.ObjectId(coursePurchaseId),
-      usedCount: 1
-    }], { session });
+  async recordCourseCouponUsage(
+    userId: string,
+    couponId: string,
+    coursePurchaseId: string,
+    session?: any,
+  ) {
+    await this.couponUsageModel.create(
+      [
+        {
+          userId: new Types.ObjectId(userId),
+          couponId: new Types.ObjectId(couponId),
+          coursePurchaseId: new Types.ObjectId(coursePurchaseId),
+          usedCount: 1,
+        },
+      ],
+      { session },
+    );
 
-    await this.couponModel.findByIdAndUpdate(new Types.ObjectId(couponId), {
-      $inc: { totalUsed: 1 }
-    }, { session });
+    await this.couponModel.findByIdAndUpdate(
+      new Types.ObjectId(couponId),
+      {
+        $inc: { totalUsed: 1 },
+      },
+      { session },
+    );
   }
 }

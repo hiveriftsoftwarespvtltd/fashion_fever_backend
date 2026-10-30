@@ -38,14 +38,13 @@ import {
 import { HomeBookingCardsService } from './home-booking-cards.service';
 
 @UseGuards(JwtAuthGuard, RolesGuard)
-
 @Controller('admin')
 export class AdminController {
   constructor(
     private adminService: AdminService,
     private influencerService: InfluencerService,
     private homeBookingCardsService: HomeBookingCardsService,
-  ) { }
+  ) {}
 
   @AdminAccess(AdminModule.VENDORS, AccessType.READ)
   @Get('vendors')
@@ -59,8 +58,13 @@ export class AdminController {
 
   @AdminAccess(AdminModule.USERS, AccessType.READ)
   @Get('users')
-  async getAllUsers(@Query('page') page: number, @Query('limit') limit: number) {
-    return await this.adminService.fetchAllUsers(page, limit);
+  async getAllUsers(
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
+    @Query('search') search?: string,
+    @Query('role') role?: string,
+  ) {
+    return await this.adminService.fetchAllUsers(page, limit, search, role);
   }
 
   @AdminAccess(AdminModule.VENDORS, AccessType.READ)
@@ -75,13 +79,19 @@ export class AdminController {
 
   @AdminAccess(AdminModule.VENDORS, AccessType.READ)
   @Get('products')
-  async fetAllProducts(@Query('page') page: number, @Query('limit') limit: number) {
+  async fetAllProducts(
+    @Query('page') page: number,
+    @Query('limit') limit: number,
+  ) {
     return this.adminService.fetchProducts(page, limit);
   }
 
   @AdminAccess(AdminModule.VENDORS, AccessType.READ)
   @Get('orders')
-  async fetchAllOrders(@Query('page') page: number, @Query('limit') limit: number) {
+  async fetchAllOrders(
+    @Query('page') page: number,
+    @Query('limit') limit: number,
+  ) {
     return this.adminService.fetchAllOrders(page, limit);
   }
 
@@ -177,8 +187,16 @@ export class AdminController {
 
   @AdminAccess(AdminModule.INFLUENCERS, AccessType.WRITE)
   @Post('send-influencer-invitation-link')
-  async sendInfluencerInvitationLink(@Body('email') email: string, @Body('name') name: string, @Req() req: any) {
-    return await this.influencerService.sendInfluencerInvitationLink(email, name, req.user._id)
+  async sendInfluencerInvitationLink(
+    @Body('email') email: string,
+    @Body('name') name: string,
+    @Req() req: any,
+  ) {
+    return await this.influencerService.sendInfluencerInvitationLink(
+      email,
+      name,
+      req.user._id,
+    );
   }
 
   @AdminAccess(AdminModule.INFLUENCERS, AccessType.WRITE)
@@ -186,10 +204,12 @@ export class AdminController {
   //   create(@Body() dto: CreateInfluencerDto) {
   //     return this.influencerService.create(dto);
   //   }
-
   @AdminAccess(AdminModule.INFLUENCERS, AccessType.READ)
   @Get('all-influencer-commission-slabs')
-  getAllCommissionSlabs(@Query('page') page: number, @Query('limit') limit: number) {
+  getAllCommissionSlabs(
+    @Query('page') page: number,
+    @Query('limit') limit: number,
+  ) {
     return this.influencerService.getAllCommissionSlabs(page, limit);
   }
 
@@ -198,7 +218,6 @@ export class AdminController {
   // settleVendorPayout(@Body() dto: SettleVendorPayoutDto) {
   //   return this.payoutService.settleVendorPayout(dto);
   // }
-
   @AdminAccess(AdminModule.INFLUENCERS, AccessType.READ)
   @Get('influencer-commissions/:influencerId')
   async influencerCommissionDetails(
@@ -255,7 +274,6 @@ export class AdminController {
   //     status,
   //   );
   // }
-
   @AdminAccess(AdminModule.PLATFORM, AccessType.WRITE)
   // @Post('vendor-pays/:vendorId')
   // async payVendor(
@@ -269,7 +287,6 @@ export class AdminController {
   //     dto,
   //   );
   // }
-
   @AdminAccess(AdminModule.FINANCE, AccessType.WRITE)
   @Put('update-vendor-payout-status/:vendorId')
   async updateVendorPayoutStatus(
@@ -463,9 +480,13 @@ export class AdminController {
   createBookingCard(
     @Body() dto: any,
     @UploadedFile() file: Express.Multer.File,
-    @Req() req: any
+    @Req() req: any,
   ) {
-    return this.homeBookingCardsService.createCard(dto, file, req.user?._id?.toString());
+    return this.homeBookingCardsService.createCard(
+      dto,
+      file,
+      req.user?._id?.toString(),
+    );
   }
 
   @Put('home-booking-cards/update/:id')
@@ -474,9 +495,14 @@ export class AdminController {
     @Param('id') id: string,
     @Body() dto: any,
     @UploadedFile() file: Express.Multer.File,
-    @Req() req: any
+    @Req() req: any,
   ) {
-    return this.homeBookingCardsService.updateCard(id, dto, file, req.user?._id?.toString());
+    return this.homeBookingCardsService.updateCard(
+      id,
+      dto,
+      file,
+      req.user?._id?.toString(),
+    );
   }
 
   @Post('home-booking-cards/update/:id')
@@ -485,9 +511,14 @@ export class AdminController {
     @Param('id') id: string,
     @Body() dto: any,
     @UploadedFile() file: Express.Multer.File,
-    @Req() req: any
+    @Req() req: any,
   ) {
-    return this.homeBookingCardsService.updateCard(id, dto, file, req.user?._id?.toString());
+    return this.homeBookingCardsService.updateCard(
+      id,
+      dto,
+      file,
+      req.user?._id?.toString(),
+    );
   }
 
   @Delete('home-booking-cards/delete/:id')

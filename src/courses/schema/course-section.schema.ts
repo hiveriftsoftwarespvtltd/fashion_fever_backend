@@ -1,7 +1,7 @@
-import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
-import { Document, Types } from "mongoose";
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Document, Types } from 'mongoose';
 
-export type CourseSectionDocument = CourseSection & Document
+export type CourseSectionDocument = CourseSection & Document;
 
 @Schema({ timestamps: true })
 export class CourseSection {
@@ -19,4 +19,4 @@ export class CourseSection {
   order: number;
 }
 
-export const CourseSectionSchema = SchemaFactory.createForClass(CourseSection)
+export const CourseSectionSchema = SchemaFactory.createForClass(CourseSection);

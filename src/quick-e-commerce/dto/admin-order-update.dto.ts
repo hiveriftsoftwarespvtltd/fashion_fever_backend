@@ -1,4 +1,12 @@
-import { IsDateString, IsEnum, IsNumber, IsOptional, IsString, Min, IsMongoId } from 'class-validator';
+import {
+  IsDateString,
+  IsEnum,
+  IsNumber,
+  IsOptional,
+  IsString,
+  Min,
+  IsMongoId,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { QuickOrderStatus } from '../schema/quick-order.schema';
 

@@ -1,23 +1,14 @@
-import {
-  Prop,
-  Schema,
-  SchemaFactory,
-} from '@nestjs/mongoose';
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 
-import {
-  Document,
-  Types,
-} from 'mongoose';
+import { Document, Types } from 'mongoose';
 
-export type WishlistDocument =
-  Wishlist & Document;
+export type WishlistDocument = Wishlist & Document;
 
 @Schema({
   timestamps: true,
   _id: false,
 })
 export class WishlistItem {
-
   @Prop({
     type: Types.ObjectId,
     ref: 'Product',
@@ -33,16 +24,12 @@ export class WishlistItem {
   variant!: Types.ObjectId;
 }
 
-export const WishlistItemSchema =
-  SchemaFactory.createForClass(
-    WishlistItem,
-  );
+export const WishlistItemSchema = SchemaFactory.createForClass(WishlistItem);
 
 @Schema({
   timestamps: true,
 })
 export class Wishlist {
-
   @Prop({
     type: Types.ObjectId,
     ref: 'User',
@@ -58,7 +45,4 @@ export class Wishlist {
   items!: WishlistItem[];
 }
 
-export const WishlistSchema =
-  SchemaFactory.createForClass(
-    Wishlist,
-  );
+export const WishlistSchema = SchemaFactory.createForClass(Wishlist);

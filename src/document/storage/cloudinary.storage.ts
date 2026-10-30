@@ -4,8 +4,6 @@ import { v2 as cloudinary } from 'cloudinary';
 import * as streamifier from 'streamifier';
 import { StorageProvider, UploadResult } from './storage.interface';
 
-
-
 export class CloudinaryStorage implements StorageProvider {
   constructor() {
     cloudinary.config({
@@ -21,10 +19,7 @@ export class CloudinaryStorage implements StorageProvider {
     return 'raw'; // pdf, docs, etc
   }
 
-  async upload(
-    file: any,
-    folder: string,
-  ): Promise<UploadResult> {
+  async upload(file: any, folder: string): Promise<UploadResult> {
     const resourceType = this.getResourceType(file.mimetype);
 
     return new Promise((resolve, reject) => {
@@ -35,7 +30,7 @@ export class CloudinaryStorage implements StorageProvider {
         },
         (error, result) => {
           if (error || !result) {
-            console.error("🔥 CLOUDINARY ERROR:", error);
+            console.error('🔥 CLOUDINARY ERROR:', error);
             return reject(error);
           }
 

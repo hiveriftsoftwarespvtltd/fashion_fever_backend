@@ -8,14 +8,34 @@ import {
   Min,
   IsEnum,
   isEnum,
-  IsNumber
+  IsNumber,
 } from 'class-validator';
 
-import { PaymentMode, PaymentMethod as PaymentTransactionMethod, TransactionStatus, ReferenceType } from '../schema/payment-transaction.schema';
-import { EarningRole, EarningReferenceType, EarningStatus } from '../schema/market-place-earning.schema';
-import { PayoutStatus, PaymentMethod as MarketplacePaymentMethod, PaymentMethod } from '../schema/market-place-payout.schema';
-import { CashSettlementStatus, CollectedBy } from '../schema/cash-settlement.schema';
-import { UserRole, PaymentDirection, SettlementStatus } from '../schema/settlement.schema';
+import {
+  PaymentMode,
+  PaymentMethod as PaymentTransactionMethod,
+  TransactionStatus,
+  ReferenceType,
+} from '../schema/payment-transaction.schema';
+import {
+  EarningRole,
+  EarningReferenceType,
+  EarningStatus,
+} from '../schema/market-place-earning.schema';
+import {
+  PayoutStatus,
+  PaymentMethod as MarketplacePaymentMethod,
+  PaymentMethod,
+} from '../schema/market-place-payout.schema';
+import {
+  CashSettlementStatus,
+  CollectedBy,
+} from '../schema/cash-settlement.schema';
+import {
+  UserRole,
+  PaymentDirection,
+  SettlementStatus,
+} from '../schema/settlement.schema';
 import { InfluencerPayoutStatus } from 'src/influencer/schema/influencer-payout.schema';
 
 export class DepositCashDto {
@@ -126,7 +146,6 @@ export class InfluencerPayoutQueryDto {
   influencerId?: string;
 }
 
-
 export class SettleVendorPendingBalanceDto {
   @IsMongoId()
   vendorId!: string;
@@ -197,7 +216,6 @@ export class UpdateCashSettlementDto {
   @IsOptional()
   depositedAt?: Date;
 
-
   @IsOptional()
   @IsString()
   remarks?: string;
@@ -233,7 +251,9 @@ export class PaginationQueryDto {
 export class PaymentTransactionQueryDto extends PaginationQueryDto {
   @IsOptional() @IsEnum(TransactionStatus) status?: TransactionStatus;
   @IsOptional() @IsEnum(PaymentMode) paymentMode?: PaymentMode;
-  @IsOptional() @IsEnum(PaymentTransactionMethod) paymentMethod?: PaymentTransactionMethod;
+  @IsOptional()
+  @IsEnum(PaymentTransactionMethod)
+  paymentMethod?: PaymentTransactionMethod;
   @IsOptional() @IsEnum(ReferenceType) referenceType?: ReferenceType;
   @IsOptional() @IsMongoId() customerId?: string;
   @IsOptional() @IsMongoId() userId?: string;
@@ -243,7 +263,9 @@ export class PaymentTransactionQueryDto extends PaginationQueryDto {
 export class MarketplaceEarningQueryDto extends PaginationQueryDto {
   @IsOptional() @IsEnum(EarningStatus) status?: EarningStatus;
   @IsOptional() @IsEnum(EarningRole) role?: EarningRole;
-  @IsOptional() @IsEnum(EarningReferenceType) referenceType?: EarningReferenceType;
+  @IsOptional()
+  @IsEnum(EarningReferenceType)
+  referenceType?: EarningReferenceType;
   @IsOptional() @IsMongoId() userId?: string;
   @IsOptional() @IsMongoId() payoutId?: string;
   @IsOptional() @IsMongoId() paymentTransactionId?: string;
@@ -253,7 +275,9 @@ export class MarketplaceEarningQueryDto extends PaginationQueryDto {
 
 export class MarketplacePayoutQueryDto extends PaginationQueryDto {
   @IsOptional() @IsEnum(PayoutStatus) status?: PayoutStatus;
-  @IsOptional() @IsEnum(MarketplacePaymentMethod) paymentMethod?: MarketplacePaymentMethod;
+  @IsOptional()
+  @IsEnum(MarketplacePaymentMethod)
+  paymentMethod?: MarketplacePaymentMethod;
   @IsOptional() @IsMongoId() userId?: string;
 }
 
@@ -287,7 +311,6 @@ export class ProcessEarningsPayoutDto {
   @IsOptional()
   @IsString()
   transactionReference?: string;
-
 
   @IsEnum(PaymentMethod)
   paymentMethod?: PaymentMethod;

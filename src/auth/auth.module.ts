@@ -8,7 +8,10 @@ import { ConfigService } from '@nestjs/config';
 import { Mongoose } from 'mongoose';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Vendor, VendorSchema } from 'src/vendor/schema/vendor.schema';
-import { ServiceProvider, ServiceProviderSchema } from 'src/service/schema/service-provider.schema';
+import {
+  ServiceProvider,
+  ServiceProviderSchema,
+} from 'src/service/schema/service-provider.schema';
 import { Admin, AdminSchema } from 'src/admin/schema/admin.schema';
 import { WalletModule } from 'src/wallet/wallet.module';
 import { InfluencerModule } from 'src/influencer/influencer.module';
@@ -20,28 +23,28 @@ import { InfluencerModule } from 'src/influencer/influencer.module';
     JwtModule.registerAsync({
       inject: [ConfigService],
       useFactory: (configSercice: ConfigService) => {
-        const secret = configSercice.get<string>('JWT_SECRET')
+        const secret = configSercice.get<string>('JWT_SECRET');
         if (!secret) {
-          throw new Error("JWT_SECRET not defined in env")
+          throw new Error('JWT_SECRET not defined in env');
         }
         return {
           secret,
           signOptions: {
-            expiresIn: '30d'
-          }
-        }
-      }
+            expiresIn: '30d',
+          },
+        };
+      },
     }),
     MongooseModule.forFeature([
-      { name: Vendor.name, schema: VendorSchema }, 
+      { name: Vendor.name, schema: VendorSchema },
       { name: ServiceProvider.name, schema: ServiceProviderSchema },
-      { name: Admin.name, schema: AdminSchema }
+      { name: Admin.name, schema: AdminSchema },
     ]),
     WalletModule,
     InfluencerModule,
   ],
   providers: [AuthService, JwtStrategy],
   controllers: [AuthController],
-  exports: [AuthService]
+  exports: [AuthService],
 })
-export class AuthModule { }
+export class AuthModule {}

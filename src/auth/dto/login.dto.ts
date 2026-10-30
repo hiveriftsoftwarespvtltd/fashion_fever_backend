@@ -1,15 +1,13 @@
-import { IsString,IsEmail,IsMongoId, IsOptional } from "class-validator";
+import { IsString, IsEmail, IsMongoId, IsOptional } from 'class-validator';
 
+export class LoginDTO {
+  @IsEmail()
+  email!: string;
 
-export class LoginDTO{
+  @IsOptional()
+  password!: string;
 
-    @IsEmail()
-    email!:string
-
-    @IsOptional()
-    password!:string
-
-    @IsMongoId()
-    @IsOptional()
-    tenantId!:string
+  @IsMongoId()
+  @IsOptional()
+  tenantId!: string;
 }

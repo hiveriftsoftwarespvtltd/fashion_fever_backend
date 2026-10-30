@@ -1,18 +1,30 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { QuickDeliveryCart, QuickDeliveryCartDocument } from './schema/quick-delivery-cart';
-import { AddToCartDto, DecreaseCartItemDto, RemoveCartItemDto } from './dto/quick-delivery-cart.dto';
+import {
+  QuickDeliveryCart,
+  QuickDeliveryCartDocument,
+} from './schema/quick-delivery-cart';
+import {
+  AddToCartDto,
+  DecreaseCartItemDto,
+  RemoveCartItemDto,
+} from './dto/quick-delivery-cart.dto';
 import { Product, ProductDocument } from 'src/product/schema/product.schema';
-import { ProductVariant, ProductVariantDocument } from 'src/product/schema/product-variant.schema';
+import {
+  ProductVariant,
+  ProductVariantDocument,
+} from 'src/product/schema/product-variant.schema';
 
 @Injectable()
 export class QuickDeliveryCartService {
   constructor(
-    @InjectModel(QuickDeliveryCart.name) private cartModel: Model<QuickDeliveryCartDocument>,
+    @InjectModel(QuickDeliveryCart.name)
+    private cartModel: Model<QuickDeliveryCartDocument>,
     @InjectModel(Product.name) private productModel: Model<ProductDocument>,
-    @InjectModel(ProductVariant.name) private variantModel: Model<ProductVariantDocument>,
-  ) { }
+    @InjectModel(ProductVariant.name)
+    private variantModel: Model<ProductVariantDocument>,
+  ) {}
 
   async getCart(userId: string) {
     let cart = await this.cartModel
@@ -22,21 +34,30 @@ export class QuickDeliveryCartService {
         select: '_id name slug description vendorId',
         populate: {
           path: 'vendorId',
-          select: '_id businessName slug logo'
-        }
+          select: '_id businessName slug logo',
+        },
       })
       .populate({
         path: 'items.variant',
-        select: '_id productId attributes salesPrice offeredPrice stock',
-        populate: {
-          path: "thumbnail",
-          select: "_id publicId url"
-        }
+        select: '_id productId attributes salesPrice offeredPrice stock thumbnail images',
+        populate: [
+          {
+            path: 'thumbnail',
+            select: '_id publicId url',
+          },
+          {
+            path: 'images',
+            select: '_id publicId url',
+          },
+        ],
       })
       .exec();
 
     if (!cart) {
-      const newCart = await this.cartModel.create({ user: new Types.ObjectId(userId), items: [] });
+      const newCart = await this.cartModel.create({
+        user: new Types.ObjectId(userId),
+        items: [],
+      });
       cart = newCart as any;
     }
 
@@ -52,7 +73,7 @@ export class QuickDeliveryCartService {
       if (!vendorMap.has(vendorIdStr)) {
         vendorMap.set(vendorIdStr, {
           vendor: vendor || null,
-          items: []
+          items: [],
         });
       }
       vendorMap.get(vendorIdStr).items.push(item);
@@ -100,13 +121,20 @@ export class QuickDeliveryCartService {
       throw new NotFoundException('Product variant not found or unavailable');
     }
 
-    let cart = await this.cartModel.findOne({ user: new Types.ObjectId(userId) });
+    let cart = await this.cartModel.findOne({
+      user: new Types.ObjectId(userId),
+    });
     if (!cart) {
-      cart = await this.cartModel.create({ user: new Types.ObjectId(userId), items: [] });
+      cart = await this.cartModel.create({
+        user: new Types.ObjectId(userId),
+        items: [],
+      });
     }
 
     const existingItemIndex = cart.items.findIndex(
-      (item) => item.product.toString() === dto.productId && item.variant.toString() === dto.variantId
+      (item) =>
+        item.product.toString() === dto.productId &&
+        item.variant.toString() === dto.variantId,
     );
 
     const qtyToAdd = dto.quantity || 1;
@@ -131,13 +159,17 @@ export class QuickDeliveryCartService {
   }
 
   async decreaseItem(userId: string, dto: DecreaseCartItemDto) {
-    const cart = await this.cartModel.findOne({ user: new Types.ObjectId(userId) });
+    const cart = await this.cartModel.findOne({
+      user: new Types.ObjectId(userId),
+    });
     if (!cart) {
       throw new NotFoundException('Cart not found');
     }
 
     const existingItemIndex = cart.items.findIndex(
-      (item) => item.product.toString() === dto.productId && item.variant.toString() === dto.variantId
+      (item) =>
+        item.product.toString() === dto.productId &&
+        item.variant.toString() === dto.variantId,
     );
 
     if (existingItemIndex > -1) {
@@ -157,13 +189,19 @@ export class QuickDeliveryCartService {
   }
 
   async removeItem(userId: string, dto: RemoveCartItemDto) {
-    const cart = await this.cartModel.findOne({ user: new Types.ObjectId(userId) });
+    const cart = await this.cartModel.findOne({
+      user: new Types.ObjectId(userId),
+    });
     if (!cart) {
       throw new NotFoundException('Cart not found');
     }
 
     cart.items = cart.items.filter(
-      (item) => !(item.product.toString() === dto.productId && item.variant.toString() === dto.variantId)
+      (item) =>
+        !(
+          item.product.toString() === dto.productId &&
+          item.variant.toString() === dto.variantId
+        ),
     );
 
     await cart.save();
@@ -176,7 +214,9 @@ export class QuickDeliveryCartService {
   }
 
   async clearCart(userId: string) {
-    const cart = await this.cartModel.findOne({ user: new Types.ObjectId(userId) });
+    const cart = await this.cartModel.findOne({
+      user: new Types.ObjectId(userId),
+    });
     if (!cart) {
       throw new NotFoundException('Cart not found');
     }

@@ -1,24 +1,24 @@
-import { IsMongoId, IsOptional, IsString } from "class-validator";
+import { IsMongoId, IsOptional, IsString } from 'class-validator';
 
 export class CreateCourseReplyDTO {
-    @IsMongoId()
-    courseId!: string;
+  @IsMongoId()
+  courseId!: string;
 
-    @IsMongoId()
-    courseSectionId!: string;
+  @IsMongoId()
+  courseSectionId!: string;
 
-    @IsMongoId()
-    courseLessonId!: string;
+  @IsMongoId()
+  courseLessonId!: string;
 
-    @IsString()
-    comment!: string;
+  @IsString()
+  comment!: string;
 
-    @IsMongoId()
-    parentId!: string;
+  @IsMongoId()
+  parentId!: string;
 }
 
 export class UpdateCourseReplyDTO {
-    @IsOptional()
-    @IsString()
-    comment?: string;
+  @IsOptional()
+  @IsString()
+  comment?: string;
 }

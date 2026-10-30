@@ -234,10 +234,11 @@ Your booking has been <strong>cancelled</strong>.
 <p><strong>Time:</strong> ${booking.slotStartTime} - ${booking.slotEndTime}</p>
 </div>
 
-${booking.cancellationReason
-      ? `<p style="margin-top:15px;color:#991b1b;"><strong>Reason:</strong> ${booking.cancellationReason}</p>`
-      : ''
-    }
+${
+  booking.cancellationReason
+    ? `<p style="margin-top:15px;color:#991b1b;"><strong>Reason:</strong> ${booking.cancellationReason}</p>`
+    : ''
+}
 
 <p style="margin-top:20px;color:#6b7280;">
 If any payment was made, refund (if applicable) will be processed as per policy.
@@ -334,7 +335,6 @@ Please make sure to be available at the new scheduled time.
 </html>
   `;
 };
-
 
 export const bookingCompletedTemplate = (
   name: string,

@@ -1,17 +1,12 @@
 import { Transform } from 'class-transformer';
-import {
-  IsArray,
-  IsOptional,
-  IsString,
-  ArrayUnique,
-} from 'class-validator';
+import { IsArray, IsOptional, IsString, ArrayUnique } from 'class-validator';
 
 export class CreateCategoryDTO {
   @IsString()
   name!: string;
 
   @IsString()
-  label!:string
+  label!: string;
 
   @IsString()
   slug!: string;
@@ -33,16 +28,14 @@ export class CreateCategoryDTO {
   tags?: string[];
 }
 
-
-
 export class UpdateCategoryDTO {
   @IsOptional()
   @IsString()
   name?: string;
 
   @IsOptional()
-   @IsString()
-  label?:string
+  @IsString()
+  label?: string;
 
   @IsOptional()
   @IsString()

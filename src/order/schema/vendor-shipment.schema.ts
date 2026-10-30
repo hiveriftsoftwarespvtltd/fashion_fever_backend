@@ -1,7 +1,6 @@
-import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
-import { Document, Types } from "mongoose";
-import { ShippingAddress, ShippingAddressSchema } from "./order.schema";
-
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Document, Types } from 'mongoose';
+import { ShippingAddress, ShippingAddressSchema } from './order.schema';
 
 export enum ShipmentStatus {
   PENDING = 'pending',
@@ -14,10 +13,9 @@ export enum ShipmentStatus {
   RTO = 'rto',
 }
 
-export type VendorShipmentDocument = VendorShipment & Document
+export type VendorShipmentDocument = VendorShipment & Document;
 @Schema({ timestamps: true })
 export class VendorShipment {
-
   @Prop({
     type: Types.ObjectId,
     ref: 'VendorOrder',
@@ -84,4 +82,5 @@ export class VendorShipment {
   deliveredAt?: Date;
 }
 
-export const VendorShipmentSchema = SchemaFactory.createForClass(VendorShipment)
+export const VendorShipmentSchema =
+  SchemaFactory.createForClass(VendorShipment);

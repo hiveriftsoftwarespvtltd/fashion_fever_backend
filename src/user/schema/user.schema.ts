@@ -4,7 +4,7 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 export type UserDocument = User & Document;
 
 export enum UserRole {
-  SUPER_ADMIN = "super_admin",
+  SUPER_ADMIN = 'super_admin',
   ADMIN = 'admin',
   VENDOR = 'vendor',
   INFLUENCER = 'influencer',
@@ -12,7 +12,7 @@ export enum UserRole {
   DISTRIBUTOR = 'distributor',
   USER = 'user',
   EDUCATOR = 'educator',
-  DELIVERY_PERSON = 'delivery_person'
+  DELIVERY_PERSON = 'delivery_person',
 }
 
 export enum AuthType {
@@ -25,10 +25,8 @@ export enum RoleStatus {
   APPROVED = 'APPROVED',
   REJECTED = 'REJECTED',
   NOT_ONBOARDED = 'NOT_ONBOARDED',
-  DEACTIVATED = "DEACTIVATED"
+  DEACTIVATED = 'DEACTIVATED',
 }
-
-
 
 @Schema({ timestamps: true })
 export class User {
@@ -124,7 +122,7 @@ export class User {
   })
   educatorId?: Types.ObjectId;
 
-  @Prop({ type: Types.ObjectId, ref: "AffliateProgram" })
+  @Prop({ type: Types.ObjectId, ref: 'AffliateProgram' })
   affliateProgramId?: Types.ObjectId;
 
   @Prop({ type: Types.ObjectId, ref: 'Influencer', default: null })
@@ -138,7 +136,6 @@ export class User {
 
   @Prop({ default: false })
   isEducatorOnboardingCompleted!: boolean;
-
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

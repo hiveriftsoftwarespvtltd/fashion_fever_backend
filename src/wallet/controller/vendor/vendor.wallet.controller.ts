@@ -9,20 +9,20 @@ import { Roles } from 'src/auth/roles.decorator';
 @Roles(UserRole.VENDOR, UserRole.ADMIN)
 @Controller('wallet/vendor')
 export class VendorWalletController {
-    constructor(private readonly userWalletService: UserWalletService) { }
+  constructor(private readonly userWalletService: UserWalletService) {}
 
-    @Get('balance')
-    async getBalance(@Req() req: any) {
-        return this.userWalletService.getBalance(req.user._id);
-    }
+  @Get('balance')
+  async getBalance(@Req() req: any) {
+    return this.userWalletService.getBalance(req.user._id);
+  }
 
-    @Get('transactions')
-    async getTransactions(@Req() req: any) {
-        return this.userWalletService.getTransactions(req.user._id);
-    }
+  @Get('transactions')
+  async getTransactions(@Req() req: any) {
+    return this.userWalletService.getTransactions(req.user._id);
+  }
 
-    @Post('topup')
-    async initiateTopup(@Req() req: any, @Body('amount') amount: number) {
-        return this.userWalletService.initiateTopup(req.user._id, amount);
-    }
+  @Post('topup')
+  async initiateTopup(@Req() req: any, @Body('amount') amount: number) {
+    return this.userWalletService.initiateTopup(req.user._id, amount);
+  }
 }

@@ -1,7 +1,6 @@
 // // src/media/storage/local.storage.ts
 // import { Express } from 'express';
 
-
 // import * as fs from 'fs';
 // import * as path from 'path';
 // import { randomUUID } from 'crypto';
@@ -59,15 +58,14 @@ export class LocalStorage implements StorageProvider {
     }
     const localDir = path.join(process.cwd(), 'uploads');
     if (!fs.existsSync(localDir)) {
-      try { fs.mkdirSync(localDir, { recursive: true }); } catch (_) {}
+      try {
+        fs.mkdirSync(localDir, { recursive: true });
+      } catch (_) {}
     }
     return localDir;
   }
 
-  async upload(
-    file: any,
-    folder: string,
-  ): Promise<UploadResult> {
+  async upload(file: any, folder: string): Promise<UploadResult> {
     const baseUploadDir = this.getBaseUploadDir();
     const uploadDir = path.join(baseUploadDir, folder);
 
@@ -84,9 +82,9 @@ export class LocalStorage implements StorageProvider {
     const port = process.env.PORT || 9000;
     const baseUrl = process.env.SERVER_BASE_URL
       ? process.env.SERVER_BASE_URL
-      : (process.env.NODE_ENV === 'production'
-          ? 'https://fashionfever.in/fashion_fever_api/api/v1'
-          : `http://localhost:${port}`);
+      : process.env.NODE_ENV === 'production'
+        ? 'https://fashionfever.in/fashion_fever_api/api/v1'
+        : `http://localhost:${port}`;
 
     const cleanBaseUrl = baseUrl.replace(/\/+$/, '');
 
@@ -99,10 +97,7 @@ export class LocalStorage implements StorageProvider {
     };
   }
 
-  async delete(
-    publicId: string,
-    resourceType?: string,
-  ): Promise<void> {
+  async delete(publicId: string, resourceType?: string): Promise<void> {
     const baseUploadDir = this.getBaseUploadDir();
     const filePath = path.join(baseUploadDir, publicId);
 

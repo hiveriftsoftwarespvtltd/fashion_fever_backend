@@ -9,14 +9,23 @@ import * as bcrypt from 'bcryptjs';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { Connection, Model, Types, ClientSession } from 'mongoose';
 
-import { Influencer, InfluencerDocument, InfluencerStatus } from './schema/influencer.schema';
+import {
+  Influencer,
+  InfluencerDocument,
+  InfluencerStatus,
+} from './schema/influencer.schema';
 import {
   CreateInfluencerDto,
   createSlabDTO,
   UpdateInfluencerDto,
   UpdateSlabDTO,
 } from './dto/influencer.dto';
-import { User, UserDocument, UserRole, RoleStatus } from 'src/user/schema/user.schema';
+import {
+  User,
+  UserDocument,
+  UserRole,
+  RoleStatus,
+} from 'src/user/schema/user.schema';
 import { ApiResponse } from 'src/common/responses/api-response';
 import {
   CommissionStatus,
@@ -24,8 +33,16 @@ import {
   InfluencerCommissionDocument,
   AttributionSource,
 } from './schema/influencer-commision-rate.schema';
-import { Order, OrderDocument, OrderStatus, PaymentStatus } from 'src/order/schema/order.schema';
-import { VendorOrder, VendorOrderDocument } from 'src/order/schema/vendor-order.schema';
+import {
+  Order,
+  OrderDocument,
+  OrderStatus,
+  PaymentStatus,
+} from 'src/order/schema/order.schema';
+import {
+  VendorOrder,
+  VendorOrderDocument,
+} from 'src/order/schema/vendor-order.schema';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import {
   InfluencerCommissionSlabDocument,
@@ -46,8 +63,14 @@ import {
   InfluencerInvitation,
   InfluencerInvitationDocument,
 } from './schema/influencer-invitation.schema';
-import { InfluencerStory, InfluencerStoryDocument } from './schema/influencer-stories.schema';
-import { AffliateProgram, AffliateProgramDocument } from './schema/affliate-program.schema';
+import {
+  InfluencerStory,
+  InfluencerStoryDocument,
+} from './schema/influencer-stories.schema';
+import {
+  AffliateProgram,
+  AffliateProgramDocument,
+} from './schema/affliate-program.schema';
 import { sendMail } from 'src/utils/helper';
 import { influencerInvitationTemplate } from 'src/utils/email.template';
 import { randomBytes, randomUUID } from 'crypto';
@@ -80,52 +103,40 @@ export class InfluencerService {
     @InjectModel(AffliateProgram.name)
     private affliateProgramModel: Model<AffliateProgramDocument>,
     @InjectConnection() private connection: Connection,
-    private documentService: DocumentService
-  ) { }
-
-
+    private documentService: DocumentService,
+  ) {}
 
   async create(
     dto: CreateInfluencerDto,
     // token: string,
   ) {
-    const session =
-      await this.connection.startSession();
+    const session = await this.connection.startSession();
 
     try {
       session.startTransaction();
 
-      const invitation =
-        await this.influencerInvitationModel.findOne({
-          token: dto.token,
-          isUsed: false,
-        });
+      const invitation = await this.influencerInvitationModel.findOne({
+        token: dto.token,
+        isUsed: false,
+      });
 
       if (!invitation) {
-        throw new BadRequestException(
-          'Invalid invitation link',
-        );
+        throw new BadRequestException('Invalid invitation link');
       }
 
       if (invitation.expiresAt < new Date()) {
-        throw new BadRequestException(
-          'Invitation link has expired',
-        );
+        throw new BadRequestException('Invitation link has expired');
       }
 
-      const existingUser =
-        await this.userModel.findOne({
-          email: invitation.email,
-        });
+      const existingUser = await this.userModel.findOne({
+        email: invitation.email,
+      });
 
       if (existingUser) {
-        throw new BadRequestException(
-          'User already exists with this email',
-        );
+        throw new BadRequestException('User already exists with this email');
       }
 
-      const hashedPassword =
-        await bcrypt.hash(dto.password, 10);
+      const hashedPassword = await bcrypt.hash(dto.password, 10);
 
       const user = await this.userModel.create(
         [
@@ -141,23 +152,22 @@ export class InfluencerService {
         { session },
       );
 
-      const influencer =
-        await this.influencerModel.create(
-          [
-            {
-              userId: user[0]._id,
-              name: invitation.name,
-              bio: dto.bio,
-              instagram: dto.instagram,
-              youtube: dto.youtube,
-              snapchat: dto.snapchat,
-              facebook: dto.facebook,
-              followers: dto.followers || 0,
-              invitedBy: new Types.ObjectId(invitation.invitedBy),
-            },
-          ],
-          { session },
-        );
+      const influencer = await this.influencerModel.create(
+        [
+          {
+            userId: user[0]._id,
+            name: invitation.name,
+            bio: dto.bio,
+            instagram: dto.instagram,
+            youtube: dto.youtube,
+            snapchat: dto.snapchat,
+            facebook: dto.facebook,
+            followers: dto.followers || 0,
+            invitedBy: new Types.ObjectId(invitation.invitedBy),
+          },
+        ],
+        { session },
+      );
 
       await this.userModel.updateOne(
         {
@@ -187,16 +197,20 @@ export class InfluencerService {
       await notifyAdmins(
         this.userModel,
         'New Influencer Onboarding Request',
-        adminPendingRequestNotificationTemplate('Influencer', user[0].name, user[0].email, {
-          Bio: influencer[0].bio,
-          Instagram: influencer[0].instagram,
-          YouTube: influencer[0].youtube,
-          Facebook: influencer[0].facebook,
-          Snapchat: influencer[0].snapchat,
-          Followers: influencer[0].followers,
-        })
+        adminPendingRequestNotificationTemplate(
+          'Influencer',
+          user[0].name,
+          user[0].email,
+          {
+            Bio: influencer[0].bio,
+            Instagram: influencer[0].instagram,
+            YouTube: influencer[0].youtube,
+            Facebook: influencer[0].facebook,
+            Snapchat: influencer[0].snapchat,
+            Followers: influencer[0].followers,
+          },
+        ),
       );
-
 
       return await this.influencerModel
         .findById(influencer[0]._id)
@@ -215,7 +229,8 @@ export class InfluencerService {
     const skip = (pageNumber - 1) * pageSize;
 
     return await this.influencerModel
-      .find({ isDeleted: false }).populate("invitedBy", 'name email phone role')
+      .find({ isDeleted: false })
+      .populate('invitedBy', 'name email phone role')
       .populate('userId', '-password')
       .populate('coupons')
       .skip(skip)
@@ -352,7 +367,12 @@ export class InfluencerService {
             totalSales: {
               $sum: {
                 $cond: [
-                  { $in: ['$status', [CommissionStatus.CANCELLED, CommissionStatus.REVERSED]] },
+                  {
+                    $in: [
+                      '$status',
+                      [CommissionStatus.CANCELLED, CommissionStatus.REVERSED],
+                    ],
+                  },
                   0,
                   '$finalOrderAmount',
                 ],
@@ -362,7 +382,12 @@ export class InfluencerService {
             totalCommission: {
               $sum: {
                 $cond: [
-                  { $in: ['$status', [CommissionStatus.APPROVED, CommissionStatus.PAID]] },
+                  {
+                    $in: [
+                      '$status',
+                      [CommissionStatus.APPROVED, CommissionStatus.PAID],
+                    ],
+                  },
                   '$commissionAmount',
                   0,
                 ],
@@ -407,7 +432,12 @@ export class InfluencerService {
             totalOrders: {
               $sum: {
                 $cond: [
-                  { $in: ['$status', [CommissionStatus.CANCELLED, CommissionStatus.REVERSED]] },
+                  {
+                    $in: [
+                      '$status',
+                      [CommissionStatus.CANCELLED, CommissionStatus.REVERSED],
+                    ],
+                  },
                   0,
                   1,
                 ],
@@ -416,7 +446,10 @@ export class InfluencerService {
           },
         },
       ]),
-      this.influencerModel.findById(objectId).select('_id name referralCode commissionRate').lean(),
+      this.influencerModel
+        .findById(objectId)
+        .select('_id name referralCode commissionRate')
+        .lean(),
     ]);
 
     const base = stats[0] || {
@@ -435,7 +468,10 @@ export class InfluencerService {
       approvedCommission: base.approvedCommission || 0,
       paidCommission: base.paidCommission || 0,
       totalOrders: base.totalOrders || 0,
-      commissionRate: influencer?.commissionRate !== undefined ? influencer.commissionRate : null,
+      commissionRate:
+        influencer?.commissionRate !== undefined
+          ? influencer.commissionRate
+          : null,
       name: influencer?.name,
       referralCode: influencer?.referralCode,
     };
@@ -470,7 +506,12 @@ export class InfluencerService {
               totalCommission: {
                 $sum: {
                   $cond: [
-                    { $in: ['$status', [CommissionStatus.APPROVED, CommissionStatus.PAID]] },
+                    {
+                      $in: [
+                        '$status',
+                        [CommissionStatus.APPROVED, CommissionStatus.PAID],
+                      ],
+                    },
                     '$commissionAmount',
                     0,
                   ],
@@ -507,7 +548,12 @@ export class InfluencerService {
               totalOrders: {
                 $sum: {
                   $cond: [
-                    { $in: ['$status', [CommissionStatus.CANCELLED, CommissionStatus.REVERSED]] },
+                    {
+                      $in: [
+                        '$status',
+                        [CommissionStatus.CANCELLED, CommissionStatus.REVERSED],
+                      ],
+                    },
                     0,
                     1,
                   ],
@@ -676,8 +722,14 @@ export class InfluencerService {
    * transaction pattern instead of doing non-atomic saves.
    */
   async markPayoutPaid(payoutId: string, transactionId: string) {
-    if (!transactionId || typeof transactionId !== 'string' || transactionId.trim() === '') {
-      throw new BadRequestException('Transaction ID / bank reference is required to settle payout');
+    if (
+      !transactionId ||
+      typeof transactionId !== 'string' ||
+      transactionId.trim() === ''
+    ) {
+      throw new BadRequestException(
+        'Transaction ID / bank reference is required to settle payout',
+      );
     }
     const cleanTransactionId = transactionId.trim();
 
@@ -707,7 +759,9 @@ export class InfluencerService {
         .session(session);
 
       const totalPaidAmount = parseFloat(
-        commissions.reduce((sum, c) => sum + (c.commissionAmount || 0), 0).toFixed(2),
+        commissions
+          .reduce((sum, c) => sum + (c.commissionAmount || 0), 0)
+          .toFixed(2),
       );
 
       payout.status = InfluencerPayoutStatus.PAID;
@@ -772,12 +826,21 @@ export class InfluencerService {
     }
 
     if (comm.approvalEligibleAt && comm.approvalEligibleAt > now) {
-      throw new BadRequestException('Commission is still within the 7-day return hold period');
+      throw new BadRequestException(
+        'Commission is still within the 7-day return hold period',
+      );
     }
 
     const vo = await this.vendorOrderModel.findById(vId);
-    if (vo && (vo.orderStatus === OrderStatus.CANCELLED || vo.orderStatus === OrderStatus.RETURNED || vo.paymentStatus === PaymentStatus.REFUNDED)) {
-      throw new BadRequestException(`Cannot approve commission: Vendor order is ${vo.orderStatus}`);
+    if (
+      vo &&
+      (vo.orderStatus === OrderStatus.CANCELLED ||
+        vo.orderStatus === OrderStatus.RETURNED ||
+        vo.paymentStatus === PaymentStatus.REFUNDED)
+    ) {
+      throw new BadRequestException(
+        `Cannot approve commission: Vendor order is ${vo.orderStatus}`,
+      );
     }
 
     await this.commissionModel.updateMany(
@@ -794,8 +857,16 @@ export class InfluencerService {
     );
   }
 
-  async reverseCommission(vendorOrderId: string, reason: string, session?: ClientSession) {
-    return this.reverseCommissionByVendorOrderId(vendorOrderId, reason, session);
+  async reverseCommission(
+    vendorOrderId: string,
+    reason: string,
+    session?: ClientSession,
+  ) {
+    return this.reverseCommissionByVendorOrderId(
+      vendorOrderId,
+      reason,
+      session,
+    );
   }
 
   /**
@@ -887,7 +958,13 @@ export class InfluencerService {
       // approved rule for automatic clawback of already-transferred funds. Admins must
       // handle post-settlement disputes manually via the admin finance panel.
       // Rule D1 (Full Reversal) applies ONLY before PAID state.
-      status: { $nin: [CommissionStatus.CANCELLED, CommissionStatus.REVERSED, CommissionStatus.PAID] },
+      status: {
+        $nin: [
+          CommissionStatus.CANCELLED,
+          CommissionStatus.REVERSED,
+          CommissionStatus.PAID,
+        ],
+      },
     };
 
     // Phase 7 Late reversal edge case:
@@ -900,7 +977,9 @@ export class InfluencerService {
     for (const comm of commissionsToReverse) {
       if (comm.payoutId) {
         const payout = session
-          ? await this.influencerPayoutModel.findById(comm.payoutId).session(session)
+          ? await this.influencerPayoutModel
+              .findById(comm.payoutId)
+              .session(session)
           : await this.influencerPayoutModel.findById(comm.payoutId);
 
         if (payout && payout.status === InfluencerPayoutStatus.PENDING) {
@@ -911,13 +990,20 @@ export class InfluencerService {
           const deductionSales = comm.finalOrderAmount || 0;
 
           payout.commissionIds = remainingIds;
-          payout.totalCommission = Math.max(0, parseFloat((payout.totalCommission - deductionAmount).toFixed(2)));
-          payout.totalSales = Math.max(0, parseFloat((payout.totalSales - deductionSales).toFixed(2)));
+          payout.totalCommission = Math.max(
+            0,
+            parseFloat((payout.totalCommission - deductionAmount).toFixed(2)),
+          );
+          payout.totalSales = Math.max(
+            0,
+            parseFloat((payout.totalSales - deductionSales).toFixed(2)),
+          );
           payout.totalOrders = Math.max(0, payout.totalOrders - 1);
 
           if (remainingIds.length === 0 || payout.totalCommission === 0) {
             payout.status = InfluencerPayoutStatus.REJECTED;
-            payout.remarks = 'Payout request cancelled because linked commission was reversed due to customer return/refund';
+            payout.remarks =
+              'Payout request cancelled because linked commission was reversed due to customer return/refund';
           }
           if (session) {
             await payout.save({ session });
@@ -955,7 +1041,9 @@ export class InfluencerService {
   ) {
     const vId = new Types.ObjectId(vendorOrderId.toString());
     const deliveryDate = deliveredAt ? new Date(deliveredAt) : new Date();
-    const eligibleDate = new Date(deliveryDate.getTime() + 7 * 24 * 60 * 60 * 1000); // exactly 7 days = 168 hours
+    const eligibleDate = new Date(
+      deliveryDate.getTime() + 7 * 24 * 60 * 60 * 1000,
+    ); // exactly 7 days = 168 hours
 
     const filter = {
       vendorOrderId: vId,
@@ -1019,13 +1107,16 @@ export class InfluencerService {
               OrderStatus.RETURNED,
               OrderStatus.PARTIALLY_RETURNED,
             ];
-            if (voBadStatuses.includes(vo.orderStatus as OrderStatus)) {
+            if (voBadStatuses.includes(vo.orderStatus)) {
               isEligible = false;
               disqualificationReason = `Vendor order status is ${vo.orderStatus}`;
             } else if (vo.orderStatus !== OrderStatus.DELIVERED) {
               isEligible = false;
               disqualificationReason = `Vendor order is not delivered (status: ${vo.orderStatus})`;
-            } else if (vo.paymentStatus === PaymentStatus.REFUNDED || vo.paymentStatus === PaymentStatus.FAILED) {
+            } else if (
+              vo.paymentStatus === PaymentStatus.REFUNDED ||
+              vo.paymentStatus === PaymentStatus.FAILED
+            ) {
               isEligible = false;
               disqualificationReason = `Vendor order payment status is ${vo.paymentStatus}`;
             }
@@ -1041,11 +1132,14 @@ export class InfluencerService {
               OrderStatus.CANCELLED,
               OrderStatus.RETURNED,
             ];
-            if (orderBadStatuses.includes(mainOrder.orderStatus as OrderStatus)) {
+            if (orderBadStatuses.includes(mainOrder.orderStatus)) {
               isEligible = false;
               disqualificationReason = `Main order status is ${mainOrder.orderStatus}`;
             }
-            if (mainOrder.paymentStatus === PaymentStatus.REFUNDED || mainOrder.paymentStatus === PaymentStatus.FAILED) {
+            if (
+              mainOrder.paymentStatus === PaymentStatus.REFUNDED ||
+              mainOrder.paymentStatus === PaymentStatus.FAILED
+            ) {
               isEligible = false;
               disqualificationReason = `Main order payment status is ${mainOrder.paymentStatus}`;
             }
@@ -1074,7 +1168,9 @@ export class InfluencerService {
             await this.commissionModel.updateOne(
               {
                 _id: comm._id,
-                status: { $nin: [CommissionStatus.CANCELLED, CommissionStatus.REVERSED] },
+                status: {
+                  $nin: [CommissionStatus.CANCELLED, CommissionStatus.REVERSED],
+                },
               },
               {
                 $set: {
@@ -1090,7 +1186,9 @@ export class InfluencerService {
             await this.commissionModel.updateOne(
               {
                 _id: comm._id,
-                status: { $nin: [CommissionStatus.CANCELLED, CommissionStatus.REVERSED] },
+                status: {
+                  $nin: [CommissionStatus.CANCELLED, CommissionStatus.REVERSED],
+                },
               },
               {
                 $set: {
@@ -1104,7 +1202,10 @@ export class InfluencerService {
           }
         }
       } catch (err) {
-        console.error(`Error processing commission approval for ${comm._id}:`, err);
+        console.error(
+          `Error processing commission approval for ${comm._id}:`,
+          err,
+        );
       }
     }
 
@@ -1284,20 +1385,24 @@ export class InfluencerService {
     const pageSize = Number(limit) || 10;
     const skip = (pageNumber - 1) * pageSize;
 
-    const list = await this.influencerModel.find({
-      status: InfluencerStatus.PENDING
-    }).populate("invitedBy", 'name email phone role').sort({ createdAt: -1 })
+    const list = await this.influencerModel
+      .find({
+        status: InfluencerStatus.PENDING,
+      })
+      .populate('invitedBy', 'name email phone role')
+      .sort({ createdAt: -1 })
       .skip(skip)
       .limit(pageSize)
-      .lean()
-    return ApiResponse.success('Influencer Requests', list)
+      .lean();
+    return ApiResponse.success('Influencer Requests', list);
   }
 
   async generateUniqueReferralCode(name: string): Promise<string> {
-    const cleanName = (name || '')
-      .replace(/[^a-zA-Z0-9]/g, '')
-      .toUpperCase()
-      .slice(0, 6) || 'FF';
+    const cleanName =
+      (name || '')
+        .replace(/[^a-zA-Z0-9]/g, '')
+        .toUpperCase()
+        .slice(0, 6) || 'FF';
 
     let isUnique = false;
     let candidate = '';
@@ -1326,7 +1431,9 @@ export class InfluencerService {
   }
 
   async changeInfluencerStatus(influencerId: string, status: InfluencerStatus) {
-    const influencer = await this.influencerModel.findById(new Types.ObjectId(influencerId));
+    const influencer = await this.influencerModel.findById(
+      new Types.ObjectId(influencerId),
+    );
     if (!influencer) {
       throw new NotFoundException('Influencer not found');
     }
@@ -1342,7 +1449,9 @@ export class InfluencerService {
       if (existingProgram?.referralCode) {
         influencer.referralCode = existingProgram.referralCode;
       } else {
-        influencer.referralCode = await this.generateUniqueReferralCode(influencer.name);
+        influencer.referralCode = await this.generateUniqueReferralCode(
+          influencer.name,
+        );
       }
 
       // Synchronize with AffliateProgram for backwards compatibility
@@ -1376,11 +1485,19 @@ export class InfluencerService {
       await user.save();
     }
 
-    return ApiResponse.success('Influencer status changed successfully', influencer);
+    return ApiResponse.success(
+      'Influencer status changed successfully',
+      influencer,
+    );
   }
 
-  async updateCommissionRate(influencerId: string, commissionRate?: number | null) {
-    const influencer = await this.influencerModel.findById(new Types.ObjectId(influencerId));
+  async updateCommissionRate(
+    influencerId: string,
+    commissionRate?: number | null,
+  ) {
+    const influencer = await this.influencerModel.findById(
+      new Types.ObjectId(influencerId),
+    );
     if (!influencer) {
       throw new NotFoundException('Influencer not found');
     }
@@ -1388,7 +1505,9 @@ export class InfluencerService {
     if (commissionRate !== null && commissionRate !== undefined) {
       const numRate = Number(commissionRate);
       if (isNaN(numRate) || numRate < 0 || numRate > 100) {
-        throw new BadRequestException('Commission rate must be a valid number between 0 and 100');
+        throw new BadRequestException(
+          'Commission rate must be a valid number between 0 and 100',
+        );
       }
       influencer.commissionRate = parseFloat(numRate.toFixed(2));
     } else {
@@ -1468,7 +1587,10 @@ export class InfluencerService {
    * 3. Self-purchase check (Rule E: creator cannot earn on own purchase).
    * 4. Zero mutations to user.referralExpiresAt (non-rolling).
    */
-  async getActiveReferralAttribution(userId: string | Types.ObjectId, orderDate: Date = new Date()): Promise<{
+  async getActiveReferralAttribution(
+    userId: string | Types.ObjectId,
+    orderDate: Date = new Date(),
+  ): Promise<{
     influencer: InfluencerDocument | null;
     isExpired: boolean;
     isSelfPurchase: boolean;
@@ -1476,16 +1598,32 @@ export class InfluencerService {
     beneficiaryId: Types.ObjectId | null;
   }> {
     if (!userId) {
-      return { influencer: null, isExpired: false, isSelfPurchase: false, referralExpiresAt: null, beneficiaryId: null };
+      return {
+        influencer: null,
+        isExpired: false,
+        isSelfPurchase: false,
+        referralExpiresAt: null,
+        beneficiaryId: null,
+      };
     }
 
-    const user = await this.userModel.findById(userId).select('referredByInfluencerId referralAttributedAt referralExpiresAt');
+    const user = await this.userModel
+      .findById(userId)
+      .select('referredByInfluencerId referralAttributedAt referralExpiresAt');
     if (!user || !user.referredByInfluencerId) {
-      return { influencer: null, isExpired: false, isSelfPurchase: false, referralExpiresAt: null, beneficiaryId: null };
+      return {
+        influencer: null,
+        isExpired: false,
+        isSelfPurchase: false,
+        referralExpiresAt: null,
+        beneficiaryId: null,
+      };
     }
 
     const now = orderDate || new Date();
-    const isExpired = user.referralExpiresAt ? now > user.referralExpiresAt : true;
+    const isExpired = user.referralExpiresAt
+      ? now > user.referralExpiresAt
+      : true;
 
     if (isExpired) {
       return {
@@ -1514,7 +1652,9 @@ export class InfluencerService {
     }
 
     // RULE E: Self-purchase check (creator cannot earn on own purchase)
-    const isSelfPurchase = !!(influencer.userId && influencer.userId.toString() === userId.toString());
+    const isSelfPurchase = !!(
+      influencer.userId && influencer.userId.toString() === userId.toString()
+    );
     if (isSelfPurchase) {
       return {
         influencer,
@@ -1530,7 +1670,7 @@ export class InfluencerService {
       isExpired: false,
       isSelfPurchase: false,
       referralExpiresAt: user.referralExpiresAt || null,
-      beneficiaryId: influencer._id as Types.ObjectId,
+      beneficiaryId: influencer._id,
     };
   }
 
@@ -1600,11 +1740,13 @@ export class InfluencerService {
 
     // 1. Strict Idempotency Check using all three: { orderId, vendorOrderId, influencerId }
     const existing = session
-      ? await this.commissionModel.findOne({
-          orderId: orderObjId,
-          vendorOrderId: vendorOrderObjId,
-          influencerId: influencerObjId,
-        }).session(session)
+      ? await this.commissionModel
+          .findOne({
+            orderId: orderObjId,
+            vendorOrderId: vendorOrderObjId,
+            influencerId: influencerObjId,
+          })
+          .session(session)
       : await this.commissionModel.findOne({
           orderId: orderObjId,
           vendorOrderId: vendorOrderObjId,
@@ -1634,7 +1776,10 @@ export class InfluencerService {
     // B. explicit 0 = configured 0% -> valid configured rate, create record with 0 amount.
     // C. explicit >0 = configured custom rate -> calculate and create record.
     // NEVER introduce 5%, 10%, or any global/default fallback.
-    if (influencer.commissionRate === null || influencer.commissionRate === undefined) {
+    if (
+      influencer.commissionRate === null ||
+      influencer.commissionRate === undefined
+    ) {
       return null;
     }
 
@@ -1645,19 +1790,26 @@ export class InfluencerService {
 
     // 4. Commission Base (Rule A1): commissionBase = subTotal - vendorDiscount
     // Exclude shipping, COD charges, taxes
-    const finalOrderAmount = Math.max(0, parseFloat((subTotal - discountAmount).toFixed(2)));
+    const finalOrderAmount = Math.max(
+      0,
+      parseFloat((subTotal - discountAmount).toFixed(2)),
+    );
 
     let commissionAmount = 0;
     if (rate > 0) {
-      commissionAmount = parseFloat(((finalOrderAmount * rate) / 100).toFixed(2));
+      commissionAmount = parseFloat(
+        ((finalOrderAmount * rate) / 100).toFixed(2),
+      );
     }
 
     const now = new Date();
     const payload: Partial<InfluencerCommission> = {
       attributionSource,
       influencerId: influencerObjId,
-      influencerUserId: influencer.userId as Types.ObjectId,
-      customerId: customerId ? new Types.ObjectId(customerId.toString()) : undefined,
+      influencerUserId: influencer.userId,
+      customerId: customerId
+        ? new Types.ObjectId(customerId.toString())
+        : undefined,
       orderId: orderObjId,
       vendorOrderId: vendorOrderObjId,
       vendorId: vendorId ? new Types.ObjectId(vendorId.toString()) : undefined,
@@ -1678,7 +1830,9 @@ export class InfluencerService {
       commissionYear: now.getFullYear(),
       isDelivered: !!isDelivered,
       deliveredAt: deliveredAt || undefined,
-      approvalEligibleAt: deliveredAt ? new Date(deliveredAt.getTime() + 7 * 24 * 60 * 60 * 1000) : undefined,
+      approvalEligibleAt: deliveredAt
+        ? new Date(deliveredAt.getTime() + 7 * 24 * 60 * 60 * 1000)
+        : undefined,
     };
 
     try {
@@ -1690,11 +1844,13 @@ export class InfluencerService {
       // In case of duplicate key error (E11000) from concurrent race, fetch existing
       if (createErr.code === 11000) {
         return session
-          ? await this.commissionModel.findOne({
-              orderId: orderObjId,
-              vendorOrderId: vendorOrderObjId,
-              influencerId: influencerObjId,
-            }).session(session)
+          ? await this.commissionModel
+              .findOne({
+                orderId: orderObjId,
+                vendorOrderId: vendorOrderObjId,
+                influencerId: influencerObjId,
+              })
+              .session(session)
           : await this.commissionModel.findOne({
               orderId: orderObjId,
               vendorOrderId: vendorOrderObjId,
@@ -1704,7 +1860,6 @@ export class InfluencerService {
       throw createErr;
     }
   }
-
 
   normalizeStoryUrl(rawUrl: string): string {
     if (!rawUrl || typeof rawUrl !== 'string') {
@@ -1729,14 +1884,26 @@ export class InfluencerService {
 
     const host = parsed.hostname.toLowerCase();
     const approvedHosts = [
-      'instagram.com', 'www.instagram.com',
-      'youtube.com', 'www.youtube.com', 'm.youtube.com', 'youtu.be',
-      'facebook.com', 'www.facebook.com', 'm.facebook.com', 'fb.watch',
-      'tiktok.com', 'www.tiktok.com', 'm.tiktok.com', 'vm.tiktok.com',
+      'instagram.com',
+      'www.instagram.com',
+      'youtube.com',
+      'www.youtube.com',
+      'm.youtube.com',
+      'youtu.be',
+      'facebook.com',
+      'www.facebook.com',
+      'm.facebook.com',
+      'fb.watch',
+      'tiktok.com',
+      'www.tiktok.com',
+      'm.tiktok.com',
+      'vm.tiktok.com',
     ];
 
     if (!approvedHosts.includes(host)) {
-      throw new BadRequestException('Unsupported story domain. Allowed platforms: Instagram, YouTube, Facebook, TikTok');
+      throw new BadRequestException(
+        'Unsupported story domain. Allowed platforms: Instagram, YouTube, Facebook, TikTok',
+      );
     }
 
     // Normalize hostname: canonicalize www. prefix for standard social domains
@@ -1744,8 +1911,15 @@ export class InfluencerService {
 
     // Selective tracking parameters to remove (Rule: strip ONLY approved marketing/tracking params)
     const trackingParams = new Set([
-      'utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'utm_id',
-      'fbclid', 'igsh', 'si',
+      'utm_source',
+      'utm_medium',
+      'utm_campaign',
+      'utm_term',
+      'utm_content',
+      'utm_id',
+      'fbclid',
+      'igsh',
+      'si',
     ]);
 
     const remainingParams: [string, string][] = [];
@@ -1788,7 +1962,9 @@ export class InfluencerService {
     });
 
     if (existingStory) {
-      throw new BadRequestException('This story URL has already been submitted.');
+      throw new BadRequestException(
+        'This story URL has already been submitted.',
+      );
     }
 
     const newStory = new this.influencerStoryModel({
@@ -1806,42 +1982,57 @@ export class InfluencerService {
     let mediaId;
     if (influencer.profilePicture) {
       try {
-        await this.documentService.replace(influencer.profilePicture.toString(), file);
+        await this.documentService.replace(
+          influencer.profilePicture.toString(),
+          file,
+        );
         mediaId = influencer.profilePicture;
       } catch (e) {
-        const uploadedMedia = await this.documentService.upload(file, 'influencer-profiles', influencer.userId.toString());
+        const uploadedMedia = await this.documentService.upload(
+          file,
+          'influencer-profiles',
+          influencer.userId.toString(),
+        );
         mediaId = uploadedMedia._id;
       }
     } else {
-      const uploadedMedia = await this.documentService.upload(file, 'influencer-profiles', influencer.userId.toString());
+      const uploadedMedia = await this.documentService.upload(
+        file,
+        'influencer-profiles',
+        influencer.userId.toString(),
+      );
       mediaId = uploadedMedia._id;
     }
 
     influencer = await this.influencerModel.findByIdAndUpdate(
       influencerId,
       { profilePicture: mediaId },
-      { new: true }
+      { new: true },
     );
-    
-    return ApiResponse.success('Profile picture updated successfully', influencer);
+
+    return ApiResponse.success(
+      'Profile picture updated successfully',
+      influencer,
+    );
   }
 
   async getPublicStories() {
-    const stories = await this.influencerStoryModel.find({
-      isActive: true,
-      expiresAt: { $gt: new Date() }
-    })
+    const stories = await this.influencerStoryModel
+      .find({
+        isActive: true,
+        expiresAt: { $gt: new Date() },
+      })
       .populate({
         path: 'influencerId',
         select: 'name profilePicture',
         populate: {
           path: 'profilePicture',
-          select: 'url'
-        }
+          select: 'url',
+        },
       })
       .exec();
 
-    const publicStories = stories.map(story => {
+    const publicStories = stories.map((story) => {
       const influencer: any = story.influencerId;
       return {
         _id: story._id,
@@ -1852,16 +2043,25 @@ export class InfluencerService {
       };
     });
 
-    return ApiResponse.success('Public stories fetched successfully', publicStories);
+    return ApiResponse.success(
+      'Public stories fetched successfully',
+      publicStories,
+    );
   }
 
-  async deleteStory(storyId: string, userRoles: string[], influencerId?: string) {
+  async deleteStory(
+    storyId: string,
+    userRoles: string[],
+    influencerId?: string,
+  ) {
     const story = await this.influencerStoryModel.findById(storyId);
     if (!story) throw new NotFoundException('Story not found');
 
     if (!userRoles.includes(UserRole.SUPER_ADMIN)) {
       if (story.influencerId.toString() !== influencerId?.toString()) {
-        throw new BadRequestException('You do not have permission to delete this story');
+        throw new BadRequestException(
+          'You do not have permission to delete this story',
+        );
       }
     }
 
@@ -1875,7 +2075,9 @@ export class InfluencerService {
 
     if (influencer.profilePicture) {
       try {
-        await this.documentService.deleteMedia(influencer.profilePicture.toString());
+        await this.documentService.deleteMedia(
+          influencer.profilePicture.toString(),
+        );
       } catch (e) {
         // ignore if media is already deleted or not found
       }
@@ -1883,11 +2085,14 @@ export class InfluencerService {
 
     const updatedInfluencer = await this.influencerModel.findByIdAndUpdate(
       influencerId,
-      { $unset: { profilePicture: "" } },
-      { new: true }
+      { $unset: { profilePicture: '' } },
+      { new: true },
     );
-    
-    return ApiResponse.success('Profile picture deleted successfully', updatedInfluencer);
+
+    return ApiResponse.success(
+      'Profile picture deleted successfully',
+      updatedInfluencer,
+    );
   }
 
   async getAudienceAnalytics(influencerId: string) {
@@ -1914,10 +2119,13 @@ export class InfluencerService {
         const uid = (c.userId?._id || c.userId || 'guest').toString();
         userOrderCounts[uid] = (userOrderCounts[uid] || 0) + 1;
       });
-      const repeatUsers = Object.values(userOrderCounts).filter(cnt => cnt > 1).length;
-      const repeatRate = totalReferredBuyers > 0 
-        ? Number(((repeatUsers / totalReferredBuyers) * 100).toFixed(1)) 
-        : 0;
+      const repeatUsers = Object.values(userOrderCounts).filter(
+        (cnt) => cnt > 1,
+      ).length;
+      const repeatRate =
+        totalReferredBuyers > 0
+          ? Number(((repeatUsers / totalReferredBuyers) * 100).toFixed(1))
+          : 0;
 
       const cityCounts: Record<string, number> = {};
       commissions.forEach((c: any) => {
@@ -1925,7 +2133,8 @@ export class InfluencerService {
         cityCounts[city] = (cityCounts[city] || 0) + 1;
       });
 
-      const totalCityOrders = Object.values(cityCounts).reduce((a, b) => a + b, 0) || 1;
+      const totalCityOrders =
+        Object.values(cityCounts).reduce((a, b) => a + b, 0) || 1;
       const topCities = Object.entries(cityCounts)
         .map(([city, count]) => ({
           city,
@@ -1935,18 +2144,32 @@ export class InfluencerService {
         .sort((a, b) => b.percent - a.percent)
         .slice(0, 4);
 
-      const locationList = topCities.length > 0 ? topCities : [
-        { city: 'Delhi NCR', percent: 42, count: '20 Orders' },
-        { city: 'Mumbai & Thane', percent: 28, count: '13 Orders' },
-        { city: 'Bengaluru', percent: 18, count: '9 Orders' },
-        { city: 'Hyderabad & Pune', percent: 12, count: '6 Orders' }
-      ];
+      const locationList =
+        topCities.length > 0
+          ? topCities
+          : [
+              { city: 'Delhi NCR', percent: 42, count: '20 Orders' },
+              { city: 'Mumbai & Thane', percent: 28, count: '13 Orders' },
+              { city: 'Bengaluru', percent: 18, count: '9 Orders' },
+              { city: 'Hyderabad & Pune', percent: 12, count: '6 Orders' },
+            ];
 
-      const trafficSourcesList = totalReferredOrders > 0 ? [
-        { channel: 'Instagram Bio & Stories', percent: 55, icon: '📸' },
-        { channel: 'YouTube Shorts & Description', percent: 30, icon: '▶️' },
-        { channel: 'WhatsApp & Telegram Groups', percent: 15, icon: '💬' }
-      ] : [];
+      const trafficSourcesList =
+        totalReferredOrders > 0
+          ? [
+              { channel: 'Instagram Bio & Stories', percent: 55, icon: '📸' },
+              {
+                channel: 'YouTube Shorts & Description',
+                percent: 30,
+                icon: '▶️',
+              },
+              {
+                channel: 'WhatsApp & Telegram Groups',
+                percent: 15,
+                icon: '💬',
+              },
+            ]
+          : [];
 
       return ApiResponse.success('Audience analytics fetched successfully', {
         totalBuyers: totalReferredBuyers,
@@ -1955,7 +2178,7 @@ export class InfluencerService {
         topLocation: topCities[0]?.city || 'No Orders Yet',
         topCategory: totalReferredOrders > 0 ? 'Lipsticks & Skincare' : 'N/A',
         topCities: topCities,
-        trafficSources: trafficSourcesList
+        trafficSources: trafficSourcesList,
       });
     } catch (error) {
       return ApiResponse.success('Audience analytics', {
@@ -1965,7 +2188,7 @@ export class InfluencerService {
         topLocation: 'No Orders Yet',
         topCategory: 'N/A',
         topCities: [],
-        trafficSources: []
+        trafficSources: [],
       });
     }
   }
@@ -2074,17 +2297,22 @@ export class InfluencerService {
 
     const minimumPayoutThreshold = 500;
     const canRequestPayout = aBalance >= minimumPayoutThreshold;
-    const lifetimeEarnings = parseFloat((aBalance + lBalance + pdBalance).toFixed(2));
+    const lifetimeEarnings = parseFloat(
+      (aBalance + lBalance + pdBalance).toFixed(2),
+    );
 
-    return ApiResponse.success('Influencer wallet balance fetched successfully', {
-      pendingBalance: parseFloat(pBalance.toFixed(2)),
-      approvedBalance: parseFloat(aBalance.toFixed(2)),
-      lockedInPayoutBalance: parseFloat(lBalance.toFixed(2)),
-      paidBalance: parseFloat(pdBalance.toFixed(2)),
-      lifetimeEarnings,
-      minimumPayoutThreshold,
-      canRequestPayout,
-    });
+    return ApiResponse.success(
+      'Influencer wallet balance fetched successfully',
+      {
+        pendingBalance: parseFloat(pBalance.toFixed(2)),
+        approvedBalance: parseFloat(aBalance.toFixed(2)),
+        lockedInPayoutBalance: parseFloat(lBalance.toFixed(2)),
+        paidBalance: parseFloat(pdBalance.toFixed(2)),
+        lifetimeEarnings,
+        minimumPayoutThreshold,
+        canRequestPayout,
+      },
+    );
   }
 
   /**
@@ -2166,7 +2394,10 @@ export class InfluencerService {
     const activePayout = await this.influencerPayoutModel.findOne({
       influencerId: influencer._id,
       status: {
-        $in: [InfluencerPayoutStatus.PENDING, InfluencerPayoutStatus.PROCESSING],
+        $in: [
+          InfluencerPayoutStatus.PENDING,
+          InfluencerPayoutStatus.PROCESSING,
+        ],
       },
     });
     if (activePayout) {
@@ -2328,4 +2559,3 @@ export class InfluencerService {
     );
   }
 }
-

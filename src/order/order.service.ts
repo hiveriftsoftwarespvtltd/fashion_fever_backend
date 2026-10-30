@@ -57,12 +57,23 @@ import {
   VendorPayoutDocument,
 } from 'src/vendor/schema/vendor-payout.schema';
 import { Vendor, VendorDocument } from 'src/vendor/schema/vendor.schema';
-import { VendorOrder, VendorOrderDocument, CancelledByEntity } from './schema/vendor-order.schema';
+import {
+  VendorOrder,
+  VendorOrderDocument,
+  CancelledByEntity,
+} from './schema/vendor-order.schema';
 import { ShiprocketService } from 'src/shiprocket/shiprocket.service';
 import { UserWalletService } from 'src/wallet/service/user/user.wallet.service';
 import { WalletTransactionReason } from 'src/wallet/schema/user/user.wallet.transactions';
-import { UserReview, UserReviewDocument } from 'src/user-review/schema/user-review.schema';
-import { CashbackSlab, CashbackSlabDocument, CashbackType } from 'src/wallet/schema/cashback/cashbacks.slabs.schema';
+import {
+  UserReview,
+  UserReviewDocument,
+} from 'src/user-review/schema/user-review.schema';
+import {
+  CashbackSlab,
+  CashbackSlabDocument,
+  CashbackType,
+} from 'src/wallet/schema/cashback/cashbacks.slabs.schema';
 import {
   CommissionRate,
   CommissionRateDocument,
@@ -71,8 +82,19 @@ import {
 } from 'src/admin/schema/commission-rate.schema';
 import { AffiliateTrackingService } from 'src/influencer/affiliate-tracking.service';
 import { NotificationService } from 'src/notification/notification.service';
-import { NotificationModuleType, NotificationType, NotificationPriority } from 'src/notification/schema/notification.schema';
-import { PaymentTransaction, PaymentTransactionDocument, TransactionStatus as PayoutTransactionStatus, ReferenceType as PayoutReferenceType, PaymentMode as PayoutPaymentMode, PaymentMethod as PayoutPaymentMethod } from 'src/payout/schema/payment-transaction.schema';
+import {
+  NotificationModuleType,
+  NotificationType,
+  NotificationPriority,
+} from 'src/notification/schema/notification.schema';
+import {
+  PaymentTransaction,
+  PaymentTransactionDocument,
+  TransactionStatus as PayoutTransactionStatus,
+  ReferenceType as PayoutReferenceType,
+  PaymentMode as PayoutPaymentMode,
+  PaymentMethod as PayoutPaymentMethod,
+} from 'src/payout/schema/payment-transaction.schema';
 
 @Injectable()
 export class OrderService {
@@ -134,8 +156,7 @@ export class OrderService {
     private readonly paymentTransactionModel: Model<PaymentTransactionDocument>,
 
     private readonly influencerService: InfluencerService,
-  ) { }
-
+  ) {}
 
   async placeOrder(dto: CreateOrderDto, userId: string) {
     const session = await this.connection.startSession();
@@ -314,23 +335,28 @@ export class OrderService {
       // ─────────────────────────────────────────────────────────────
       // 4. Resolve Active Referral & Coupon Influencer Attribution (Phase 3)
       // ─────────────────────────────────────────────────────────────
-      const referralAttribution = await this.influencerService.getActiveReferralAttribution(userId);
+      const referralAttribution =
+        await this.influencerService.getActiveReferralAttribution(userId);
 
       let coupon: CouponDocument | null = null;
       let couponInfluencer: InfluencerDocument | null = null;
 
       if (dto.couponCode) {
-        coupon = await this.couponModel.findOne({
-          code: dto.couponCode.trim().toUpperCase(),
-          isActive: true,
-        }).session(session);
+        coupon = await this.couponModel
+          .findOne({
+            code: dto.couponCode.trim().toUpperCase(),
+            isActive: true,
+          })
+          .session(session);
 
         if (!coupon) {
           throw new BadRequestException('Invalid Coupon');
         }
 
         if (dto.paymentMethod === PaymentMethod.CASH_ON_DELIVERY) {
-          throw new BadRequestException('Coupon not apply for cash on delivery');
+          throw new BadRequestException(
+            'Coupon not apply for cash on delivery',
+          );
         }
 
         // vendor coupon validation
@@ -357,10 +383,12 @@ export class OrderService {
           throw new BadRequestException('Coupon usage limit exceeded');
         }
 
-        const userCouponUsage = await this.couponUsageModel.countDocuments({
-          couponId: coupon._id,
-          userId: new Types.ObjectId(userId),
-        }).session(session);
+        const userCouponUsage = await this.couponUsageModel
+          .countDocuments({
+            couponId: coupon._id,
+            userId: new Types.ObjectId(userId),
+          })
+          .session(session);
 
         if (
           coupon.usageLimitPerUser &&
@@ -370,15 +398,22 @@ export class OrderService {
         }
 
         if (coupon.influencerId) {
-          couponInfluencer = await this.influencerModel.findById(coupon.influencerId);
+          couponInfluencer = await this.influencerModel.findById(
+            coupon.influencerId,
+          );
 
           if (!couponInfluencer) {
             throw new NotFoundException('Influencer not found');
           }
 
           // Rule E2: Block creator from applying their own influencer coupon
-          if (couponInfluencer.userId && couponInfluencer.userId.toString() === userId.toString()) {
-            throw new BadRequestException('You cannot use your own influencer coupon.');
+          if (
+            couponInfluencer.userId &&
+            couponInfluencer.userId.toString() === userId.toString()
+          ) {
+            throw new BadRequestException(
+              'You cannot use your own influencer coupon.',
+            );
           }
         }
       }
@@ -392,7 +427,10 @@ export class OrderService {
       let activeAttributionSource: AttributionSource | null = null;
 
       if (referralAttribution.beneficiaryId && referralAttribution.influencer) {
-        if (referralAttribution.influencer.userId && referralAttribution.influencer.userId.toString() === userId.toString()) {
+        if (
+          referralAttribution.influencer.userId &&
+          referralAttribution.influencer.userId.toString() === userId.toString()
+        ) {
           // Self-purchase via own referral link: suppress attribution, create NO commission record
           activeBeneficiaryInfluencer = null;
           activeAttributionSource = null;
@@ -401,7 +439,10 @@ export class OrderService {
           activeAttributionSource = AttributionSource.REFERRAL;
         }
       } else if (couponInfluencer) {
-        if (couponInfluencer.userId && couponInfluencer.userId.toString() === userId.toString()) {
+        if (
+          couponInfluencer.userId &&
+          couponInfluencer.userId.toString() === userId.toString()
+        ) {
           // Self-purchase via own coupon: already rejected during validation above, but guarded as defense-in-depth
           activeBeneficiaryInfluencer = null;
           activeAttributionSource = null;
@@ -442,7 +483,9 @@ export class OrderService {
 
         try {
           if (!vendor.vendorPincode) {
-            throw new Error(`Vendor ${vendor.businessName} has no pincode configured`);
+            throw new Error(
+              `Vendor ${vendor.businessName} has no pincode configured`,
+            );
           }
 
           const shipping = await this.shiprocketService.getShippingOptions({
@@ -467,11 +510,17 @@ export class OrderService {
 
           estimatedDate = shipping.estimatedDate || null;
         } catch (error) {
-          console.warn(`Shiprocket shipping fallback used for vendor ${vendor.businessName}:`, error?.message || error);
+          console.warn(
+            `Shiprocket shipping fallback used for vendor ${vendor.businessName}:`,
+            error?.message || error,
+          );
           shippingCharge = 50; // Standard fallback shipping fee
-          codCharge = dto.paymentMethod === PaymentMethod.CASH_ON_DELIVERY ? 30 : 0;
+          codCharge =
+            dto.paymentMethod === PaymentMethod.CASH_ON_DELIVERY ? 30 : 0;
           estimatedDays = 5;
-          estimatedDate = new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString();
+          estimatedDate = new Date(
+            Date.now() + 5 * 24 * 60 * 60 * 1000,
+          ).toISOString();
         }
 
         // ─────────────────────────────────────────
@@ -523,7 +572,7 @@ export class OrderService {
           }
 
           oi.finalPrice = parseFloat(
-            (oi.totalPrice! - oi.discountAmount!).toFixed(2),
+            (oi.totalPrice! - oi.discountAmount).toFixed(2),
           );
         }
 
@@ -534,7 +583,9 @@ export class OrderService {
         const DEFAULT_COMMISSION_ON = CommissionOn.PROFITVALUE;
 
         // Fetch once per order; subsequent vendors reuse the same doc
-        const commissionDoc = await this.commissionRateModel.findOne().session(session);
+        const commissionDoc = await this.commissionRateModel
+          .findOne()
+          .session(session);
 
         const vendorSlab = commissionDoc?.commissions?.find(
           (s) => s.entityType === CommissionEntityType.VENDOR,
@@ -661,7 +712,6 @@ export class OrderService {
               platformCommissionOn,
               platformCommissionAmount,
 
-
               payoutAmount,
 
               estimatedDeliveryDate: estimatedDate,
@@ -680,9 +730,10 @@ export class OrderService {
                   : PaymentStatus.PENDING,
 
               influencerId: activeBeneficiaryInfluencer?._id || null,
-              influencerCommissionRate: (typeof activeBeneficiaryInfluencer?.commissionRate === 'number')
-                ? activeBeneficiaryInfluencer.commissionRate
-                : null,
+              influencerCommissionRate:
+                typeof activeBeneficiaryInfluencer?.commissionRate === 'number'
+                  ? activeBeneficiaryInfluencer.commissionRate
+                  : null,
               influencerCommissionAmount: 0,
               attributionSource: activeAttributionSource || null,
             },
@@ -718,7 +769,6 @@ export class OrderService {
           }
         }
 
-
         orderSubTotal += subTotal;
 
         orderDiscount += vendorDiscount;
@@ -734,17 +784,23 @@ export class OrderService {
       // 5.5 Deduct Wallet Balance
       // ─────────────────────────────────────────────────────────────
       let walletAmountUsed = 0;
-      let actualPaymentStatus =
+      const actualPaymentStatus =
         dto.paymentMethod === PaymentMethod.WALLET
           ? PaymentStatus.PAID
           : PaymentStatus.PENDING;
 
-      if (dto.paymentMethod === PaymentMethod.WALLET || dto.paymentMethod === PaymentMethod.WALLET_PLUS_ONLINE || dto.paymentMethod === PaymentMethod.WALLET_PLUS_COD) {
+      if (
+        dto.paymentMethod === PaymentMethod.WALLET ||
+        dto.paymentMethod === PaymentMethod.WALLET_PLUS_ONLINE ||
+        dto.paymentMethod === PaymentMethod.WALLET_PLUS_COD
+      ) {
         const userWallet = await this.userWalletService.getBalance(userId);
 
         if (dto.paymentMethod === PaymentMethod.WALLET) {
           if (userWallet.balance < orderGrandTotal) {
-            throw new BadRequestException('Insufficient wallet balance to cover the entire order');
+            throw new BadRequestException(
+              'Insufficient wallet balance to cover the entire order',
+            );
           }
           walletAmountUsed = orderGrandTotal;
         } else if (dto.paymentMethod === PaymentMethod.WALLET_PLUS_ONLINE) {
@@ -755,7 +811,9 @@ export class OrderService {
         } else if (dto.paymentMethod === PaymentMethod.WALLET_PLUS_COD) {
           const advanceAmount = parseFloat((orderGrandTotal * 0.2).toFixed(2));
           if (userWallet.balance < advanceAmount) {
-            throw new BadRequestException(`Minimum ₹${advanceAmount} wallet balance required as advance payment`);
+            throw new BadRequestException(
+              `Minimum ₹${advanceAmount} wallet balance required as advance payment`,
+            );
           }
           walletAmountUsed = advanceAmount;
         }
@@ -766,7 +824,7 @@ export class OrderService {
             walletAmountUsed,
             WalletTransactionReason.ORDER_PAYMENT,
             `Payment for Order ${orderNumber}`,
-            session
+            session,
           );
         }
       }
@@ -817,48 +875,60 @@ export class OrderService {
 
             walletAmountUsed: walletAmountUsed,
 
-            paidAmount: actualPaymentStatus === PaymentStatus.PAID ? orderGrandTotal : walletAmountUsed,
+            paidAmount:
+              actualPaymentStatus === PaymentStatus.PAID
+                ? orderGrandTotal
+                : walletAmountUsed,
           },
         ],
         { session },
       );
 
-      
-
-      
-
       for (const vOrder of vendorOrdersData) {
-        const ratio = orderGrandTotal > 0 ? (vOrder.grandTotal / orderGrandTotal) : 0;
-        const vendorWalletAmount = parseFloat((walletAmountUsed * ratio).toFixed(2));
-        const vendorRemainingAmount = parseFloat((vOrder.grandTotal - vendorWalletAmount).toFixed(2));
+        const ratio =
+          orderGrandTotal > 0 ? vOrder.grandTotal / orderGrandTotal : 0;
+        const vendorWalletAmount = parseFloat(
+          (walletAmountUsed * ratio).toFixed(2),
+        );
+        const vendorRemainingAmount = parseFloat(
+          (vOrder.grandTotal - vendorWalletAmount).toFixed(2),
+        );
 
         if (vendorWalletAmount > 0) {
           await this.paymentTransactionModel.create(
-            [{
-              customerId: new Types.ObjectId(userId),
-              referenceType: PayoutReferenceType.ORDER,
-              referenceId: vOrder._id,
-              paymentMode: PayoutPaymentMode.ONLINE,
-              paymentMethod: PayoutPaymentMethod.WALLET,
-              amount: vendorWalletAmount,
-              status: PayoutTransactionStatus.SUCCESS,
-            }],
-            { session }
+            [
+              {
+                customerId: new Types.ObjectId(userId),
+                referenceType: PayoutReferenceType.ORDER,
+                referenceId: vOrder._id,
+                paymentMode: PayoutPaymentMode.ONLINE,
+                paymentMethod: PayoutPaymentMethod.WALLET,
+                amount: vendorWalletAmount,
+                status: PayoutTransactionStatus.SUCCESS,
+              },
+            ],
+            { session },
           );
         }
 
-        if (vendorRemainingAmount > 0 && (dto.paymentMethod === PaymentMethod.CASH_ON_DELIVERY || dto.paymentMethod === PaymentMethod.WALLET_PLUS_COD)) {
+        if (
+          vendorRemainingAmount > 0 &&
+          (dto.paymentMethod === PaymentMethod.CASH_ON_DELIVERY ||
+            dto.paymentMethod === PaymentMethod.WALLET_PLUS_COD)
+        ) {
           await this.paymentTransactionModel.create(
-            [{
-              customerId: new Types.ObjectId(userId),
-              referenceType: PayoutReferenceType.ORDER,
-              referenceId: vOrder._id,
-              paymentMode: PayoutPaymentMode.COD,
-              paymentMethod: PayoutPaymentMethod.CASH,
-              amount: vendorRemainingAmount,
-              status: PayoutTransactionStatus.PENDING,
-            }],
-            { session }
+            [
+              {
+                customerId: new Types.ObjectId(userId),
+                referenceType: PayoutReferenceType.ORDER,
+                referenceId: vOrder._id,
+                paymentMode: PayoutPaymentMode.COD,
+                paymentMethod: PayoutPaymentMethod.CASH,
+                amount: vendorRemainingAmount,
+                status: PayoutTransactionStatus.PENDING,
+              },
+            ],
+            { session },
           );
         }
       }
@@ -887,26 +957,31 @@ export class OrderService {
         dto.paymentMethod === PaymentMethod.WALLET &&
         actualPaymentStatus === PaymentStatus.PAID;
 
-      if (isVerifiedWalletPaid && activeBeneficiaryInfluencer && activeAttributionSource) {
+      if (
+        isVerifiedWalletPaid &&
+        activeBeneficiaryInfluencer &&
+        activeAttributionSource
+      ) {
         for (const vOrder of vendorOrdersData) {
-          const commRecord = await this.influencerService.createCommissionRecord({
-            orderId: order._id,
-            vendorOrderId: vOrder._id,
-            influencerId: activeBeneficiaryInfluencer._id,
-            customerId: userId,
-            vendorId: vOrder.vendorId,
-            couponId: coupon?._id || null,
-            subTotal: vOrder.subTotal,
-            discountAmount: vOrder.discount || 0,
-            totalCostPrice: vOrder.costPrice,
-            grossProfit: vOrder.grossProfit,
-            netProfit: vOrder.netProfit,
-            shippingCost: vOrder.shippingCharge,
-            taxAmount: vOrder.tax,
-            platformCommissionAmount: vOrder.platformCommissionAmount,
-            attributionSource: activeAttributionSource,
-            session,
-          });
+          const commRecord =
+            await this.influencerService.createCommissionRecord({
+              orderId: order._id,
+              vendorOrderId: vOrder._id,
+              influencerId: activeBeneficiaryInfluencer._id,
+              customerId: userId,
+              vendorId: vOrder.vendorId,
+              couponId: coupon?._id || null,
+              subTotal: vOrder.subTotal,
+              discountAmount: vOrder.discount || 0,
+              totalCostPrice: vOrder.costPrice,
+              grossProfit: vOrder.grossProfit,
+              netProfit: vOrder.netProfit,
+              shippingCost: vOrder.shippingCharge,
+              taxAmount: vOrder.tax,
+              platformCommissionAmount: vOrder.platformCommissionAmount,
+              attributionSource: activeAttributionSource,
+              session,
+            });
 
           if (commRecord) {
             await this.vendorOrderModel.updateOne(
@@ -952,17 +1027,24 @@ export class OrderService {
       // 9. CASHBACK CALCULATION
       // ─────────────────────────────────────────────────────────────
       if (actualPaymentStatus === PaymentStatus.PAID) {
-        const applicableSlab = await this.cashbackSlabModel.findOne({
-          isActive: true,
-          minValue: { $lte: orderGrandTotal },
-          maxValue: { $gte: orderGrandTotal }
-        }).session(session);
+        const applicableSlab = await this.cashbackSlabModel
+          .findOne({
+            isActive: true,
+            minValue: { $lte: orderGrandTotal },
+            maxValue: { $gte: orderGrandTotal },
+          })
+          .session(session);
 
         if (applicableSlab) {
           let cashbackAmount = 0;
           if (applicableSlab.cashbackType === CashbackType.PERCENTAGE) {
-            cashbackAmount = (orderGrandTotal * applicableSlab.cashbackValue) / 100;
-            if (applicableSlab.maxCashback && applicableSlab.maxCashback > 0 && cashbackAmount > applicableSlab.maxCashback) {
+            cashbackAmount =
+              (orderGrandTotal * applicableSlab.cashbackValue) / 100;
+            if (
+              applicableSlab.maxCashback &&
+              applicableSlab.maxCashback > 0 &&
+              cashbackAmount > applicableSlab.maxCashback
+            ) {
               cashbackAmount = applicableSlab.maxCashback;
             }
           } else {
@@ -975,13 +1057,18 @@ export class OrderService {
               cashbackAmount,
               WalletTransactionReason.CASHBACK,
               `Cashback for Order ${orderNumber}`,
-              session
+              session,
             );
           }
         }
       }
 
-      await this.affiliateTrackingService.createPendingCommission(userId, 'PRODUCT', order._id, orderGrandTotal);
+      await this.affiliateTrackingService.createPendingCommission(
+        userId,
+        'PRODUCT',
+        order._id,
+        orderGrandTotal,
+      );
 
       await session.commitTransaction();
 
@@ -992,7 +1079,7 @@ export class OrderService {
         body: `Your order has been placed successfully.`,
         moduleType: NotificationModuleType.ORDER,
         type: NotificationType.SYSTEM,
-        priority: NotificationPriority.HIGH
+        priority: NotificationPriority.HIGH,
       });
 
       // Send Notification to Vendors
@@ -1004,7 +1091,7 @@ export class OrderService {
             body: `You have received a new order.`,
             moduleType: NotificationModuleType.ORDER,
             type: NotificationType.SYSTEM,
-            priority: NotificationPriority.HIGH
+            priority: NotificationPriority.HIGH,
           });
         }
       }
@@ -1038,14 +1125,21 @@ export class OrderService {
       .sort({ createdAt: -1 })
       .lean();
 
-    const userReviews = await this.userReviewModel.find({ userId: new Types.ObjectId(userId), isDeleted: false }).lean();
+    const userReviews = await this.userReviewModel
+      .find({ userId: new Types.ObjectId(userId), isDeleted: false })
+      .lean();
 
     const ordersWithReviews = orders.map((order: any) => {
       if (order.vendorOrders) {
         order.vendorOrders.forEach((vendorOrder: any) => {
           if (vendorOrder.items) {
             vendorOrder.items.forEach((item: any) => {
-              const review = userReviews.find(r => r.productId.toString() === (item.productId?._id?.toString() || item.productId?.toString()));
+              const review = userReviews.find(
+                (r) =>
+                  r.productId.toString() ===
+                  (item.productId?._id?.toString() ||
+                    item.productId?.toString()),
+              );
               item.isReviewed = !!review;
               item.reviewDetails = review || null;
             });
@@ -1055,7 +1149,10 @@ export class OrderService {
       return order;
     });
 
-    return ApiResponse.success('Orders fetched successfully', ordersWithReviews);
+    return ApiResponse.success(
+      'Orders fetched successfully',
+      ordersWithReviews,
+    );
   }
 
   async userOrderDetails(userId: string, orderId: string) {
@@ -1082,13 +1179,19 @@ export class OrderService {
       throw new NotFoundException('Order not found');
     }
 
-    const userReviews = await this.userReviewModel.find({ userId: new Types.ObjectId(userId), isDeleted: false }).lean();
+    const userReviews = await this.userReviewModel
+      .find({ userId: new Types.ObjectId(userId), isDeleted: false })
+      .lean();
 
     if (order.vendorOrders) {
       order.vendorOrders.forEach((vendorOrder: any) => {
         if (vendorOrder.items) {
           vendorOrder.items.forEach((item: any) => {
-            const review = userReviews.find(r => r.productId.toString() === (item.productId?._id?.toString() || item.productId?.toString()));
+            const review = userReviews.find(
+              (r) =>
+                r.productId.toString() ===
+                (item.productId?._id?.toString() || item.productId?.toString()),
+            );
             item.isReviewed = !!review;
             item.reviewDetails = review || null;
           });
@@ -1104,10 +1207,13 @@ export class OrderService {
     try {
       session.startTransaction();
 
-      const order = await this.orderModel.findOne({
-        _id: new Types.ObjectId(orderId),
-        userId: new Types.ObjectId(userId),
-      }).populate('vendorOrders').session(session);
+      const order = await this.orderModel
+        .findOne({
+          _id: new Types.ObjectId(orderId),
+          userId: new Types.ObjectId(userId),
+        })
+        .populate('vendorOrders')
+        .session(session);
 
       if (!order) {
         throw new NotFoundException('Order Not Found');
@@ -1136,27 +1242,35 @@ export class OrderService {
       if (order.paymentStatus === PaymentStatus.PAID) {
         const amountToRefund = order.grandTotal;
 
-        if (amountToRefund > 0 && (!order.walletRefundedAmount || order.walletRefundedAmount === 0)) {
+        if (
+          amountToRefund > 0 &&
+          (!order.walletRefundedAmount || order.walletRefundedAmount === 0)
+        ) {
           await this.userWalletService.addBalance(
             userId,
             amountToRefund,
             WalletTransactionReason.REFUND,
             `Refund for cancelled Order ${order.orderNumber}`,
-            session
+            session,
           );
           order.walletRefundedAmount = amountToRefund;
           order.paymentStatus = PaymentStatus.REFUNDED;
           paymentStatusRefunded = true;
 
-          await this.paymentTransactionModel.create([{
-            customerId: new Types.ObjectId(userId),
-            referenceType: PayoutReferenceType.ORDER,
-            referenceId: order._id,
-            paymentMode: PayoutPaymentMode.ONLINE,
-            paymentMethod: PayoutPaymentMethod.WALLET,
-            amount: amountToRefund,
-            status: PayoutTransactionStatus.REFUNDED
-          }], { session });
+          await this.paymentTransactionModel.create(
+            [
+              {
+                customerId: new Types.ObjectId(userId),
+                referenceType: PayoutReferenceType.ORDER,
+                referenceId: order._id,
+                paymentMode: PayoutPaymentMode.ONLINE,
+                paymentMethod: PayoutPaymentMethod.WALLET,
+                amount: amountToRefund,
+                status: PayoutTransactionStatus.REFUNDED,
+              },
+            ],
+            { session },
+          );
         }
       }
 
@@ -1168,7 +1282,7 @@ export class OrderService {
         cancelledAt: new Date(),
         cancellationReason: dto.cancellationReason,
         cancelledBy: new Types.ObjectId(userId),
-        cancelledByEntity: CancelledByEntity.USER
+        cancelledByEntity: CancelledByEntity.USER,
       };
 
       if (paymentStatusRefunded) {
@@ -1178,9 +1292,9 @@ export class OrderService {
       await this.vendorOrderModel.updateMany(
         { orderId: order._id },
         {
-          $set: vendorOrderUpdateData
+          $set: vendorOrderUpdateData,
         },
-        { session }
+        { session },
       );
 
       // Phase 6: Pre-delivery cancellation of main order -> cancel all commissions for this order
@@ -1202,7 +1316,10 @@ export class OrderService {
         itemsCancelledStr = itemNames.join(', ');
       }
 
-      const refundAmt = (order.walletAmountUsed && order.walletAmountUsed > 0) ? order.walletAmountUsed : 0;
+      const refundAmt =
+        order.walletAmountUsed && order.walletAmountUsed > 0
+          ? order.walletAmountUsed
+          : 0;
       const notificationDesc = `Order ${order.orderNumber} cancelled. Items cancelled: ${itemsCancelledStr || 'All'}. Amount refunded: ${refundAmt > 0 ? refundAmt : 'None'}.`;
 
       await this.notificationService.sendNotification({
@@ -1215,8 +1332,8 @@ export class OrderService {
         data: {
           orderId: order._id,
           cancellationReason: dto.cancellationReason,
-          cancelledByEntity: CancelledByEntity.USER
-        }
+          cancelledByEntity: CancelledByEntity.USER,
+        },
       });
 
       await session.commitTransaction();

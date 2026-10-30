@@ -8,13 +8,10 @@ import { Roles } from 'src/auth/roles.decorator';
 import { UserRole } from 'src/user/schema/user.schema';
 import { SeedDataDto } from './dto/seed-data.dto';
 
-
-
 @Controller('admin/seeder')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class AdminSeederController {
-  constructor(private readonly adminSeederService: AdminSeederService) { }
-
+  constructor(private readonly adminSeederService: AdminSeederService) {}
 
   // @AdminAccess(AdminModule.HOME_CONTENT, AccessType.WRITE)
   @Roles(UserRole.SUPER_ADMIN)

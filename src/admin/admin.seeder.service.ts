@@ -8,12 +8,15 @@ import * as bcrypt from 'bcryptjs';
 
 @Injectable()
 export class AdminSeederService {
-  constructor(@InjectConnection() private readonly connection: Connection) { }
+  constructor(@InjectConnection() private readonly connection: Connection) {}
 
   private async generateMedia(type: 'image' | 'video' = 'image') {
     const MediaModel = this.connection.model('Media');
     const media = new MediaModel({
-      url: type === 'image' ? faker.image.url() : 'https://www.w3schools.com/html/mov_bbb.mp4',
+      url:
+        type === 'image'
+          ? faker.image.url()
+          : 'https://www.w3schools.com/html/mov_bbb.mp4',
       publicId: faker.string.uuid(),
       type: type,
       originalName: faker.system.fileName(),
@@ -77,10 +80,14 @@ export class AdminSeederService {
       const courseCategories: any[] = [];
       for (let i = 0; i < 5; i++) {
         const cat = new CourseCategoryModel({
-          name: faker.company.catchPhraseAdjective() + ' Course ' + faker.string.alpha(3),
+          name:
+            faker.company.catchPhraseAdjective() +
+            ' Course ' +
+            faker.string.alpha(3),
           description: faker.lorem.sentence(),
           image: await this.generateMedia(),
-          label: faker.company.catchPhraseAdjective() +
+          label:
+            faker.company.catchPhraseAdjective() +
             ' Course ' +
             faker.string.alpha(3),
           isActive: true,
@@ -92,8 +99,10 @@ export class AdminSeederService {
       const serviceCategories: any[] = [];
       for (let i = 0; i < 5; i++) {
         const cat = new ServiceCategoryModel({
-          name: faker.commerce.department() + ' Service ' + faker.string.alpha(3),
-          label: faker.commerce.department() + ' Service ' + faker.string.alpha(3),
+          name:
+            faker.commerce.department() + ' Service ' + faker.string.alpha(3),
+          label:
+            faker.commerce.department() + ' Service ' + faker.string.alpha(3),
           description: faker.lorem.sentence(),
           image: await this.generateMedia(),
           isActive: true,
@@ -130,7 +139,9 @@ export class AdminSeederService {
         const vendor = new VendorModel({
           ownerId: u._id,
           businessName: faker.company.name(),
-          slug: faker.helpers.slugify(faker.company.name() + ' ' + faker.string.uuid()),
+          slug: faker.helpers.slugify(
+            faker.company.name() + ' ' + faker.string.uuid(),
+          ),
           email: u.email,
           phone: faker.phone.number(),
           description: faker.lorem.paragraph(),
@@ -147,13 +158,13 @@ export class AdminSeederService {
         u.vendorId = vendor._id;
         await u.save({ session });
 
-
-
         // Products for vendor
         for (let j = 0; j < 3; j++) {
           const product = new ProductModel({
             name: faker.commerce.productName(),
-            slug: faker.helpers.slugify(faker.commerce.productName() + ' ' + faker.string.uuid()),
+            slug: faker.helpers.slugify(
+              faker.commerce.productName() + ' ' + faker.string.uuid(),
+            ),
             description: faker.commerce.productDescription(),
             vendorId: vendor._id,
             createdBy: u._id,
@@ -166,12 +177,22 @@ export class AdminSeederService {
           const variant = new ProductVariantModel({
             productId: product._id,
             sku: faker.string.alphanumeric(8).toUpperCase(),
-            costPrice: faker.number.float({ min: 10, max: 50, multipleOf: 0.01 }),
-            salesPrice: faker.number.float({ min: 60, max: 100, multipleOf: 0.01 }),
+            costPrice: faker.number.float({
+              min: 10,
+              max: 50,
+              multipleOf: 0.01,
+            }),
+            salesPrice: faker.number.float({
+              min: 60,
+              max: 100,
+              multipleOf: 0.01,
+            }),
             stock: faker.number.int({ min: 10, max: 100 }),
             thumbnail: await this.generateMedia(),
             weight: faker.number.int({ min: 100, max: 500 }),
-            length: 10, width: 10, height: 10,
+            length: 10,
+            width: 10,
+            height: 10,
           });
           await variant.save({ session });
 
@@ -204,17 +225,27 @@ export class AdminSeederService {
         u.educatorId = educator._id;
         await u.save({ session });
 
-
-
         for (let j = 0; j < 2; j++) {
           const course = new CourseModel({
             educatorId: educator._id,
             categoryId: faker.helpers.arrayElement(courseCategories),
             title: faker.commerce.department() + ' Masterclass',
             description: faker.lorem.paragraph(),
-            costPrice: faker.number.float({ min: 50, max: 200, multipleOf: 0.01 }),
-            sellingPrice: faker.number.float({ min: 100, max: 300, multipleOf: 0.01 }),
-            offeredPrice: faker.number.float({ min: 80, max: 250, multipleOf: 0.01 }),
+            costPrice: faker.number.float({
+              min: 50,
+              max: 200,
+              multipleOf: 0.01,
+            }),
+            sellingPrice: faker.number.float({
+              min: 100,
+              max: 300,
+              multipleOf: 0.01,
+            }),
+            offeredPrice: faker.number.float({
+              min: 80,
+              max: 250,
+              multipleOf: 0.01,
+            }),
             thumbnail: await this.generateMedia(),
             level: 'BEGINNER',
             status: 'PUBLISHED',
@@ -272,8 +303,6 @@ export class AdminSeederService {
         u.serviceProviderId = provider._id;
         await u.save({ session });
 
-
-
         for (let j = 0; j < 2; j++) {
           const service = new ServiceModel({
             providerId: provider._id,
@@ -281,9 +310,21 @@ export class AdminSeederService {
             title: faker.commerce.productName() + ' Service',
             description: faker.lorem.paragraph(),
             durationMinutes: faker.number.int({ min: 30, max: 120 }),
-            costPrice: faker.number.float({ min: 20, max: 50, multipleOf: 0.01 }),
-            sellingPrice: faker.number.float({ min: 60, max: 150, multipleOf: 0.01 }),
-            offeredPrice: faker.number.float({ min: 55, max: 140, multipleOf: 0.01 }),
+            costPrice: faker.number.float({
+              min: 20,
+              max: 50,
+              multipleOf: 0.01,
+            }),
+            sellingPrice: faker.number.float({
+              min: 60,
+              max: 150,
+              multipleOf: 0.01,
+            }),
+            offeredPrice: faker.number.float({
+              min: 55,
+              max: 140,
+              multipleOf: 0.01,
+            }),
             images: [await this.generateMedia()],
           });
           await service.save({ session });
@@ -313,8 +354,6 @@ export class AdminSeederService {
         await influencer.save({ session });
         u.influencerId = influencer._id;
         await u.save({ session });
-
-
       }
 
       await session.commitTransaction();

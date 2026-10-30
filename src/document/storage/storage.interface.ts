@@ -11,10 +11,7 @@ export type UploadResult = {
 };
 
 export interface StorageProvider {
-  upload(
-    file: any,
-    folder: string,
-  ): Promise<UploadResult>;
+  upload(file: any, folder: string): Promise<UploadResult>;
 
   delete(publicId: string, resourceType?: string): Promise<void>;
-}
+}

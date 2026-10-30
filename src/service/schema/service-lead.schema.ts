@@ -1,24 +1,23 @@
-import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
-import { Document, Types } from "mongoose";
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Document, Types } from 'mongoose';
 
 export enum ServiceLeadStatus {
-  OPEN = "OPEN",
-  ASSIGNED = "ASSIGNED",
-  BOOKED = "BOOKED",
-  EXPIRED = "EXPIRED",
-  COMPLETED = "COMPLETED",
-  CANCELLED = "CANCELLED",
+  OPEN = 'OPEN',
+  ASSIGNED = 'ASSIGNED',
+  BOOKED = 'BOOKED',
+  EXPIRED = 'EXPIRED',
+  COMPLETED = 'COMPLETED',
+  CANCELLED = 'CANCELLED',
 }
 
 export enum ServiceLeadGender {
-  MALE = "MALE",
-  FEMALE = "FEMALE",
+  MALE = 'MALE',
+  FEMALE = 'FEMALE',
 }
 
-export type ServiceLeadDocument = ServiceLead & Document
+export type ServiceLeadDocument = ServiceLead & Document;
 @Schema({ timestamps: true })
 export class ServiceLead {
-
   @Prop({ type: Types.ObjectId, ref: 'User' })
   userId!: Types.ObjectId;
 
@@ -104,7 +103,6 @@ export class ServiceLead {
   @Prop({ enum: ServiceLeadGender, default: ServiceLeadGender.FEMALE })
   gender!: ServiceLeadGender;
 
-
   @Prop({
     enum: ServiceLeadStatus,
     default: ServiceLeadStatus.OPEN,
@@ -112,6 +110,6 @@ export class ServiceLead {
   status!: string;
 }
 
-export const ServiceLeadSchema = SchemaFactory.createForClass(ServiceLead)
+export const ServiceLeadSchema = SchemaFactory.createForClass(ServiceLead);
 
 ServiceLeadSchema.index({ location: '2dsphere' });

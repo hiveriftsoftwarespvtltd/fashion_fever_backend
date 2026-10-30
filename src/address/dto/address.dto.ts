@@ -1,7 +1,6 @@
 import { IsMongoId, IsOptional, IsString, Length } from 'class-validator';
 
 export class AddAddressDTO {
-
   @IsString()
   line1!: string;
 
@@ -43,11 +42,7 @@ export class AddAddressDTO {
   };
 }
 
-
-
-
 export class UpdateAddressDTO {
-
   @IsOptional()
   @IsString()
   line1?: string;

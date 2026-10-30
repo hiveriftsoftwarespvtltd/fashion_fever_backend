@@ -49,7 +49,10 @@ describe('Phase 1: Influencer & Affiliate Architecture Contracts', () => {
   });
 
   describe('2. Strict Three-Tier Commission Rate Contract', () => {
-    function evaluateCommissionDecision(commissionRate: number | null | undefined, finalOrderAmount: number) {
+    function evaluateCommissionDecision(
+      commissionRate: number | null | undefined,
+      finalOrderAmount: number,
+    ) {
       if (commissionRate === null || commissionRate === undefined) {
         return {
           createRecord: false,
@@ -68,7 +71,9 @@ describe('Phase 1: Influencer & Affiliate Architecture Contracts', () => {
         };
       }
 
-      const commissionAmount = parseFloat(((finalOrderAmount * commissionRate) / 100).toFixed(2));
+      const commissionAmount = parseFloat(
+        ((finalOrderAmount * commissionRate) / 100).toFixed(2),
+      );
       return {
         createRecord: true,
         reason: 'CONFIGURED_POSITIVE_RATE',
@@ -119,12 +124,16 @@ describe('Phase 1: Influencer & Affiliate Architecture Contracts', () => {
       const expiresAt = new Date(attributedAt.getTime() + EXACT_365_DAYS_MS);
 
       expect(expiresAt.toISOString()).toBe('2027-10-03T10:00:00.000Z');
-      expect(expiresAt.getTime() - attributedAt.getTime()).toBe(EXACT_365_DAYS_MS);
+      expect(expiresAt.getTime() - attributedAt.getTime()).toBe(
+        EXACT_365_DAYS_MS,
+      );
     });
 
     it('should verify that attribution does not extend or reset on subsequent purchases (strict immutability)', () => {
       const attributedAt = new Date('2026-10-03T10:00:00.000Z');
-      const initialExpiresAt = new Date(attributedAt.getTime() + 365 * 24 * 60 * 60 * 1000);
+      const initialExpiresAt = new Date(
+        attributedAt.getTime() + 365 * 24 * 60 * 60 * 1000,
+      );
 
       // Subsequent purchase 30 days later
       const orderDate = new Date('2026-11-02T10:00:00.000Z');
@@ -135,13 +144,17 @@ describe('Phase 1: Influencer & Affiliate Architecture Contracts', () => {
       };
 
       // Ensure expiry is never refreshed
-      expect(simulatedUser.referralExpiresAt.toISOString()).toBe(initialExpiresAt.toISOString());
+      expect(simulatedUser.referralExpiresAt.toISOString()).toBe(
+        initialExpiresAt.toISOString(),
+      );
       expect(orderDate < simulatedUser.referralExpiresAt).toBe(true);
     });
 
     it('should expire attribution after exactly 365 days have elapsed', () => {
       const attributedAt = new Date('2026-10-03T10:00:00.000Z');
-      const expiresAt = new Date(attributedAt.getTime() + 365 * 24 * 60 * 60 * 1000);
+      const expiresAt = new Date(
+        attributedAt.getTime() + 365 * 24 * 60 * 60 * 1000,
+      );
 
       const withinWindow = new Date('2027-10-02T10:00:00.000Z');
       const afterWindow = new Date('2027-10-04T10:00:00.000Z');
@@ -153,10 +166,12 @@ describe('Phase 1: Influencer & Affiliate Architecture Contracts', () => {
 
   describe('4. Referral Code Canonical Identity Formatting', () => {
     function sanitizeReferralCodePrefix(name: string): string {
-      return (name || '')
-        .replace(/[^a-zA-Z0-9]/g, '')
-        .toUpperCase()
-        .slice(0, 6) || 'FF';
+      return (
+        (name || '')
+          .replace(/[^a-zA-Z0-9]/g, '')
+          .toUpperCase()
+          .slice(0, 6) || 'FF'
+      );
     }
 
     it('should generate uppercase alphanumeric prefix from influencer name', () => {

@@ -36,24 +36,16 @@ export class ShiprocketService {
     private readonly shiprocketTokenModel: Model<ShiprocketTokenDocument>,
 
     private readonly httpService: HttpService,
-  ) { }
+  ) {}
 
   private async generateToken(): Promise<string> {
     try {
-
-
       const { data } = await firstValueFrom(
-        this.httpService.post(
-          `${process.env.SHIPROCKET_USER_URL}/auth/login`,
-          {
-            email: process.env.SHIPROCKET_USER_EMAIL,
-            password:
-              process.env.SHIPROCKET_USER_PASSWORD,
-          },
-        ),
+        this.httpService.post(`${process.env.SHIPROCKET_USER_URL}/auth/login`, {
+          email: process.env.SHIPROCKET_USER_EMAIL,
+          password: process.env.SHIPROCKET_USER_PASSWORD,
+        }),
       );
-
-
 
       const expiresAt = new Date();
       expiresAt.setDate(expiresAt.getDate() + 9);
@@ -72,7 +64,7 @@ export class ShiprocketService {
 
       return data.token;
     } catch (error) {
-      console.log("Generate Ship Rocket Token Error", error)
+      console.log('Generate Ship Rocket Token Error', error);
       console.log('Message:', error.message);
       console.log('Response:', error.response?.data);
       console.log('Status:', error.response?.status);
@@ -82,7 +74,9 @@ export class ShiprocketService {
     }
   }
 
-  async insertShiprocketToken(insertShiprocketTokenDto: InsertShiprocketTokenDto) {
+  async insertShiprocketToken(
+    insertShiprocketTokenDto: InsertShiprocketTokenDto,
+  ) {
     const expiresAt = insertShiprocketTokenDto.expiresAt
       ? new Date(insertShiprocketTokenDto.expiresAt)
       : new Date(new Date().setDate(new Date().getDate() + 9));
@@ -103,22 +97,16 @@ export class ShiprocketService {
   }
 
   async getAuthToken(): Promise<string> {
-    const tokenDoc =
-      await this.shiprocketTokenModel.findOne();
+    const tokenDoc = await this.shiprocketTokenModel.findOne();
 
-    if (
-      tokenDoc &&
-      tokenDoc.expiresAt.getTime() > Date.now()
-    ) {
+    if (tokenDoc && tokenDoc.expiresAt.getTime() > Date.now()) {
       // console.log("Shiprocket token",tokenDoc.token)
       return tokenDoc.token;
     }
     return this.generateToken();
   }
 
-  async getShippingOptions(
-    params: ServiceabilityParams,
-  ) {
+  async getShippingOptions(params: ServiceabilityParams) {
     const token = await this.getAuthToken();
 
     const query = new URLSearchParams({
@@ -126,31 +114,15 @@ export class ShiprocketService {
       delivery_postcode: params.deliveryPincode,
       weight: String(params.weightKg),
       cod: String(params.isCOD),
-      declared_value: String(
-        params.declaredValue,
-      ),
+      declared_value: String(params.declaredValue),
     });
 
+    if (params.length && params.breadth && params.height) {
+      query.append('length', String(params.length));
 
-    if (
-      params.length &&
-      params.breadth &&
-      params.height
-    ) {
-      query.append(
-        'length',
-        String(params.length),
-      );
+      query.append('breadth', String(params.breadth));
 
-      query.append(
-        'breadth',
-        String(params.breadth),
-      );
-
-      query.append(
-        'height',
-        String(params.height),
-      );
+      query.append('height', String(params.height));
     }
 
     const { data } = await firstValueFrom(
@@ -164,22 +136,16 @@ export class ShiprocketService {
       ),
     );
 
-  
-    const availableCouriers =
-      data?.data?.available_courier_companies || [];
+    const availableCouriers = data?.data?.available_courier_companies || [];
 
     if (!availableCouriers.length) {
-      throw new BadRequestException(
-        'No courier available for this route',
-      );
+      throw new BadRequestException('No courier available for this route');
     }
 
     // Only road/surface couriers
-    const surfaceCouriers =
-      availableCouriers.filter(
-        (courier: any) =>
-          courier.is_surface === true,
-      );
+    const surfaceCouriers = availableCouriers.filter(
+      (courier: any) => courier.is_surface === true,
+    );
 
     if (!surfaceCouriers.length) {
       throw new BadRequestException(
@@ -191,59 +157,38 @@ export class ShiprocketService {
     // 1. Highest tracking performance
     // 2. Lowest ETA hours
 
-    const bestCourier = surfaceCouriers.sort(
-      (a: any, b: any) => {
-        if (
-          b.tracking_performance !==
-          a.tracking_performance
-        ) {
-          return (
-            b.tracking_performance -
-            a.tracking_performance
-          );
-        }
+    const bestCourier = surfaceCouriers.sort((a: any, b: any) => {
+      if (b.tracking_performance !== a.tracking_performance) {
+        return b.tracking_performance - a.tracking_performance;
+      }
 
-        return a.etd_hours - b.etd_hours;
-      },
-    )[0];
+      return a.etd_hours - b.etd_hours;
+    })[0];
 
     return {
-      courierCompanyId:
-        bestCourier.courier_company_id,
+      courierCompanyId: bestCourier.courier_company_id,
 
-      courierName:
-        bestCourier.courier_name,
+      courierName: bestCourier.courier_name,
 
-      shippingCharge:
-        Number(bestCourier.rate),
+      shippingCharge: Number(bestCourier.rate),
 
-      freightCharge:
-        Number(bestCourier.freight_charge),
+      freightCharge: Number(bestCourier.freight_charge),
 
-      codCharge:
-        Number(bestCourier.cod_charges),
+      codCharge: Number(bestCourier.cod_charges),
 
-      estimatedDays: Number(
-        bestCourier.estimated_delivery_days,
-      ),
+      estimatedDays: Number(bestCourier.estimated_delivery_days),
 
-      estimatedDate:
-        bestCourier.etd,
+      estimatedDate: bestCourier.etd,
 
-      estimatedHours:
-        bestCourier.etd_hours,
+      estimatedHours: bestCourier.etd_hours,
 
-      trackingPerformance:
-        bestCourier.tracking_performance,
+      trackingPerformance: bestCourier.tracking_performance,
 
-      rating:
-        bestCourier.rating,
+      rating: bestCourier.rating,
 
-      rtoCharges:
-        Number(bestCourier.rto_charges),
+      rtoCharges: Number(bestCourier.rto_charges),
 
-      isCODAvailable:
-        Boolean(bestCourier.cod),
+      isCODAvailable: Boolean(bestCourier.cod),
     };
   }
   async calculateShippingForVariant(
@@ -253,31 +198,26 @@ export class ShiprocketService {
     isCOD: 0 | 1 = 0,
   ) {
     try {
-      const shipping =
-        await this.getShippingOptions({
-          pickupPincode: vendorPincode,
-          deliveryPincode: deliveryPincode,
+      const shipping = await this.getShippingOptions({
+        pickupPincode: vendorPincode,
+        deliveryPincode: deliveryPincode,
 
-          weightKg: Number(variant.weight || 0.5),
+        weightKg: Number(variant.weight || 0.5),
 
-          declaredValue: Number(
-            variant.salesPrice || variant.price,
-          ),
+        declaredValue: Number(variant.salesPrice || variant.price),
 
-          isCOD,
+        isCOD,
 
-          length: Number(variant.length || 10),
-          breadth: Number(variant.breadth || 10),
-          height: Number(variant.height || 10),
-        });
+        length: Number(variant.length || 10),
+        breadth: Number(variant.breadth || 10),
+        height: Number(variant.height || 10),
+      });
 
       return shipping;
     } catch (error: any) {
       return {
         shippingAvailable: false,
-        message:
-          error?.response?.data?.message ||
-          'Shipping unavailable',
+        message: error?.response?.data?.message || 'Shipping unavailable',
       };
     }
   }

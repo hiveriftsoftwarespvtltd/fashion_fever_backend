@@ -11,13 +11,12 @@ import { UserRole } from 'src/user/schema/user.schema';
 @Controller('admin/cleanup')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class AdminCleanupController {
-    constructor(private readonly adminCleanupService: AdminCleanupService) { }
+  constructor(private readonly adminCleanupService: AdminCleanupService) {}
 
-
-    // @AdminAccess(AdminModule.HOME_CONTENT, AccessType.WRITE)
-    @Roles(UserRole.SUPER_ADMIN)
-    @Delete('all-data')
-    async wipeAllData() {
-        return await this.adminCleanupService.wipeAllData(['shiprockettokens']);
-    }
+  // @AdminAccess(AdminModule.HOME_CONTENT, AccessType.WRITE)
+  @Roles(UserRole.SUPER_ADMIN)
+  @Delete('all-data')
+  async wipeAllData() {
+    return await this.adminCleanupService.wipeAllData(['shiprockettokens']);
+  }
 }

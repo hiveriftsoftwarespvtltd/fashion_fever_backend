@@ -6,7 +6,11 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Product, ProductDocument, ProductStatus } from './schema/product.schema';
+import {
+  Product,
+  ProductDocument,
+  ProductStatus,
+} from './schema/product.schema';
 import { Model, Types } from 'mongoose';
 import {
   ProductVariant,
@@ -21,8 +25,14 @@ import { DocumentService } from 'src/document/document.service';
 import { ApiResponse } from 'src/common/responses/api-response';
 // import { UpdateCategoryDTO } from './dto/update-category.dto';
 import { CreateProductDto, UpdateProductDto } from './dto/product.dto';
-import { VendorOrder, VendorOrderDocument } from 'src/order/schema/vendor-order.schema';
-import { QuickDeliveryCart, QuickDeliveryCartDocument } from 'src/quick-e-commerce/schema/quick-delivery-cart';
+import {
+  VendorOrder,
+  VendorOrderDocument,
+} from 'src/order/schema/vendor-order.schema';
+import {
+  QuickDeliveryCart,
+  QuickDeliveryCartDocument,
+} from 'src/quick-e-commerce/schema/quick-delivery-cart';
 import { NotificationService } from 'src/notification/notification.service';
 
 @Injectable()
@@ -33,11 +43,13 @@ export class ProductService {
     private productVariantModel: Model<ProductVariantDocument>,
     @InjectModel(Category.name) private categoryModel: Model<CategoryDocument>,
     @InjectModel(Media.name) private mediaModel: Model<MediaDocument>,
-    @InjectModel(VendorOrder.name) private vendorOrderModel: Model<VendorOrderDocument>,
-    @InjectModel(QuickDeliveryCart.name) private quickDeliveryCartModel: Model<QuickDeliveryCartDocument>,
+    @InjectModel(VendorOrder.name)
+    private vendorOrderModel: Model<VendorOrderDocument>,
+    @InjectModel(QuickDeliveryCart.name)
+    private quickDeliveryCartModel: Model<QuickDeliveryCartDocument>,
     private documentService: DocumentService,
     private notificationService: NotificationService,
-  ) { }
+  ) {}
 
   // async CreateCategory(
   //   dto: CreateCategory,
@@ -434,11 +446,11 @@ export class ProductService {
 
           uploadedMediaIds.push(uploaded._id.toString());
 
-          imageIds.push(uploaded._id as Types.ObjectId);
+          imageIds.push(uploaded._id);
         }
 
         variantMediaData.push({
-          thumbnailId: thumbnail._id as Types.ObjectId,
+          thumbnailId: thumbnail._id,
           imageIds,
         });
       }
@@ -468,7 +480,7 @@ export class ProductService {
               hasVariants: dto.variants.length > 1,
               tags: dto.tags,
               isShippingApply: dto.isShippingApply,
-              brand: dto.brand?.toLowerCase()
+              brand: dto.brand?.toLowerCase(),
             },
           ],
           { session },
@@ -517,7 +529,7 @@ export class ProductService {
             { session },
           );
 
-          variantIds.push(createdVariant._id as Types.ObjectId);
+          variantIds.push(createdVariant._id);
         }
 
         product.variants = variantIds;
@@ -624,7 +636,7 @@ export class ProductService {
     }
 
     if (dto.tags !== undefined) {
-      product.tags = dto.tags
+      product.tags = dto.tags;
     }
 
     if (dto.description !== undefined) {
@@ -707,11 +719,15 @@ export class ProductService {
             if (variant.stock !== undefined) {
               const newStock = Number(variant.stock);
               if (existingVariant.stock === 0 && newStock > 0) {
-                this.notificationService.notifyProductRestock(
-                  product._id.toString(),
-                  existingVariant._id.toString(),
-                  product.name
-                ).catch(e => console.error('Error notifying product restock', e));
+                this.notificationService
+                  .notifyProductRestock(
+                    product._id.toString(),
+                    existingVariant._id.toString(),
+                    product.name,
+                  )
+                  .catch((e) =>
+                    console.error('Error notifying product restock', e),
+                  );
               }
               existingVariant.stock = newStock;
             }
@@ -817,7 +833,7 @@ export class ProductService {
 
             await existingVariant.save({ session });
 
-            variantIds.push(existingVariant._id as Types.ObjectId);
+            variantIds.push(existingVariant._id);
           }
 
           // =========================
@@ -941,7 +957,7 @@ export class ProductService {
               { session },
             );
 
-            variantIds.push(createdVariant._id as Types.ObjectId);
+            variantIds.push(createdVariant._id);
           }
         }
 
@@ -1023,10 +1039,13 @@ export class ProductService {
 
       await this.quickDeliveryCartModel.updateMany(
         {},
-        { $pull: { items: { product: product._id } } }
+        { $pull: { items: { product: product._id } } },
       );
 
-      return ApiResponse.success('Product soft deleted because it was ordered previously', null);
+      return ApiResponse.success(
+        'Product soft deleted because it was ordered previously',
+        null,
+      );
     }
 
     for (const variant of variants) {
@@ -1048,7 +1067,7 @@ export class ProductService {
 
     await this.quickDeliveryCartModel.updateMany(
       {},
-      { $pull: { items: { product: product._id } } }
+      { $pull: { items: { product: product._id } } },
     );
 
     return ApiResponse.success('Product Deleted Successfully', null);
@@ -1157,10 +1176,13 @@ export class ProductService {
 
       await this.quickDeliveryCartModel.updateMany(
         {},
-        { $pull: { items: { variant: variant._id } } }
+        { $pull: { items: { variant: variant._id } } },
       );
 
-      return ApiResponse.success('Product Variant soft deleted because it was ordered previously', null);
+      return ApiResponse.success(
+        'Product Variant soft deleted because it was ordered previously',
+        null,
+      );
     }
 
     if (variant.thumbnail) {
@@ -1185,7 +1207,7 @@ export class ProductService {
 
     await this.quickDeliveryCartModel.updateMany(
       {},
-      { $pull: { items: { variant: variant._id } } }
+      { $pull: { items: { variant: variant._id } } },
     );
 
     return ApiResponse.success('Product Variant Deleted Successfully', null);

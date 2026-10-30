@@ -1,4 +1,17 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, Req, Query, UseGuards, UseInterceptors, UploadedFile } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Put,
+  Delete,
+  Body,
+  Param,
+  Req,
+  Query,
+  UseGuards,
+  UseInterceptors,
+  UploadedFile,
+} from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { HomeBookingCardsService } from './home-booking-cards.service';
 import { OptionalAuthGuard } from 'src/auth/optional-auth.guards';
@@ -32,7 +45,7 @@ export class HomeBookingCardsController {
   createCard(
     @Body() dto: any,
     @UploadedFile() file: Express.Multer.File,
-    @Req() req: any
+    @Req() req: any,
   ) {
     return this.cardsService.createCard(dto, file, req.user?._id?.toString());
   }
@@ -45,9 +58,14 @@ export class HomeBookingCardsController {
     @Param('id') id: string,
     @Body() dto: any,
     @UploadedFile() file: Express.Multer.File,
-    @Req() req: any
+    @Req() req: any,
   ) {
-    return this.cardsService.updateCard(id, dto, file, req.user?._id?.toString());
+    return this.cardsService.updateCard(
+      id,
+      dto,
+      file,
+      req.user?._id?.toString(),
+    );
   }
 
   // Support PUT update/:id
@@ -58,9 +76,14 @@ export class HomeBookingCardsController {
     @Param('id') id: string,
     @Body() dto: any,
     @UploadedFile() file: Express.Multer.File,
-    @Req() req: any
+    @Req() req: any,
   ) {
-    return this.cardsService.updateCard(id, dto, file, req.user?._id?.toString());
+    return this.cardsService.updateCard(
+      id,
+      dto,
+      file,
+      req.user?._id?.toString(),
+    );
   }
 
   // Support PUT :id
@@ -71,9 +94,14 @@ export class HomeBookingCardsController {
     @Param('id') id: string,
     @Body() dto: any,
     @UploadedFile() file: Express.Multer.File,
-    @Req() req: any
+    @Req() req: any,
   ) {
-    return this.cardsService.updateCard(id, dto, file, req.user?._id?.toString());
+    return this.cardsService.updateCard(
+      id,
+      dto,
+      file,
+      req.user?._id?.toString(),
+    );
   }
 
   // Admin endpoint to delete card

@@ -1,4 +1,13 @@
-import { Body, Controller, Get, Param, Post, Query, Req, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Query,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { OptionalAuthGuard } from 'src/auth/optional-auth.guards';
 import { UserService } from './user.service';
 import { InfluencerService } from 'src/influencer/influencer.service';
@@ -7,7 +16,10 @@ import { CreateInfluencerDto } from 'src/influencer/dto/influencer.dto';
 @UseGuards(OptionalAuthGuard)
 @Controller('public-user')
 export class PublicUserController {
-  constructor(private userService: UserService, private influencerService: InfluencerService) { }
+  constructor(
+    private userService: UserService,
+    private influencerService: InfluencerService,
+  ) {}
 
   @Get('products')
   async fetchProducts(
@@ -19,7 +31,7 @@ export class PublicUserController {
     @Query('page') page = 1,
     @Query('limit') limit = 10,
     @Query('brand') brand?: string,
-    @Query('is_shipping_apply') isShippingApply?: boolean
+    @Query('is_shipping_apply') isShippingApply?: boolean,
   ) {
     return this.userService.fetchProducts(
       req.user?._id,
@@ -36,7 +48,7 @@ export class PublicUserController {
 
   @Get('influencer-slabs')
   async influencerSlabs() {
-    return await this.influencerService.getAllCommissionSlabs()
+    return await this.influencerService.getAllCommissionSlabs();
   }
 
   @Get('test-500')

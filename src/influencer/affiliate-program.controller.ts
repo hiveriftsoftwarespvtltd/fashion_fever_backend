@@ -8,15 +8,17 @@ import { UserRole } from 'src/user/schema/user.schema';
 @Controller('affiliate-program')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class AffiliateProgramController {
-    constructor(private readonly affiliateProgramService: AffiliateProgramService) { }
+  constructor(
+    private readonly affiliateProgramService: AffiliateProgramService,
+  ) {}
 
-    @Post('generate-link')
-    @Roles(UserRole.INFLUENCER)
-    async generateLink(@Req() req: any) {
-        const influencerId = req.user.influencerId;
-        if (!influencerId) {
-            return { success: false, message: 'Influencer profile not found' };
-        }
-        return this.affiliateProgramService.generateAffiliateLink(influencerId);
+  @Post('generate-link')
+  @Roles(UserRole.INFLUENCER)
+  async generateLink(@Req() req: any) {
+    const influencerId = req.user.influencerId;
+    if (!influencerId) {
+      return { success: false, message: 'Influencer profile not found' };
     }
+    return this.affiliateProgramService.generateAffiliateLink(influencerId);
+  }
 }

@@ -77,10 +77,10 @@ export class InfluencerCommission {
   couponId?: Types.ObjectId;
 
   @Prop({
-  type: Types.ObjectId,
-  ref: 'InfluencerPayout',
-})
-payoutId?: Types.ObjectId;
+    type: Types.ObjectId,
+    ref: 'InfluencerPayout',
+  })
+  payoutId?: Types.ObjectId;
 
   // financial snapshot
   @Prop({ required: true })

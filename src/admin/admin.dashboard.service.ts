@@ -855,132 +855,120 @@ export class AdminDashboardService {
     });
   }
 
-  async topVendorsGraph(
-  limit = 10,
-) {
-  limit = Number(limit) || 10;
+  async topVendorsGraph(limit = 10) {
+    limit = Number(limit) || 10;
 
-  return this.vendorOrderModel.aggregate([
-    {
-      $group: {
-        _id: '$vendorId',
+    return this.vendorOrderModel.aggregate([
+      {
+        $group: {
+          _id: '$vendorId',
 
-        totalRevenue: {
-          $sum: '$grandTotal',
-        },
+          totalRevenue: {
+            $sum: '$grandTotal',
+          },
 
-        totalOrders: {
-          $sum: 1,
-        },
-      },
-    },
-
-    {
-      $sort: {
-        totalRevenue: -1,
-      },
-    },
-
-    {
-      $limit: limit,
-    },
-
-    {
-      $lookup: {
-        from: 'vendors',
-        localField: '_id',
-        foreignField: '_id',
-        as: 'vendor',
-      },
-    },
-
-    {
-      $unwind: '$vendor',
-    },
-
-    // populate logo
-    {
-      $lookup: {
-        from: 'media',
-        localField: 'vendor.logo',
-        foreignField: '_id',
-        as: 'logo',
-      },
-    },
-
-    {
-      $unwind: {
-        path: '$logo',
-        preserveNullAndEmptyArrays: true,
-      },
-    },
-
-    // populate banner
-    {
-      $lookup: {
-        from: 'media',
-        localField: 'vendor.banner',
-        foreignField: '_id',
-        as: 'banner',
-      },
-    },
-
-    {
-      $unwind: {
-        path: '$banner',
-        preserveNullAndEmptyArrays: true,
-      },
-    },
-
-    {
-      $project: {
-        _id: 0,
-
-        totalRevenue: 1,
-
-        totalOrders: 1,
-
-        vendor: {
-          _id: '$vendor._id',
-
-          businessName:
-            '$vendor.businessName',
-
-          slug: '$vendor.slug',
-
-          description:
-            '$vendor.description',
-
-          address:
-            '$vendor.address',
-
-          phone:
-            '$vendor.phone',
-
-          email:
-            '$vendor.email',
-
-          city:
-            '$vendor.city',
-
-          state:
-            '$vendor.state',
-
-          vendorPincode:
-            '$vendor.vendorPincode',
-
-          commissionRate:
-            '$vendor.commissionRate',
-
-          status:
-            '$vendor.status',
-
-          logo: '$logo',
-
-          banner: '$banner',
+          totalOrders: {
+            $sum: 1,
+          },
         },
       },
-    },
-  ]);
-}
+
+      {
+        $sort: {
+          totalRevenue: -1,
+        },
+      },
+
+      {
+        $limit: limit,
+      },
+
+      {
+        $lookup: {
+          from: 'vendors',
+          localField: '_id',
+          foreignField: '_id',
+          as: 'vendor',
+        },
+      },
+
+      {
+        $unwind: '$vendor',
+      },
+
+      // populate logo
+      {
+        $lookup: {
+          from: 'media',
+          localField: 'vendor.logo',
+          foreignField: '_id',
+          as: 'logo',
+        },
+      },
+
+      {
+        $unwind: {
+          path: '$logo',
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+
+      // populate banner
+      {
+        $lookup: {
+          from: 'media',
+          localField: 'vendor.banner',
+          foreignField: '_id',
+          as: 'banner',
+        },
+      },
+
+      {
+        $unwind: {
+          path: '$banner',
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+
+      {
+        $project: {
+          _id: 0,
+
+          totalRevenue: 1,
+
+          totalOrders: 1,
+
+          vendor: {
+            _id: '$vendor._id',
+
+            businessName: '$vendor.businessName',
+
+            slug: '$vendor.slug',
+
+            description: '$vendor.description',
+
+            address: '$vendor.address',
+
+            phone: '$vendor.phone',
+
+            email: '$vendor.email',
+
+            city: '$vendor.city',
+
+            state: '$vendor.state',
+
+            vendorPincode: '$vendor.vendorPincode',
+
+            commissionRate: '$vendor.commissionRate',
+
+            status: '$vendor.status',
+
+            logo: '$logo',
+
+            banner: '$banner',
+          },
+        },
+      },
+    ]);
+  }
 }

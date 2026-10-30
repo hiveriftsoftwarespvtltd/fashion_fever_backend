@@ -1,5 +1,5 @@
-import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
-import { Document, Types } from "mongoose";
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Document, Types } from 'mongoose';
 
 export enum RefundStatus {
   REQUESTED = 'requested',
@@ -13,11 +13,9 @@ export enum RefundType {
   RETURN = 'return',
 }
 
-
-export type RefundDocument = Refund & Document
+export type RefundDocument = Refund & Document;
 @Schema({ timestamps: true })
 export class Refund {
-
   @Prop({
     type: Types.ObjectId,
     ref: 'Order',
@@ -78,4 +76,4 @@ export class Refund {
   transactionId?: string;
 }
 
-export const RefundSchema = SchemaFactory.createForClass(Refund)
+export const RefundSchema = SchemaFactory.createForClass(Refund);

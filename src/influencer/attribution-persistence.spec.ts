@@ -168,19 +168,37 @@ describe('Phase 3: 1-Year Attribution Persistence & Expiry Enforcement Contracts
     });
 
     it('subsequent purchases must never modify or extend user.referralExpiresAt (non-rolling)', () => {
-      const firstPurchaseDate = new Date(signupDate.getTime() + 30 * ONE_DAY_MS);
-      const secondPurchaseDate = new Date(signupDate.getTime() + 180 * ONE_DAY_MS);
+      const firstPurchaseDate = new Date(
+        signupDate.getTime() + 30 * ONE_DAY_MS,
+      );
+      const secondPurchaseDate = new Date(
+        signupDate.getTime() + 180 * ONE_DAY_MS,
+      );
 
       // Verify that expiry remains strictly locked to original 365 days
-      expect(user.referralExpiresAt!.toISOString()).toBe(expiryDate.toISOString());
+      expect(user.referralExpiresAt!.toISOString()).toBe(
+        expiryDate.toISOString(),
+      );
 
-      const resFirst = resolveOrderAttribution({ user, orderDate: firstPurchaseDate, influencers: influencersMap });
+      const resFirst = resolveOrderAttribution({
+        user,
+        orderDate: firstPurchaseDate,
+        influencers: influencersMap,
+      });
       expect(resFirst.commissionEligible).toBe(true);
-      expect(user.referralExpiresAt!.toISOString()).toBe(expiryDate.toISOString());
+      expect(user.referralExpiresAt!.toISOString()).toBe(
+        expiryDate.toISOString(),
+      );
 
-      const resSecond = resolveOrderAttribution({ user, orderDate: secondPurchaseDate, influencers: influencersMap });
+      const resSecond = resolveOrderAttribution({
+        user,
+        orderDate: secondPurchaseDate,
+        influencers: influencersMap,
+      });
       expect(resSecond.commissionEligible).toBe(true);
-      expect(user.referralExpiresAt!.toISOString()).toBe(expiryDate.toISOString());
+      expect(user.referralExpiresAt!.toISOString()).toBe(
+        expiryDate.toISOString(),
+      );
     });
   });
 
@@ -254,7 +272,9 @@ describe('Phase 3: 1-Year Attribution Persistence & Expiry Enforcement Contracts
     });
 
     it('Expired referral + valid influencer coupon -> coupon attribution (expired referral must not block coupon)', () => {
-      const expiredOrderDate = new Date(signupDate.getTime() + 400 * ONE_DAY_MS);
+      const expiredOrderDate = new Date(
+        signupDate.getTime() + 400 * ONE_DAY_MS,
+      );
       const res = resolveOrderAttribution({
         user: userReferredByA,
         orderDate: expiredOrderDate,
@@ -314,9 +334,10 @@ describe('Phase 3: 1-Year Attribution Persistence & Expiry Enforcement Contracts
       };
 
       // Stamped vendorOrder rate must preserve null, never coercing to 0 via ?? 0
-      const stampedRate = typeof unconfiguredCreator.commissionRate === 'number'
-        ? unconfiguredCreator.commissionRate
-        : null;
+      const stampedRate =
+        typeof unconfiguredCreator.commissionRate === 'number'
+          ? unconfiguredCreator.commissionRate
+          : null;
 
       expect(stampedRate).toBeNull();
       expect(stampedRate).not.toBe(0);
@@ -335,9 +356,10 @@ describe('Phase 3: 1-Year Attribution Persistence & Expiry Enforcement Contracts
         commissionRate: 0,
       };
 
-      const stampedRate = typeof zeroRateCreator.commissionRate === 'number'
-        ? zeroRateCreator.commissionRate
-        : null;
+      const stampedRate =
+        typeof zeroRateCreator.commissionRate === 'number'
+          ? zeroRateCreator.commissionRate
+          : null;
 
       expect(stampedRate).toBe(0);
       expect(stampedRate).not.toBeNull();
@@ -353,9 +375,10 @@ describe('Phase 3: 1-Year Attribution Persistence & Expiry Enforcement Contracts
         commissionRate: 12.5,
       };
 
-      const stampedRate = typeof customRateCreator.commissionRate === 'number'
-        ? customRateCreator.commissionRate
-        : null;
+      const stampedRate =
+        typeof customRateCreator.commissionRate === 'number'
+          ? customRateCreator.commissionRate
+          : null;
 
       expect(stampedRate).toBe(12.5);
       expect(stampedRate! > 0).toBe(true);
@@ -374,7 +397,8 @@ describe('Phase 3: 1-Year Attribution Persistence & Expiry Enforcement Contracts
       expect(financialRecordsCreatedInPhase3).toBe(0);
 
       // Verified milestone for COD financial creation belongs to Phase 5: DELIVERED && PAID
-      const isCodMilestoneReached = order.orderStatus === 'DELIVERED' && order.paymentStatus === 'PAID';
+      const isCodMilestoneReached =
+        order.orderStatus === 'DELIVERED' && order.paymentStatus === 'PAID';
       expect(isCodMilestoneReached).toBe(false);
     });
   });

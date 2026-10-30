@@ -33,11 +33,8 @@ export class WishlistService {
     @InjectModel(ProductVariant.name)
     private productVariantModel: Model<ProductVariantDocument>,
   ) {}
-  
 
   async addToWishlist(userId: string, productId: string, variantId: string) {
-    
-
     const product = await this.productModel.findOne({
       _id: productId,
       isDeleted: false,
@@ -54,7 +51,6 @@ export class WishlistService {
       productId: new Types.ObjectId(productId),
       isActive: true,
     });
-
 
     if (!variant) {
       throw new NotFoundException('Variant not found');
@@ -84,7 +80,7 @@ export class WishlistService {
     wishlist.items.push({
       product: new Types.ObjectId(productId),
       variant: new Types.ObjectId(variantId),
-    } as any);
+    });
 
     await wishlist.save();
 

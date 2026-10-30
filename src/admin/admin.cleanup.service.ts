@@ -7,116 +7,113 @@ import { ApiResponse } from 'src/common/responses/api-response';
 
 @Injectable()
 export class AdminCleanupService {
-    constructor(
-        @InjectConnection() private readonly connection: Connection,
-        private readonly documentService: DocumentService,
-    ) { }
+  constructor(
+    @InjectConnection() private readonly connection: Connection,
+    private readonly documentService: DocumentService,
+  ) {}
 
-    // async wipeAllData() {
-    //     try {
-    //         // 1. Find and delete all media files using DocumentService
-    //         const mediaModel = this.connection.model('Media');
-    //         const allMedia = await mediaModel.find({});
+  // async wipeAllData() {
+  //     try {
+  //         // 1. Find and delete all media files using DocumentService
+  //         const mediaModel = this.connection.model('Media');
+  //         const allMedia = await mediaModel.find({});
 
-    //         for (const media of allMedia) {
-    //             try {
-    //                 await this.documentService.deleteMedia(media._id.toString());
-    //             } catch (error) {
-    //                 console.error(`Failed to delete media ${media._id}:`, error);
-    //             }
-    //         }
+  //         for (const media of allMedia) {
+  //             try {
+  //                 await this.documentService.deleteMedia(media._id.toString());
+  //             } catch (error) {
+  //                 console.error(`Failed to delete media ${media._id}:`, error);
+  //             }
+  //         }
 
-    //         // 2. Clear all collections, excluding admin user
-    //         const collections = this.connection.collections;
-    //         for (const collectionName in collections) {
-    //             const collection = collections[collectionName];
-    //             if (collection.collectionName === 'users') {
-    //                 // Keep the admin user
-    //                 await collection.deleteMany({ role: { $ne: UserRole.ADMIN } });
-    //             } else if (collection.collectionName !== 'media') {
-    //                 // Media collection is already cleared by documentService.deleteMedia, 
-    //                 // but we can double clear it safely if any orphaned docs exist
-    //                 await collection.deleteMany({});
-    //             }
+  //         // 2. Clear all collections, excluding admin user
+  //         const collections = this.connection.collections;
+  //         for (const collectionName in collections) {
+  //             const collection = collections[collectionName];
+  //             if (collection.collectionName === 'users') {
+  //                 // Keep the admin user
+  //                 await collection.deleteMany({ role: { $ne: UserRole.ADMIN } });
+  //             } else if (collection.collectionName !== 'media') {
+  //                 // Media collection is already cleared by documentService.deleteMedia,
+  //                 // but we can double clear it safely if any orphaned docs exist
+  //                 await collection.deleteMany({});
+  //             }
 
-    //             // Drop indexes (except _id index which MongoDB prevents from dropping)
-    //             try {
-    //                 await collection.dropIndexes();
-    //             } catch (error: any) {
-    //                 console.log(`Failed to drop indexes for ${collection.collectionName}:`, error.message);
-    //             }
-    //         }
-    //         return ApiResponse.success('All data, media, and indexes wiped successfully, preserving admin users.', 200);
-    //     } catch (error) {
-    //         console.error('Wipe data failed:', error);
-    //         throw error;
-    //     }
-    // }
+  //             // Drop indexes (except _id index which MongoDB prevents from dropping)
+  //             try {
+  //                 await collection.dropIndexes();
+  //             } catch (error: any) {
+  //                 console.log(`Failed to drop indexes for ${collection.collectionName}:`, error.message);
+  //             }
+  //         }
+  //         return ApiResponse.success('All data, media, and indexes wiped successfully, preserving admin users.', 200);
+  //     } catch (error) {
+  //         console.error('Wipe data failed:', error);
+  //         throw error;
+  //     }
+  // }
 
-    async wipeAllData(excludedCollections: string[] = []) {
-        try {
-            // Always preserve users and admins records
-            const protectedCollections = [
-                'users',
-                'admins',
-                ...excludedCollections,
-            ];
+  async wipeAllData(excludedCollections: string[] = []) {
+    try {
+      // Always preserve users and admins records
+      const protectedCollections = ['users', 'admins', ...excludedCollections];
 
-            // Delete media files first only if media is not excluded
-            if (!protectedCollections.includes('media')) {
-                const mediaModel = this.connection.model('Media');
-                const allMedia = await mediaModel.find({});
+      // Delete media files first only if media is not excluded
+      if (!protectedCollections.includes('media')) {
+        const mediaModel = this.connection.model('Media');
+        const allMedia = await mediaModel.find({});
 
-                for (const media of allMedia) {
-                    try {
-                        await this.documentService.deleteMedia(media._id.toString());
-                    } catch (error) {
-                        console.error(`Failed to delete media ${media._id}:`, error);
-                    }
-                }
-            }
-
-            const collections = this.connection.collections;
-
-            for (const collectionName in collections) {
-                const collection = collections[collectionName];
-
-                // Skip excluded collections
-                if (protectedCollections.includes(collection.collectionName)) {
-                    
-                    continue;
-                }
-
-                await collection.deleteMany({});
-
-                try {
-                    await collection.dropIndexes();
-                } catch (error: any) {
-                    console.log(
-                        `Failed to drop indexes for ${collection.collectionName}:`,
-                        error.message,
-                    );
-                }
-            }
-
-            // Handle users separately (keep admins)
-            if (!excludedCollections.includes('users')) {
-                const adminEmail = (process.env.ADMIN_EMAIL || 'admin@fashionfever.in').toLowerCase().trim();
-                await collections.users.deleteMany({
-                    $and: [
-                        { email: { $ne: adminEmail } },
-                        { roles: { $nin: [UserRole.ADMIN, UserRole.SUPER_ADMIN] } },
-                    ]
-                });
-            }
-
-            return ApiResponse.success(
-                'All data wiped successfully while preserving excluded collections.',
-                200,
-            );
-        } catch (error) {
-            console.error('Wipe data failed:', error);
-            throw error;
+        for (const media of allMedia) {
+          try {
+            await this.documentService.deleteMedia(media._id.toString());
+          } catch (error) {
+            console.error(`Failed to delete media ${media._id}:`, error);
+          }
         }
+      }
+
+      const collections = this.connection.collections;
+
+      for (const collectionName in collections) {
+        const collection = collections[collectionName];
+
+        // Skip excluded collections
+        if (protectedCollections.includes(collection.collectionName)) {
+          continue;
+        }
+
+        await collection.deleteMany({});
+
+        try {
+          await collection.dropIndexes();
+        } catch (error: any) {
+          console.log(
+            `Failed to drop indexes for ${collection.collectionName}:`,
+            error.message,
+          );
+        }
+      }
+
+      // Handle users separately (keep admins)
+      if (!excludedCollections.includes('users')) {
+        const adminEmail = (process.env.ADMIN_EMAIL || 'admin@fashionfever.in')
+          .toLowerCase()
+          .trim();
+        await collections.users.deleteMany({
+          $and: [
+            { email: { $ne: adminEmail } },
+            { roles: { $nin: [UserRole.ADMIN, UserRole.SUPER_ADMIN] } },
+          ],
+        });
+      }
+
+      return ApiResponse.success(
+        'All data wiped successfully while preserving excluded collections.',
+        200,
+      );
+    } catch (error) {
+      console.error('Wipe data failed:', error);
+      throw error;
     }
+  }
 }

@@ -1,4 +1,3 @@
-
 export const emailWrapper = (
   title: string,
   subtitle: string,
@@ -191,11 +190,7 @@ export const emailWrapper = (
 //   `;
 // };
 
-
-export const verificationTemplate = (
-  name: string,
-  otp: string,
-) => {
+export const verificationTemplate = (name: string, otp: string) => {
   return emailWrapper(
     'Email Verification',
     `Hello ${name}, please verify your email address using the OTP below.`,
@@ -227,10 +222,7 @@ export const verificationTemplate = (
   );
 };
 
-export const loginOtpTemplate = (
-  name: string,
-  otp: string,
-) => {
+export const loginOtpTemplate = (name: string, otp: string) => {
   return emailWrapper(
     'Two-Factor Authentication',
     `Hello ${name}, use the following OTP to complete your login.`,
@@ -262,10 +254,7 @@ export const loginOtpTemplate = (
   );
 };
 
-export const forgotPasswordTemplate = (
-  name: string,
-  otp: string,
-) => {
+export const forgotPasswordTemplate = (name: string, otp: string) => {
   return emailWrapper(
     'Reset Your Password',
     `Hello ${name}, we received a request to reset your password.`,
@@ -310,7 +299,6 @@ const commissionSlabsUrl =
   process.env.NODE_ENV === 'production'
     ? 'https://fashionfever.in/influencer/commission-slabs'
     : 'http://localhost:5173/influencer/commission-slabs';
-
 
 export const influencerInvitationTemplate = (
   name: string,

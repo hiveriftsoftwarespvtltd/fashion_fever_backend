@@ -10,15 +10,20 @@ import { UserRole } from 'src/user/schema/user.schema';
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles(UserRole.DELIVERY_PERSON)
 export class DeliveryPersonCashSettlementController {
-    constructor(private readonly settlementService: DeliveryPersonCashSettlementService) { }
+  constructor(
+    private readonly settlementService: DeliveryPersonCashSettlementService,
+  ) {}
 
-    @Post('deposit')
-    async generateCashSettlement(@Req() req: any, @Body() dto: GenerateCashSettlementDto) {
-        return this.settlementService.generateCashSettlement(
-            req.user._id,
-            dto.transactionId,
-            dto.depositedAmount,
-            dto.remarks
-        );
-    }
+  @Post('deposit')
+  async generateCashSettlement(
+    @Req() req: any,
+    @Body() dto: GenerateCashSettlementDto,
+  ) {
+    return this.settlementService.generateCashSettlement(
+      req.user._id,
+      dto.transactionId,
+      dto.depositedAmount,
+      dto.remarks,
+    );
+  }
 }

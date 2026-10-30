@@ -2,71 +2,61 @@ import { ToNumber, ToBoolean } from '../../utils/type-tranformer';
 import { IsEnum, IsNumber, IsOptional, IsBoolean } from 'class-validator';
 import { CashbackType } from '../schema/cashback/cashbacks.slabs.schema';
 
-
-
 export class CreateCashbackSlabDto {
-    @ToNumber()
-    @IsNumber()
-    minValue!: number;
+  @ToNumber()
+  @IsNumber()
+  minValue!: number;
 
-    @ToNumber()
+  @ToNumber()
+  @IsNumber()
+  maxValue!: number;
 
-    @IsNumber()
-    maxValue!: number;
+  @ToNumber()
+  @IsNumber()
+  cashbackValue!: number;
 
-    @ToNumber()
+  @IsEnum(CashbackType)
+  @IsOptional()
+  cashbackType?: CashbackType;
 
-    @IsNumber()
-    cashbackValue!: number;
+  @ToNumber()
+  @IsNumber()
+  @IsOptional()
+  maxCashback?: number;
 
-    @IsEnum(CashbackType)
-    @IsOptional()
-    cashbackType?: CashbackType;
-
-    @ToNumber()
-
-    @IsNumber()
-    @IsOptional()
-    maxCashback?: number;
-
-    @ToBoolean()
-
-    @IsBoolean()
-    @IsOptional()
-    isActive?: boolean;
+  @ToBoolean()
+  @IsBoolean()
+  @IsOptional()
+  isActive?: boolean;
 }
 
 export class UpdateCashbackSlabDto {
-    @ToNumber()
-    @IsNumber()
-    @IsOptional()
-    minValue?: number;
+  @ToNumber()
+  @IsNumber()
+  @IsOptional()
+  minValue?: number;
 
-    @ToNumber()
+  @ToNumber()
+  @IsNumber()
+  @IsOptional()
+  maxValue?: number;
 
-    @IsNumber()
-    @IsOptional()
-    maxValue?: number;
+  @ToNumber()
+  @IsNumber()
+  @IsOptional()
+  cashbackValue?: number;
 
-    @ToNumber()
+  @IsEnum(CashbackType)
+  @IsOptional()
+  cashbackType?: CashbackType;
 
-    @IsNumber()
-    @IsOptional()
-    cashbackValue?: number;
+  @ToNumber()
+  @IsNumber()
+  @IsOptional()
+  maxCashback?: number;
 
-    @IsEnum(CashbackType)
-    @IsOptional()
-    cashbackType?: CashbackType;
-
-    @ToNumber()
-
-    @IsNumber()
-    @IsOptional()
-    maxCashback?: number;
-
-    @ToBoolean()
-
-    @IsBoolean()
-    @IsOptional()
-    isActive?: boolean;
+  @ToBoolean()
+  @IsBoolean()
+  @IsOptional()
+  isActive?: boolean;
 }

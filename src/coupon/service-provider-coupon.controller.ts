@@ -15,7 +15,10 @@ import { RolesGuard } from 'src/auth/roles.guard';
 import { Roles } from 'src/auth/roles.decorator';
 import { UserRole } from 'src/user/schema/user.schema';
 import { ServiceProviderCouponService } from './service-provider-coupon.service';
-import { CreateServiceCouponDto, UpdateServiceCouponDto } from './dto/coupon.dto';
+import {
+  CreateServiceCouponDto,
+  UpdateServiceCouponDto,
+} from './dto/coupon.dto';
 
 /**
  * Service-Provider Coupon Controller
@@ -28,9 +31,7 @@ import { CreateServiceCouponDto, UpdateServiceCouponDto } from './dto/coupon.dto
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles(UserRole.SERVICE_PROVIDER)
 export class ServiceProviderCouponController {
-  constructor(
-    private readonly spCouponService: ServiceProviderCouponService,
-  ) {}
+  constructor(private readonly spCouponService: ServiceProviderCouponService) {}
 
   /** Create a coupon linked to one of the SP's own services */
   @Post('create')

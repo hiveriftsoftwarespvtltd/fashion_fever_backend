@@ -1,7 +1,10 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { HomeBookingCard, HomeBookingCardDocument } from './schema/home-booking-cards.schema';
+import {
+  HomeBookingCard,
+  HomeBookingCardDocument,
+} from './schema/home-booking-cards.schema';
 import { DocumentService } from 'src/document/document.service';
 import { ApiResponse } from 'src/common/responses/api-response';
 
@@ -9,51 +12,57 @@ const defaultCardsData = [
   {
     category: 'BRIDAL MAKEUP',
     name: 'HD Bridal Makeup & Hair Styling',
-    imageUrl: 'https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=600&h=600&fit=crop',
+    imageUrl:
+      'https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=600&h=600&fit=crop',
     slug: 'bridal',
     isActive: true,
-    displayOrder: 1
+    displayOrder: 1,
   },
   {
     category: 'SALON AT HOME',
     name: 'Luxury HydraFacial & Skin Glow',
-    imageUrl: 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=600&h=600&fit=crop',
+    imageUrl:
+      'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=600&h=600&fit=crop',
     slug: 'athome',
     isActive: true,
-    displayOrder: 2
+    displayOrder: 2,
   },
   {
     category: 'HAIR EXPERT',
     name: 'Keratin Hair Spa & Smoothening',
-    imageUrl: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=600&h=600&fit=crop',
+    imageUrl:
+      'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=600&h=600&fit=crop',
     slug: 'hair',
     isActive: true,
-    displayOrder: 3
+    displayOrder: 3,
   },
   {
     category: 'PARTY & EVENT',
     name: 'Sangeet & Reception Glam Look',
-    imageUrl: 'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=600&h=600&fit=crop',
+    imageUrl:
+      'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=600&h=600&fit=crop',
     slug: 'party',
     isActive: true,
-    displayOrder: 4
+    displayOrder: 4,
   },
   {
     category: 'NAIL STUDIO',
     name: 'Gel Nail Extensions & Art',
-    imageUrl: 'https://images.unsplash.com/photo-1604654894610-df63bc536371?w=600&h=600&fit=crop',
+    imageUrl:
+      'https://images.unsplash.com/photo-1604654894610-df63bc536371?w=600&h=600&fit=crop',
     slug: 'nail',
     isActive: true,
-    displayOrder: 5
-  }
+    displayOrder: 5,
+  },
 ];
 
 @Injectable()
 export class HomeBookingCardsService {
   constructor(
-    @InjectModel(HomeBookingCard.name) private cardModel: Model<HomeBookingCardDocument>,
+    @InjectModel(HomeBookingCard.name)
+    private cardModel: Model<HomeBookingCardDocument>,
     private documentService: DocumentService,
-  ) { }
+  ) {}
 
   async createCard(dto: any, file?: Express.Multer.File, userId?: string) {
     let imageMediaId: Types.ObjectId | null = null;
@@ -64,7 +73,7 @@ export class HomeBookingCardsService {
         const media = await this.documentService.upload(
           file,
           'admin-home-content',
-          userId || 'ADMIN'
+          userId || 'ADMIN',
         );
         imageMediaId = media._id;
         uploadedUrl = media.url || uploadedUrl;
@@ -76,8 +85,13 @@ export class HomeBookingCardsService {
     const payload: any = {
       name: dto.name || dto.title || 'Beauty Service',
       category: (dto.category || 'SALON SERVICE').toUpperCase(),
-      slug: dto.slug || (dto.name || dto.title || '').toLowerCase().replace(/\s+/g, '-'),
-      isActive: dto.isActive !== undefined ? (dto.isActive === 'true' || dto.isActive === true) : true,
+      slug:
+        dto.slug ||
+        (dto.name || dto.title || '').toLowerCase().replace(/\s+/g, '-'),
+      isActive:
+        dto.isActive !== undefined
+          ? dto.isActive === 'true' || dto.isActive === true
+          : true,
       displayOrder: dto.displayOrder ? Number(dto.displayOrder) : 1,
       imageUrl: uploadedUrl,
     };
@@ -112,10 +126,18 @@ export class HomeBookingCardsService {
       }
     }
 
-    return ApiResponse.success('Home Booking Cards retrieved successfully', cards);
+    return ApiResponse.success(
+      'Home Booking Cards retrieved successfully',
+      cards,
+    );
   }
 
-  async updateCard(id: string, dto: any, file?: Express.Multer.File, userId?: string) {
+  async updateCard(
+    id: string,
+    dto: any,
+    file?: Express.Multer.File,
+    userId?: string,
+  ) {
     let card: HomeBookingCardDocument | null = null;
 
     // Check if ID is a valid Mongo ObjectId
@@ -138,7 +160,7 @@ export class HomeBookingCardsService {
         const media = await this.documentService.upload(
           file,
           'admin-home-content',
-          userId || 'ADMIN'
+          userId || 'ADMIN',
         );
         card.imageMedia = media._id;
         card.imageUrl = media.url || card.imageUrl;
@@ -151,8 +173,10 @@ export class HomeBookingCardsService {
     if (dto.category) card.category = dto.category.toUpperCase();
     if (dto.slug) card.slug = dto.slug;
     if (dto.imageUrl && !file) card.imageUrl = dto.imageUrl;
-    if (dto.displayOrder !== undefined) card.displayOrder = Number(dto.displayOrder);
-    if (dto.isActive !== undefined) card.isActive = (dto.isActive === 'true' || dto.isActive === true);
+    if (dto.displayOrder !== undefined)
+      card.displayOrder = Number(dto.displayOrder);
+    if (dto.isActive !== undefined)
+      card.isActive = dto.isActive === 'true' || dto.isActive === true;
 
     await card.save();
     return ApiResponse.success('Home Booking Card updated successfully', card);
@@ -166,6 +190,9 @@ export class HomeBookingCardsService {
     if (!card) {
       card = await this.cardModel.findOneAndDelete({ slug: id });
     }
-    return ApiResponse.success('Home Booking Card deleted successfully', card || { id });
+    return ApiResponse.success(
+      'Home Booking Card deleted successfully',
+      card || { id },
+    );
   }
 }

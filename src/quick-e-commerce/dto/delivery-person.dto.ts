@@ -1,5 +1,21 @@
-import { ArrayMaxSize, ArrayMinSize, IsArray, IsBoolean, IsEnum, IsMongoId, IsNotEmpty, IsNumber, IsObject, IsOptional, IsString, ValidateNested } from 'class-validator';
-import { VehicleType, DeliveryPersonStatus } from '../schema/delivery-person.schema';
+import {
+  ArrayMaxSize,
+  ArrayMinSize,
+  IsArray,
+  IsBoolean,
+  IsEnum,
+  IsMongoId,
+  IsNotEmpty,
+  IsNumber,
+  IsObject,
+  IsOptional,
+  IsString,
+  ValidateNested,
+} from 'class-validator';
+import {
+  VehicleType,
+  DeliveryPersonStatus,
+} from '../schema/delivery-person.schema';
 import { PartialType } from '@nestjs/mapped-types';
 import { Type, Transform } from 'class-transformer';
 
@@ -78,7 +94,9 @@ export class CreateDeliveryPersonDto {
   location?: number[];
 }
 
-export class UpdateDeliveryPersonDto extends PartialType(CreateDeliveryPersonDto) {
+export class UpdateDeliveryPersonDto extends PartialType(
+  CreateDeliveryPersonDto,
+) {
   @IsOptional()
   @IsEnum(DeliveryPersonStatus)
   status?: DeliveryPersonStatus;

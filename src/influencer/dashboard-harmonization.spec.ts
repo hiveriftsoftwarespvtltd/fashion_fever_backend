@@ -1,5 +1,8 @@
 import { Types } from 'mongoose';
-import { CommissionStatus, AttributionSource } from './schema/influencer-commision-rate.schema';
+import {
+  CommissionStatus,
+  AttributionSource,
+} from './schema/influencer-commision-rate.schema';
 import { InfluencerStatus } from './schema/influencer.schema';
 
 describe('Phase 8: Influencer Dashboard & Admin Harmonization Contracts', () => {

@@ -1,4 +1,12 @@
-import { Controller, Get, Put, Query, Param, Body, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Put,
+  Query,
+  Param,
+  Body,
+  UseGuards,
+} from '@nestjs/common';
 import { UserManagementService } from './user-management.service';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guad';
 import { RolesGuard } from 'src/auth/roles.guard';
@@ -12,8 +20,7 @@ import { AccessType, AdminModule } from './schema/admin.schema';
 // @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
 @Controller('admin/user-management')
 export class UserManagementController {
-  constructor(private readonly userManagementService: UserManagementService) { }
-
+  constructor(private readonly userManagementService: UserManagementService) {}
 
   @Get('users')
   @AdminAccess(AdminModule.USERS, AccessType.READ)
@@ -63,7 +70,7 @@ export class UserManagementController {
   @AdminAccess(AdminModule.USERS, AccessType.WRITE)
   async updateUser(
     @Param('userId') userId: string,
-    @Body() updateData: UpdateUserRoleDto
+    @Body() updateData: UpdateUserRoleDto,
   ) {
     return await this.userManagementService.updateUser(userId, updateData);
   }

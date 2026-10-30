@@ -11,7 +11,12 @@ import { JwtService } from '@nestjs/jwt';
 import { UserService } from 'src/user/user.service';
 import * as bcrypt from 'bcryptjs';
 import { InjectModel } from '@nestjs/mongoose';
-import { User, UserRole, AuthType, RoleStatus } from 'src/user/schema/user.schema';
+import {
+  User,
+  UserRole,
+  AuthType,
+  RoleStatus,
+} from 'src/user/schema/user.schema';
 import { Model, Types } from 'mongoose';
 import { OAuth2Client } from 'google-auth-library';
 import { RegisterDTO } from './dto/register.dto';
@@ -32,8 +37,16 @@ import { Vendor } from 'src/vendor/schema/vendor.schema';
 import { ServiceProvider } from 'src/service/schema/service-provider.schema';
 import { UserWalletService } from 'src/wallet/service/user/user.wallet.service';
 import { AffiliateTrackingService } from 'src/influencer/affiliate-tracking.service';
-import { Influencer, InfluencerDocument, InfluencerStatus } from 'src/influencer/schema/influencer.schema';
-import { Educator, EducatorDocument, EducatorStatus } from 'src/courses/schema/educator.schema';
+import {
+  Influencer,
+  InfluencerDocument,
+  InfluencerStatus,
+} from 'src/influencer/schema/influencer.schema';
+import {
+  Educator,
+  EducatorDocument,
+  EducatorStatus,
+} from 'src/courses/schema/educator.schema';
 import { Admin, AdminDocument } from 'src/admin/schema/admin.schema';
 
 @Injectable()
@@ -41,15 +54,17 @@ export class AuthService implements OnApplicationBootstrap {
   constructor(
     @InjectModel(User.name) private userModel: Model<User>,
     @InjectModel(Vendor.name) private vendorModel: Model<Vendor>,
-    @InjectModel(ServiceProvider.name) private serviceProviderModel: Model<ServiceProvider>,
-    @InjectModel(Influencer.name) private influencerModel: Model<InfluencerDocument>,
+    @InjectModel(ServiceProvider.name)
+    private serviceProviderModel: Model<ServiceProvider>,
+    @InjectModel(Influencer.name)
+    private influencerModel: Model<InfluencerDocument>,
     @InjectModel(Educator.name) private educatorModel: Model<EducatorDocument>,
     @InjectModel(Admin.name) private adminModel: Model<AdminDocument>,
     private userService: UserService,
     private jwtService: JwtService,
     private userWalletService: UserWalletService,
     private affiliateTrackingService: AffiliateTrackingService,
-  ) { }
+  ) {}
 
   async onApplicationBootstrap() {
     await this.ensureSuperAdminExists();
@@ -57,7 +72,9 @@ export class AuthService implements OnApplicationBootstrap {
 
   async ensureSuperAdminExists(): Promise<any> {
     try {
-      const adminEmail = (process.env.ADMIN_EMAIL || 'admin@fashionfever.in').toLowerCase().trim();
+      const adminEmail = (process.env.ADMIN_EMAIL || 'admin@fashionfever.in')
+        .toLowerCase()
+        .trim();
       const adminPassword = process.env.ADMIN_PASSWORD || 'Admin@123';
       const hashedPassword = await bcrypt.hash(adminPassword, 10);
 
@@ -83,10 +100,17 @@ export class AuthService implements OnApplicationBootstrap {
           authTypes: [AuthType.EMAIL],
         });
       } else {
-        userId = user._id as Types.ObjectId;
+        userId = user._id;
         let changed = false;
         if (!user.roles?.includes(UserRole.SUPER_ADMIN)) {
-          user.roles = Array.from(new Set([...(user.roles || []), UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.USER]));
+          user.roles = Array.from(
+            new Set([
+              ...(user.roles || []),
+              UserRole.SUPER_ADMIN,
+              UserRole.ADMIN,
+              UserRole.USER,
+            ]),
+          );
           changed = true;
         }
         if (!user.isActive) {
@@ -97,7 +121,10 @@ export class AuthService implements OnApplicationBootstrap {
           user.isEmailVerified = true;
           changed = true;
         }
-        const matchesCurrent = await bcrypt.compare(adminPassword, user.password || '');
+        const matchesCurrent = await bcrypt.compare(
+          adminPassword,
+          user.password || '',
+        );
         if (!matchesCurrent) {
           user.password = hashedPassword;
           changed = true;
@@ -133,13 +160,20 @@ export class AuthService implements OnApplicationBootstrap {
     }
   }
 
-  async resolveReferralAttribution(referralCode?: string, registeringEmail?: string): Promise<{
+  async resolveReferralAttribution(
+    referralCode?: string,
+    registeringEmail?: string,
+  ): Promise<{
     referredByInfluencerId: Types.ObjectId | null;
     referralAttributedAt: Date | null;
     referralExpiresAt: Date | null;
   }> {
     if (!referralCode || typeof referralCode !== 'string') {
-      return { referredByInfluencerId: null, referralAttributedAt: null, referralExpiresAt: null };
+      return {
+        referredByInfluencerId: null,
+        referralAttributedAt: null,
+        referralExpiresAt: null,
+      };
     }
 
     const normalizedCode = referralCode.trim().toUpperCase();
@@ -152,15 +186,30 @@ export class AuthService implements OnApplicationBootstrap {
     });
 
     if (!influencer) {
-      return { referredByInfluencerId: null, referralAttributedAt: null, referralExpiresAt: null };
+      return {
+        referredByInfluencerId: null,
+        referralAttributedAt: null,
+        referralExpiresAt: null,
+      };
     }
 
     // RULE E: Self-referral prohibition (Server-side enforcement)
     if (registeringEmail) {
-      const influencerUser = await this.userModel.findById(influencer.userId).select('email');
-      if (influencerUser && influencerUser.email.toLowerCase() === registeringEmail.toLowerCase()) {
-        console.warn(`[AuthService] Self-referral attempt blocked for email: ${registeringEmail}`);
-        return { referredByInfluencerId: null, referralAttributedAt: null, referralExpiresAt: null };
+      const influencerUser = await this.userModel
+        .findById(influencer.userId)
+        .select('email');
+      if (
+        influencerUser &&
+        influencerUser.email.toLowerCase() === registeringEmail.toLowerCase()
+      ) {
+        console.warn(
+          `[AuthService] Self-referral attempt blocked for email: ${registeringEmail}`,
+        );
+        return {
+          referredByInfluencerId: null,
+          referralAttributedAt: null,
+          referralExpiresAt: null,
+        };
       }
     }
 
@@ -169,14 +218,17 @@ export class AuthService implements OnApplicationBootstrap {
     const expiresAt = new Date(now.getTime() + EXACT_365_DAYS_MS);
 
     return {
-      referredByInfluencerId: influencer._id as Types.ObjectId,
+      referredByInfluencerId: influencer._id,
       referralAttributedAt: now,
       referralExpiresAt: expiresAt,
     };
   }
 
   async register(dto: RegisterDTO) {
-    const attribution = await this.resolveReferralAttribution(dto.referralCode, dto.email);
+    const attribution = await this.resolveReferralAttribution(
+      dto.referralCode,
+      dto.email,
+    );
 
     const existingUser = await this.userModel.findOne({
       email: dto.email.toLowerCase(),
@@ -184,7 +236,13 @@ export class AuthService implements OnApplicationBootstrap {
 
     // block restricted roles
     if (dto.roles && dto.roles.length > 0) {
-      const restrictedRoles = [UserRole.ADMIN, UserRole.INFLUENCER, UserRole.DISTRIBUTOR, UserRole.SUPER_ADMIN, UserRole.DELIVERY_PERSON];
+      const restrictedRoles = [
+        UserRole.ADMIN,
+        UserRole.INFLUENCER,
+        UserRole.DISTRIBUTOR,
+        UserRole.SUPER_ADMIN,
+        UserRole.DELIVERY_PERSON,
+      ];
       for (const r of dto.roles) {
         if (restrictedRoles.includes(r)) {
           throw new BadRequestException(
@@ -221,7 +279,7 @@ export class AuthService implements OnApplicationBootstrap {
         existingUser.phone = dto.phone;
       }
       if (dto.roles) {
-        existingUser.roles = dto.roles as any;
+        existingUser.roles = dto.roles;
         const roleStatus = new Map<UserRole, RoleStatus>();
         dto.roles.forEach((r) => roleStatus.set(r, RoleStatus.NOT_ONBOARDED));
         existingUser.roleStatus = roleStatus;
@@ -231,8 +289,12 @@ export class AuthService implements OnApplicationBootstrap {
       existingUser.otpExpiresAt = otpExpiresAt;
 
       // Link referral attribution if not already linked
-      if (!existingUser.referredByInfluencerId && attribution.referredByInfluencerId) {
-        existingUser.referredByInfluencerId = attribution.referredByInfluencerId;
+      if (
+        !existingUser.referredByInfluencerId &&
+        attribution.referredByInfluencerId
+      ) {
+        existingUser.referredByInfluencerId =
+          attribution.referredByInfluencerId;
         existingUser.referralAttributedAt = attribution.referralAttributedAt;
         existingUser.referralExpiresAt = attribution.referralExpiresAt;
         await this.influencerModel.updateOne(
@@ -240,7 +302,10 @@ export class AuthService implements OnApplicationBootstrap {
           { $inc: { totalSignups: 1 } },
         );
         if (dto.referralCode) {
-          await this.affiliateTrackingService.trackSignup(existingUser._id, dto.referralCode.trim().toUpperCase());
+          await this.affiliateTrackingService.trackSignup(
+            existingUser._id,
+            dto.referralCode.trim().toUpperCase(),
+          );
         }
       }
 
@@ -270,7 +335,7 @@ export class AuthService implements OnApplicationBootstrap {
         existingUser.phone = dto.phone;
       }
       if (dto.roles) {
-        existingUser.roles = dto.roles as any;
+        existingUser.roles = dto.roles;
         const roleStatus = new Map<UserRole, RoleStatus>();
         dto.roles.forEach((r) => roleStatus.set(r, RoleStatus.NOT_ONBOARDED));
         existingUser.roleStatus = roleStatus;
@@ -282,7 +347,8 @@ export class AuthService implements OnApplicationBootstrap {
       existingUser.isDeleted = false;
       existingUser.isEmailVerified = false;
 
-      existingUser.isActive = (dto.roles && dto.roles.includes(UserRole.VENDOR)) ? false : true;
+      existingUser.isActive =
+        dto.roles && dto.roles.includes(UserRole.VENDOR) ? false : true;
 
       await existingUser.save();
 
@@ -303,25 +369,16 @@ export class AuthService implements OnApplicationBootstrap {
 
     // new user creation
     const initialRoles = Array.from(
-      new Set([
-        UserRole.USER,
-        ...requestedRoles,
-      ]),
+      new Set([UserRole.USER, ...requestedRoles]),
     );
 
     const initialRoleStatuses = new Map<UserRole, RoleStatus>();
 
-    initialRoleStatuses.set(
-      UserRole.USER,
-      RoleStatus.APPROVED,
-    );
+    initialRoleStatuses.set(UserRole.USER, RoleStatus.APPROVED);
 
     requestedRoles.forEach((role) => {
       if (role !== UserRole.USER) {
-        initialRoleStatuses.set(
-          role,
-          RoleStatus.NOT_ONBOARDED,
-        );
+        initialRoleStatuses.set(role, RoleStatus.NOT_ONBOARDED);
       }
     });
     // const initialRoles = dto.roles || [UserRole.USER];
@@ -346,11 +403,13 @@ export class AuthService implements OnApplicationBootstrap {
       otpExpiresAt,
       isEmailVerified: false,
       isActive: true,
-      ...(attribution.referredByInfluencerId ? {
-        referredByInfluencerId: attribution.referredByInfluencerId,
-        referralAttributedAt: attribution.referralAttributedAt,
-        referralExpiresAt: attribution.referralExpiresAt,
-      } : {}),
+      ...(attribution.referredByInfluencerId
+        ? {
+            referredByInfluencerId: attribution.referredByInfluencerId,
+            referralAttributedAt: attribution.referralAttributedAt,
+            referralExpiresAt: attribution.referralExpiresAt,
+          }
+        : {}),
     });
 
     if (attribution.referredByInfluencerId) {
@@ -359,11 +418,12 @@ export class AuthService implements OnApplicationBootstrap {
         { $inc: { totalSignups: 1 } },
       );
       if (dto.referralCode) {
-        await this.affiliateTrackingService.trackSignup(user._id, dto.referralCode.trim().toUpperCase());
+        await this.affiliateTrackingService.trackSignup(
+          user._id,
+          dto.referralCode.trim().toUpperCase(),
+        );
       }
     }
-
-
 
     await sendMail(
       user.email,
@@ -428,14 +488,16 @@ export class AuthService implements OnApplicationBootstrap {
       throw new BadRequestException('OTP expired');
     }
 
-    console.log("Referral Code", referralCode)
+    console.log('Referral Code', referralCode);
     if (referralCode) {
-      const program = await this.affiliateTrackingService.trackSignup(user._id, referralCode);
-      console.log("Referral Code", program)
-      user.affliateProgramId = program?._id
-      user.referredByInfluencerId = program?.influencerId
+      const program = await this.affiliateTrackingService.trackSignup(
+        user._id,
+        referralCode,
+      );
+      console.log('Referral Code', program);
+      user.affliateProgramId = program?._id;
+      user.referredByInfluencerId = program?.influencerId;
       // user.save()
-
     }
 
     user.isEmailVerified = true;
@@ -454,7 +516,9 @@ export class AuthService implements OnApplicationBootstrap {
 
   async login(dto: LoginDTO) {
     const inputEmail = dto.email.toLowerCase().trim();
-    const adminEmail = (process.env.ADMIN_EMAIL || 'admin@fashionfever.in').toLowerCase().trim();
+    const adminEmail = (process.env.ADMIN_EMAIL || 'admin@fashionfever.in')
+      .toLowerCase()
+      .trim();
     const isEnvAdminLogin = inputEmail === adminEmail;
 
     let user = await this.userModel.findOne({
@@ -514,7 +578,9 @@ export class AuthService implements OnApplicationBootstrap {
     }
 
     if (user.roles && user.roles.includes(UserRole.SERVICE_PROVIDER)) {
-      const serviceProvider = await this.serviceProviderModel.findOne({ ownerId: new Types.ObjectId(user._id) });
+      const serviceProvider = await this.serviceProviderModel.findOne({
+        ownerId: new Types.ObjectId(user._id),
+      });
 
       if (serviceProvider?.verificationStatus === 'PENDING') {
         throw new ConflictException('You account is not approved by admin');
@@ -524,24 +590,28 @@ export class AuthService implements OnApplicationBootstrap {
     }
 
     if (user.roles && user.roles.includes(UserRole.INFLUENCER)) {
-      const influencer = await this.influencerModel.findOne({ userId: new Types.ObjectId(user._id) })
+      const influencer = await this.influencerModel.findOne({
+        userId: new Types.ObjectId(user._id),
+      });
       if (influencer?.status === InfluencerStatus.PENDING) {
-        throw new ConflictException("You account is not approved by admin");
+        throw new ConflictException('You account is not approved by admin');
       } else if (influencer?.status === InfluencerStatus.REJECTED) {
-        throw new ConflictException("Your account is rejected by admin");
+        throw new ConflictException('Your account is rejected by admin');
       } else if (influencer?.status === InfluencerStatus.BLOCKED) {
-        throw new ConflictException("Your account is blocked by admin");
+        throw new ConflictException('Your account is blocked by admin');
       }
     }
 
     if (user.roles && user.roles.includes(UserRole.EDUCATOR)) {
-      const educator = await this.educatorModel.findOne({ userId: new Types.ObjectId(user._id) })
+      const educator = await this.educatorModel.findOne({
+        userId: new Types.ObjectId(user._id),
+      });
       if (educator?.status === EducatorStatus.PENDING) {
-        throw new ConflictException("You account is not approved by admin");
+        throw new ConflictException('You account is not approved by admin');
       } else if (educator?.status === EducatorStatus.REJECTED) {
-        throw new ConflictException("Your account is rejected by admin");
+        throw new ConflictException('Your account is rejected by admin');
       } else if (educator?.status === EducatorStatus.BLOCKED) {
-        throw new ConflictException("Your account is blocked by admin");
+        throw new ConflictException('Your account is blocked by admin');
       }
     }
 
@@ -554,7 +624,11 @@ export class AuthService implements OnApplicationBootstrap {
         user.password = await bcrypt.hash(envAdminPassword, 10);
         await user.save();
       }
-    } else if (!isMatch && (user.roles?.includes(UserRole.ADMIN) || user.roles?.includes(UserRole.SUPER_ADMIN))) {
+    } else if (
+      !isMatch &&
+      (user.roles?.includes(UserRole.ADMIN) ||
+        user.roles?.includes(UserRole.SUPER_ADMIN))
+    ) {
       const envAdminPassword = process.env.ADMIN_PASSWORD;
       if (envAdminPassword && dto.password === envAdminPassword) {
         isMatch = true;
@@ -583,7 +657,6 @@ export class AuthService implements OnApplicationBootstrap {
       roles: user.roles,
     };
 
-
     const token = await this.jwtService.signAsync(payload);
 
     const safeUser: any = user.toObject();
@@ -595,7 +668,11 @@ export class AuthService implements OnApplicationBootstrap {
     }
 
     let moduleAccess: any = undefined;
-    if (user.roles && (user.roles.includes(UserRole.ADMIN) || user.roles.includes(UserRole.SUPER_ADMIN))) {
+    if (
+      user.roles &&
+      (user.roles.includes(UserRole.ADMIN) ||
+        user.roles.includes(UserRole.SUPER_ADMIN))
+    ) {
       const adminData = await this.adminModel.findOne({ userId: user._id });
       if (adminData) {
         moduleAccess = adminData.moduleAccess;
@@ -633,19 +710,30 @@ export class AuthService implements OnApplicationBootstrap {
       if (!user) {
         // Check restricted roles for registration
         if (dto.roles && dto.roles.length > 0) {
-          const restrictedRoles = [UserRole.ADMIN, UserRole.INFLUENCER, UserRole.DISTRIBUTOR];
+          const restrictedRoles = [
+            UserRole.ADMIN,
+            UserRole.INFLUENCER,
+            UserRole.DISTRIBUTOR,
+          ];
           for (const r of dto.roles) {
             if (restrictedRoles.includes(r)) {
-              throw new BadRequestException(`You are not authorized to create ${r} account`);
+              throw new BadRequestException(
+                `You are not authorized to create ${r} account`,
+              );
             }
           }
         }
 
         const initialRoles = [UserRole.USER];
         const initialRoleStatuses = new Map<UserRole, RoleStatus>();
-        initialRoles.forEach((r) => initialRoleStatuses.set(r, RoleStatus.NOT_ONBOARDED));
+        initialRoles.forEach((r) =>
+          initialRoleStatuses.set(r, RoleStatus.NOT_ONBOARDED),
+        );
 
-        const attribution = await this.resolveReferralAttribution(dto.referralCode, email);
+        const attribution = await this.resolveReferralAttribution(
+          dto.referralCode,
+          email,
+        );
 
         // Create user
         user = await this.userModel.create({
@@ -653,15 +741,18 @@ export class AuthService implements OnApplicationBootstrap {
           email,
           googleId: payload.sub,
           isEmailVerified: true,
-          isActive: (dto.roles && dto.roles.includes(UserRole.VENDOR)) ? false : true,
+          isActive:
+            dto.roles && dto.roles.includes(UserRole.VENDOR) ? false : true,
           roles: initialRoles,
           roleStatus: initialRoleStatuses,
           authTypes: [AuthType.GOOGLE],
-          ...(attribution.referredByInfluencerId ? {
-            referredByInfluencerId: attribution.referredByInfluencerId,
-            referralAttributedAt: attribution.referralAttributedAt,
-            referralExpiresAt: attribution.referralExpiresAt,
-          } : {}),
+          ...(attribution.referredByInfluencerId
+            ? {
+                referredByInfluencerId: attribution.referredByInfluencerId,
+                referralAttributedAt: attribution.referralAttributedAt,
+                referralExpiresAt: attribution.referralExpiresAt,
+              }
+            : {}),
         });
 
         if (attribution.referredByInfluencerId) {
@@ -670,7 +761,10 @@ export class AuthService implements OnApplicationBootstrap {
             { $inc: { totalSignups: 1 } },
           );
           if (dto.referralCode) {
-            await this.affiliateTrackingService.trackSignup(user._id, dto.referralCode.trim().toUpperCase());
+            await this.affiliateTrackingService.trackSignup(
+              user._id,
+              dto.referralCode.trim().toUpperCase(),
+            );
           }
         }
 
@@ -727,7 +821,9 @@ export class AuthService implements OnApplicationBootstrap {
         }
 
         if (user.roles && user.roles.includes(UserRole.SERVICE_PROVIDER)) {
-          const serviceProvider = await this.serviceProviderModel.findOne({ ownerId: new Types.ObjectId(user._id) });
+          const serviceProvider = await this.serviceProviderModel.findOne({
+            ownerId: new Types.ObjectId(user._id),
+          });
           if (serviceProvider?.verificationStatus === 'PENDING') {
             throw new ConflictException('You account is not approved by admin');
           } else if (serviceProvider?.verificationStatus === 'REJECTED') {
@@ -736,24 +832,28 @@ export class AuthService implements OnApplicationBootstrap {
         }
 
         if (user.roles && user.roles.includes(UserRole.INFLUENCER)) {
-          const influencer = await this.influencerModel.findOne({ userId: new Types.ObjectId(user._id) })
+          const influencer = await this.influencerModel.findOne({
+            userId: new Types.ObjectId(user._id),
+          });
           if (influencer?.status === InfluencerStatus.PENDING) {
-            throw new ConflictException("You account is not approved by admin");
+            throw new ConflictException('You account is not approved by admin');
           } else if (influencer?.status === InfluencerStatus.REJECTED) {
-            throw new ConflictException("Your account is rejected by admin");
+            throw new ConflictException('Your account is rejected by admin');
           } else if (influencer?.status === InfluencerStatus.BLOCKED) {
-            throw new ConflictException("Your account is blocked by admin");
+            throw new ConflictException('Your account is blocked by admin');
           }
         }
 
         if (user.roles && user.roles.includes(UserRole.EDUCATOR)) {
-          const educator = await this.educatorModel.findOne({ userId: new Types.ObjectId(user._id) })
+          const educator = await this.educatorModel.findOne({
+            userId: new Types.ObjectId(user._id),
+          });
           if (educator?.status === EducatorStatus.PENDING) {
-            throw new ConflictException("You account is not approved by admin");
+            throw new ConflictException('You account is not approved by admin');
           } else if (educator?.status === EducatorStatus.REJECTED) {
-            throw new ConflictException("Your account is rejected by admin");
+            throw new ConflictException('Your account is rejected by admin');
           } else if (educator?.status === EducatorStatus.BLOCKED) {
-            throw new ConflictException("Your account is blocked by admin");
+            throw new ConflictException('Your account is blocked by admin');
           }
         }
       }
@@ -774,7 +874,11 @@ export class AuthService implements OnApplicationBootstrap {
       }
 
       let moduleAccess: any = undefined;
-      if (user.roles && (user.roles.includes(UserRole.ADMIN) || user.roles.includes(UserRole.SUPER_ADMIN))) {
+      if (
+        user.roles &&
+        (user.roles.includes(UserRole.ADMIN) ||
+          user.roles.includes(UserRole.SUPER_ADMIN))
+      ) {
         const adminData = await this.adminModel.findOne({ userId: user._id });
         if (adminData) {
           moduleAccess = adminData.moduleAccess;
@@ -791,7 +895,12 @@ export class AuthService implements OnApplicationBootstrap {
         200,
       );
     } catch (e: any) {
-      if (e instanceof UnauthorizedException || e instanceof ConflictException || e instanceof NotAcceptableException || e instanceof BadRequestException) {
+      if (
+        e instanceof UnauthorizedException ||
+        e instanceof ConflictException ||
+        e instanceof NotAcceptableException ||
+        e instanceof BadRequestException
+      ) {
         throw e;
       }
       throw new UnauthorizedException('Invalid Google Token');
@@ -799,7 +908,6 @@ export class AuthService implements OnApplicationBootstrap {
   }
 
   async verifyLoginOtp(dto: VerifyLoginDTO) {
-
     const user = await this.userModel.findOne({
       email: dto.email.toLowerCase(),
     });

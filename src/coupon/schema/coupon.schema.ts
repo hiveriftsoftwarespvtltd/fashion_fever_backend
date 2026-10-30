@@ -13,29 +13,25 @@ export enum CouponType {
   FIXED = 'fixed',
 }
 
-
 export enum CouponScope {
   PLATFORM = 'platform',
   PRODUCT = 'product',
   QUICK_DELIVERY = 'quick_delivery',
   SERVICE = 'service',
   COURSE = 'course',
-  VENDOR = 'vendor'
+  VENDOR = 'vendor',
 }
 
 // Discriminator used to identify service-provider owned coupons
 export const SERVICE_COUPON_SCOPE = CouponScope.SERVICE;
-
 
 export enum CouponFor {
   USER = 'user',
   ADMIN = 'admin',
   INFLUENCER = 'influencer',
   EDUCATOR = 'educator',
-  SERVICE_PROVIDERS = 'service_providers'
-
+  SERVICE_PROVIDERS = 'service_providers',
 }
-
 
 export enum OwnerType {
   SUPER_ADMIN = 'super_admin',
@@ -43,9 +39,8 @@ export enum OwnerType {
   INFLUENCER = 'influencer',
   EDUCATOR = 'educator',
   SERVICE_PROVIDER = 'service_provider',
-  VENDOR = 'vendor'
+  VENDOR = 'vendor',
 }
-
 
 @Schema({ timestamps: true })
 export class Coupon {
@@ -130,13 +125,13 @@ export class Coupon {
   isInfluencerCoupon!: boolean;
 
   @Prop({ type: Types.ObjectId, ref: 'User', default: null })
-  createdBy!: Types.ObjectId
+  createdBy!: Types.ObjectId;
 
   @Prop({ type: String, enum: OwnerType, default: OwnerType.SUPER_ADMIN })
-  ownerType!: OwnerType
+  ownerType!: OwnerType;
 
   @Prop({ type: Types.ObjectId, default: null })
-  ownerId: Types.ObjectId
+  ownerId: Types.ObjectId;
 
   // ── Service-Provider Owned Coupon Fields ──────────────────────────────────
   // Both fields are required when scope === 'service' (enforced via pre-save).
@@ -148,18 +143,16 @@ export class Coupon {
   // ─────────────────────────────────────────────────────────────────────────
 
   @Prop({ type: [Types.ObjectId], ref: 'Product', default: [] })
-  appliedProducts!: Types.ObjectId[]
+  appliedProducts!: Types.ObjectId[];
 
   @Prop({ type: [Types.ObjectId], ref: 'Service', default: [] })
-  appliedServices!: Types.ObjectId[]
+  appliedServices!: Types.ObjectId[];
 
   @Prop({ type: [Types.ObjectId], ref: 'Course', default: [] })
-  appliedCourses!: Types.ObjectId[]
+  appliedCourses!: Types.ObjectId[];
 
   @Prop({ type: String, enum: CouponFor, default: CouponFor.USER })
-  couponFor!: CouponFor
-
-
+  couponFor!: CouponFor;
 }
 
 export const CouponSchema = SchemaFactory.createForClass(Coupon);
@@ -171,7 +164,9 @@ CouponSchema.index({ code: 1, serviceProviderId: 1, linkedServiceId: 1 });
 CouponSchema.pre('save', function () {
   if ((this as any).scope === CouponScope.SERVICE) {
     if (!(this as any).serviceProviderId) {
-      throw new Error('serviceProviderId is required for service-scoped coupons');
+      throw new Error(
+        'serviceProviderId is required for service-scoped coupons',
+      );
     }
     if (!(this as any).linkedServiceId) {
       throw new Error('linkedServiceId is required for service-scoped coupons');

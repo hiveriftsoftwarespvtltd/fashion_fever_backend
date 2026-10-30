@@ -23,7 +23,10 @@ import {
 import { ShiprocketService } from 'src/shiprocket/shiprocket.service';
 import { Vendor, VendorDocument } from 'src/vendor/schema/vendor.schema';
 import { Address, AddressDocument } from 'src/address/schema/address.schema';
-import { UserWallet, UserWalletDocument } from 'src/wallet/schema/user/user.wallet.schema';
+import {
+  UserWallet,
+  UserWalletDocument,
+} from 'src/wallet/schema/user/user.wallet.schema';
 import { ApiResponse } from 'src/common/responses/api-response';
 
 export interface VendorShippingEstimate {
@@ -55,7 +58,6 @@ export interface CartShippingEstimateResponse {
 }
 @Injectable()
 export class CartService {
-
   constructor(
     @InjectModel(Cart.name)
     private cartModel: Model<CartDocument>,
@@ -76,8 +78,7 @@ export class CartService {
     private userWalletModel: Model<UserWalletDocument>,
 
     private shipRocketService: ShiprocketService,
-
-  ) { }
+  ) {}
 
   private async cleanInvalidCartItems(
     cart: CartDocument,
@@ -88,7 +89,6 @@ export class CartService {
 
     const productIds = cart.items.map((item) => item.product);
     const variantIds = cart.items.map((item) => item.variant);
-
 
     const products = await this.productModel.find({
       _id: { $in: productIds },
@@ -102,7 +102,6 @@ export class CartService {
       isActive: true,
     });
 
-
     const productMap = new Map(
       products.map((product) => [product._id.toString(), product]),
     );
@@ -110,7 +109,6 @@ export class CartService {
     const variantMap = new Map(
       variants.map((variant) => [variant._id.toString(), variant]),
     );
-
 
     const validItems = cart.items.filter((item) => {
       // const product = productMap.get(item.product.toString());
@@ -145,14 +143,10 @@ export class CartService {
       return true;
     });
 
-
-
     if (validItems.length !== cart.items.length) {
       cart.items = validItems;
       await cart.save();
     }
-
-
 
     return cart;
   }
@@ -196,8 +190,6 @@ export class CartService {
       user: new Types.ObjectId(userId),
     });
 
-
-
     if (!cart) {
       cart = await this.cartModel.create({
         user: new Types.ObjectId(userId),
@@ -207,17 +199,11 @@ export class CartService {
 
     await this.cleanInvalidCartItems(cart);
 
-
-
-
     const existingItem = cart.items.find(
       (item) =>
         item.product.toString() === productId &&
         item.variant.toString() === variantId,
     );
-
-
-
 
     if (existingItem) {
       const updatedQty = existingItem.quantity + quantity;
@@ -232,22 +218,16 @@ export class CartService {
         product: new Types.ObjectId(productId),
         variant: new Types.ObjectId(variantId),
         quantity,
-      } as any);
+      });
     }
-
-
 
     await cart.save();
 
-
-
     // return await this.fetchUserCart(userId);
-    return ApiResponse.success("Item added to cart successfully", cart)
+    return ApiResponse.success('Item added to cart successfully', cart);
   }
 
   async fetchUserCart(userId: string) {
-
-
     const cart = await this.cartModel
       .findOne({ user: userId })
       .populate({
@@ -261,11 +241,11 @@ export class CartService {
         populate: [
           {
             path: 'thumbnail',
-            select: 'url _id publicId'
+            select: 'url _id publicId',
           },
           {
             path: 'images',
-            select: 'url _id publicId'
+            select: 'url _id publicId',
           },
         ],
       });
@@ -274,11 +254,7 @@ export class CartService {
       return ApiResponse.success('Cart not found', { items: [] });
     }
 
-
-
     await this.cleanInvalidCartItems(cart);
-
-
 
     return ApiResponse.success('Cart fetched successfully', cart);
   }
@@ -291,7 +267,6 @@ export class CartService {
     if (!cart) {
       throw new NotFoundException('Cart not found');
     }
-
 
     cart.items = [];
 
@@ -349,7 +324,6 @@ export class CartService {
 
     await this.cleanInvalidCartItems(cart);
 
-
     const cartItem = cart.items.find(
       (item) => item.variant.toString() === variantId,
     );
@@ -372,7 +346,7 @@ export class CartService {
   }
 
   async estimateCartSummary(userId: string, addressId: string) {
-    console.log("UserId and AddressId in line 375 : ", userId, addressId)
+    console.log('UserId and AddressId in line 375 : ', userId, addressId);
     const address = await this.addressModel
       .findOne({
         user: new Types.ObjectId(userId),
@@ -384,18 +358,12 @@ export class CartService {
       throw new NotFoundException('Address Not Found');
     }
 
-
     const userPinCode = address.pincode;
     const cart = await this.cartModel
       .findOne({
         user: new Types.ObjectId(userId),
       })
       .lean();
-
-
-
-
-
 
     if (!cart || !cart.items.length) {
       return {
@@ -430,7 +398,8 @@ export class CartService {
     const variants = await this.productVariantModel
       .find({
         _id: { $in: variantIds },
-      }).populate({ path: "thumbnail", select: "url" })
+      })
+      .populate({ path: 'thumbnail', select: 'url' })
       .lean();
 
     const productsMap = new Map(products.map((p) => [p._id.toString(), p]));
@@ -467,9 +436,9 @@ export class CartService {
       }
 
       const price =
-        (variant.offeredPrice && variant.offeredPrice > 0)
+        variant.offeredPrice && variant.offeredPrice > 0
           ? variant.offeredPrice
-          : (variant.salesPrice || variant.costPrice || 0);
+          : variant.salesPrice || variant.costPrice || 0;
 
       const totalPrice = price * item.quantity;
 
@@ -565,7 +534,7 @@ export class CartService {
         height,
       });
 
-      console.log("Shipping Charge", shipping)
+      console.log('Shipping Charge', shipping);
 
       totalShippingCharge += shipping.shippingCharge;
 
@@ -688,9 +657,10 @@ export class CartService {
         throw new BadRequestException(`${product.name} is unavailable`);
       }
 
-      const variant = await this.productVariantModel.findById(item.variant)
-        .populate("images", "url publicId _id")
-        .populate("thumbnail", "url publicId _id");
+      const variant = await this.productVariantModel
+        .findById(item.variant)
+        .populate('images', 'url publicId _id')
+        .populate('thumbnail', 'url publicId _id');
 
       if (!variant) {
         throw new NotFoundException('Variant not found');
@@ -710,7 +680,8 @@ export class CartService {
         throw new BadRequestException(`${product.name} is out of stock`);
       }
 
-      const sellingPrice = variant.offeredPrice ?? variant.salesPrice ?? variant.costPrice ?? 0;
+      const sellingPrice =
+        variant.offeredPrice ?? variant.salesPrice ?? variant.costPrice ?? 0;
       const totalPrice = sellingPrice * item.quantity;
       subTotal += totalPrice;
 
@@ -726,7 +697,9 @@ export class CartService {
     // =========================
     // APPLY WALLET BALANCE
     // =========================
-    const wallet = await this.userWalletModel.findOne({ userId: new Types.ObjectId(userId) });
+    const wallet = await this.userWalletModel.findOne({
+      userId: new Types.ObjectId(userId),
+    });
 
     if (!wallet) {
       throw new BadRequestException('Wallet not found');

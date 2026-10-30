@@ -1,8 +1,8 @@
 // import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 // import { Document, Types } from 'mongoose';
 
-import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
-import { Types } from "mongoose";
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Types } from 'mongoose';
 
 export enum VendorPayoutStatus {
   PENDING = 'pending',
@@ -12,10 +12,10 @@ export enum VendorPayoutStatus {
   REVERSED = 'reversed',
 }
 
-export enum PaymentMethod{
-  UPI='upi',
-  CARD='card',
-  BANK_TRANSFER='bank_transfer'
+export enum PaymentMethod {
+  UPI = 'upi',
+  CARD = 'card',
+  BANK_TRANSFER = 'bank_transfer',
 }
 
 // export type VendorPayoutDocument = VendorPayout & Document;
@@ -135,10 +135,9 @@ export enum PaymentMethod{
 // }
 
 // export const VendorPayoutSchema = SchemaFactory.createForClass(VendorPayout);
-export type VendorPayoutDocument = VendorPayout & Document
+export type VendorPayoutDocument = VendorPayout & Document;
 @Schema({ timestamps: true })
 export class VendorPayout {
-
   @Prop({
     type: Types.ObjectId,
     ref: 'Vendor',

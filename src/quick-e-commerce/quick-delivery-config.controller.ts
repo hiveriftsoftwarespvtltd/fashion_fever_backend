@@ -11,18 +11,18 @@ import { AdminModule, AccessType } from 'src/admin/schema/admin.schema';
 
 @Controller('quick-delivery-config')
 export class QuickDeliveryConfigController {
-    constructor(private readonly configService: QuickDeliveryConfigService) { }
+  constructor(private readonly configService: QuickDeliveryConfigService) {}
 
-    @Get('details')
-    async getConfig() {
-        return await this.configService.getConfig();
-    }
+  @Get('details')
+  async getConfig() {
+    return await this.configService.getConfig();
+  }
 
-    @UseGuards(JwtAuthGuard, RolesGuard, AdminPermissionGuard)
-    @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
-    @AdminPermission(AdminModule.PLATFORM, AccessType.WRITE)
-    @Post('create-or-update')
-    async createOrUpdateConfig(@Body() dto: UpdateQuickDeliveryConfigDto) {
-        return await this.configService.createOrUpdateConfig(dto);
-    }
+  @UseGuards(JwtAuthGuard, RolesGuard, AdminPermissionGuard)
+  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
+  @AdminPermission(AdminModule.PLATFORM, AccessType.WRITE)
+  @Post('create-or-update')
+  async createOrUpdateConfig(@Body() dto: UpdateQuickDeliveryConfigDto) {
+    return await this.configService.createOrUpdateConfig(dto);
+  }
 }

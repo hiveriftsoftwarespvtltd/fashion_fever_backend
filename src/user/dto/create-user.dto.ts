@@ -7,7 +7,6 @@ import {
 } from 'class-validator';
 import { UserRole } from '../schema/user.schema';
 
-
 export class CreateUserDto {
   @IsString()
   name!: string;

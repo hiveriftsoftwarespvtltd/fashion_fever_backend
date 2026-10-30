@@ -8,5 +8,4 @@ export enum MediaFolderName {
   Educator = 'educator',
   CourseCategories = 'course-categories',
   CourseContent = 'course-content',
-
 }
